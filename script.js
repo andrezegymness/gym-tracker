@@ -21,7 +21,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 /* =========================================
-   2. DATA: ANDRE MAP WAVE (FULL)
+   2. DATA: ANDRE MAP WAVE (FULL DATA)
    ========================================= */
 const andreData = {
   1: {
@@ -61,7 +61,6 @@ const andreData = {
     "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
   }
 };
-// Deload Generation for Andre
 andreData[6] = {};
 if(andreData[1]) {
     Object.keys(andreData[1]).forEach(day => {
@@ -81,7 +80,7 @@ const andreAccessories = {
 };
 
 /* =========================================
-   3. DATA: BASE MAP LINEAR (Dynamic Logic)
+   3. DATA: BASE MAP LINEAR
    ========================================= */
 const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
 const standardProg = 0.0425, maintProg = 0.02, tempoStartPct = 0.71, tempoProg = 0.04;
@@ -147,7 +146,6 @@ function init() {
     inputs[key].addEventListener('input', (e) => {
       state.maxes[key] = parseFloat(e.target.value) || 0;
       deferredSave(); 
-      // Force render on input so it updates immediately
       render();
     });
   });
@@ -170,7 +168,11 @@ function init() {
   setupAuthButtons();
   
   // Attach Window Functions
-  window.switchProgram = (prog) => { state.activeProgram = prog; deferredSave(); render(); };
+  window.switchProgram = (prog) => { 
+      state.activeProgram = prog; 
+      deferredSave(); 
+      render(); 
+  };
   window.setWeek = (n) => { state.activeWeek = n; deferredSave(); render(); };
   window.toggleUnit = () => { state.unit = state.unit === 'LBS' ? 'KG' : 'LBS'; deferredSave(); render(); };
   window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; deferredSave(); render(); };
@@ -367,7 +369,10 @@ function render() {
     const dashView = document.getElementById('view-dashboard');
     const progSelect = document.getElementById('programSelect');
     
-    progSelect.value = state.activeProgram;
+    // Ensure dropdown matches state
+    if(progSelect.value !== state.activeProgram) {
+        progSelect.value = state.activeProgram;
+    }
 
     if (state.activeProgram === "AndreMapWave") {
         andreView.style.display = 'block';
@@ -378,8 +383,9 @@ function render() {
         dashView.style.display = 'block';
         
         // Sync Dashboard Inputs
-        document.getElementById('dashMode').value = state.dashMode;
-        document.getElementById('dashReps').value = state.dashReps;
+        if(document.getElementById('dashMode').value !== state.dashMode) document.getElementById('dashMode').value = state.dashMode;
+        if(document.getElementById('dashReps').value !== state.dashReps) document.getElementById('dashReps').value = state.dashReps;
+        
         const fBtn = document.getElementById('fastedBtn');
         fBtn.innerText = state.dashFasted ? "Fasted: ON" : "Fasted: OFF";
         fBtn.classList.toggle('active', state.dashFasted);
@@ -628,7 +634,7 @@ window.openTools = () => {
     const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
     document.getElementById('dotsTotalInput').value = total;
     document.getElementById('bodyWeightInput').value = state.settings.bw || '';
-}
+};
 window.openAuthModal = () => document.getElementById('authModal').style.display = 'flex';
 window.openMeetPlanner = () => {
     const m = document.getElementById('meetModal'); const g = document.getElementById('meetGrid');
@@ -692,8 +698,10 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
+            
+            // 1. POPULATE STATE
             if(d.maxes) {
-                // FORCE CAPITALIZATION MATCH
+                // Ensure case insensitivity and defaults
                 state.maxes.Squat = d.maxes.Squat || d.maxes.squat || 0;
                 state.maxes.Bench = d.maxes.Bench || d.maxes.bench || 0;
                 state.maxes.Deadlift = d.maxes.Deadlift || d.maxes.deadlift || 0;
@@ -714,12 +722,13 @@ async function loadFromCloud(uid) {
                 document.getElementById('rackBench').value = state.settings.rackBench || '';
             }
             
-            // MANUALLY FILL INPUTS
-            if(inputs.Squat) inputs.Squat.value = state.maxes.Squat || '';
-            if(inputs.Bench) inputs.Bench.value = state.maxes.Bench || '';
-            if(inputs.Deadlift) inputs.Deadlift.value = state.maxes.Deadlift || '';
-            if(inputs.OHP) inputs.OHP.value = state.maxes.OHP || '';
+            // 2. FORCE INPUTS TO VISUALLY UPDATE (The Missing Step)
+            if(document.getElementById('squatInput')) document.getElementById('squatInput').value = state.maxes.Squat || '';
+            if(document.getElementById('benchInput')) document.getElementById('benchInput').value = state.maxes.Bench || '';
+            if(document.getElementById('deadliftInput')) document.getElementById('deadliftInput').value = state.maxes.Deadlift || '';
+            if(document.getElementById('ohpInput')) document.getElementById('ohpInput').value = state.maxes.OHP || '';
 
+            // 3. FORCE PROGRAM RENDER
             render();
         }
     } catch(e) { console.error(e); }
