@@ -329,19 +329,26 @@ async function saveToCloud() {
   const user = auth.currentUser;
   if (!user) return; // Don't save if not logged in
 
-  // --- ADD THESE 3 NEW LINES HERE ---
+  // 1. ADD OWNER INFO
   state.ownerEmail = user.email;
   state.ownerName = user.displayName;
   state.lastSaved = new Date().toDateString();
-  // ----------------------------------
 
   try {
-      // Save the entire STATE object to Firestore
-      await setDoc(doc(db, "users", user.uid), state, { merge: true });
-  try {
-      // Save the entire STATE object to Firestore
+      // 2. SAVE TO FIREBASE
       await setDoc(doc(db, "users", user.uid), state, { merge: true });
       console.log("Saved to Cloud!");
+      
+      // 3. FLASH GREEN LIGHT (Visual Feedback)
+      const brand = document.querySelector('.brand');
+      if(brand) {
+          brand.style.color = '#4caf50';
+          setTimeout(() => brand.style.color = '#fff', 500);
+      }
+  } catch(e) {
+      console.error("Save failed:", e);
+  }
+}
       
       // Flash Green Light on Header (Visual Feedback)
       const brand = document.querySelector('.brand');
