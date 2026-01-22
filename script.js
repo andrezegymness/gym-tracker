@@ -71,7 +71,7 @@ if(andreData[1]) {
     });
 }
 
-// Andre Accessories (with Base Calculation data)
+// Andre Accessories
 const andreAccessories = {
   "Tuesday": [ { name: "Close Grip Bench", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.72 }, { name: "Larsen Press", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.68 }, { name: "Tricep Pushdowns", sets: "3x12", weeks: [1,2,3,6] } ],
   "Wednesday": [ { name: "Leg Extensions", sets: "3x15", weeks: [1,2,3,4,6] }, { name: "Pendulum Squat", sets: "3x8", weeks: [1,2,3,4,6] }, { name: "Walking Lunges", sets: "3x12", weeks: [1,2,3,6] }, { name: "Leg Press", sets: "4x10", weeks: [1,2,3,4,6] }, { name: "GHR", sets: "3x8", weeks: [1,2,3,4,6] } ],
@@ -147,6 +147,7 @@ function init() {
     inputs[key].addEventListener('input', (e) => {
       state.maxes[key] = parseFloat(e.target.value) || 0;
       deferredSave(); 
+      // Force render on input so it updates immediately
       render();
     });
   });
@@ -161,6 +162,7 @@ function init() {
           closeModal('authModal');
       } else {
           updateAuthUI(null);
+          // Always render defaults even if not logged in
           render();
       }
   });
@@ -313,6 +315,7 @@ function init() {
 
   window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; };
   
+  // Force initial render even before cloud sync
   render();
   updateTimerDisplay();
 }
