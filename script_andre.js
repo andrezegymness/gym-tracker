@@ -8,16 +8,52 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// ANDRE DATA
+// ==========================================
+// 1. THE FULL ANDRE MAP DATA (RESTORED)
+// ==========================================
 const andreData = {
-  1: { "Monday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.701, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 3, pct: 0.721, type: "Squat" }, { name: "Pause Squat", sets: 2, reps: 2, pct: 0.74, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ], "Tuesday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.733, type: "Bench" }, { name: "Bench", sets: 4, reps: 3, pct: 0.844, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.756, type: "Bench" } ], "Wednesday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 3, pct: 0.799, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.838, type: "Squat" }, { name: "OHP", sets: 4, reps: 3, pct: 0.804, type: "OHP" } ], "Thursday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.844, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.799, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 1, pct: 0.903, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ], "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.756, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ] },
-  2: { "Monday": [{name:"Squat",sets:1,reps:3,pct:0.753,type:"Squat"}], "Tuesday": [{name:"Bench",sets:1,reps:5,pct:0.767,type:"Bench"}] },
-  3: { "Monday": [{name:"Squat",sets:1,reps:3,pct:0.753,type:"Squat"}] },
-  4: { "Monday": [{name:"Squat",sets:1,reps:4,pct:0.753,type:"Squat"}] },
-  5: { "Monday": [{name:"Squat",sets:2,reps:2,pct:0.727,type:"Squat"}] },
-  6: { "Monday": [{name:"Tempo Squat",sets:2,reps:2,pct:0.65,type:"Squat"}] }
+  1: {
+    "Monday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.701, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 3, pct: 0.721, type: "Squat" }, { name: "Pause Squat", sets: 2, reps: 2, pct: 0.74, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ],
+    "Tuesday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.733, type: "Bench" }, { name: "Bench", sets: 4, reps: 3, pct: 0.844, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.756, type: "Bench" } ],
+    "Wednesday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 3, pct: 0.799, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.838, type: "Squat" }, { name: "OHP", sets: 4, reps: 3, pct: 0.804, type: "OHP" } ],
+    "Thursday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.844, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ],
+    "Friday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.799, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 1, pct: 0.903, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ],
+    "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.756, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
+  },
+  2: {
+    "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.773, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.831, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" } ],
+    "Tuesday": [ { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.811, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.778, type: "Bench" } ],
+    "Wednesday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } ],
+    "Thursday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ],
+    "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" } ],
+    "Saturday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } ]
+  },
+  3: {
+    "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 2, pct: 0.779, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.89, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.826, type: "OHP" } ],
+    "Tuesday": [ { name: "Bench", sets: 2, reps: 7, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 2, reps: 6, pct: 0.8, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.789, type: "Bench" } ],
+    "Wednesday": [ { name: "Squat", sets: 1, reps: 7, pct: 0.76, type: "Squat" }, { name: "Squat", sets: 2, reps: 6, pct: 0.799, type: "Squat" }, { name: "OHP", sets: 4, reps: 6, pct: 0.783, type: "OHP" } ],
+    "Thursday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.7, type: "Bench" } ],
+    "Friday": [ { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Pause Squat", sets: 3, reps: 2, pct: 0.727, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.783, type: "OHP" } ],
+    "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.841, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.738, type: "Deadlift" } ]
+  },
+  4: {
+    "Monday": [ { name: "Squat", sets: 1, reps: 4, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.773, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 4, pct: 0.903, type: "Squat" }, { name: "Squat (Backoff)", sets: 1, reps: 4, pct: 0.87, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.738, type: "Deadlift" } ],
+    "Wednesday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.792, type: "Squat" }, { name: "Bench", sets: 1, reps: 4, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.8, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.867, type: "Bench" } ],
+    "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.903, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.942, type: "Squat" } ],
+    "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.8, type: "Bench" }, { name: "Bench (Peak)", sets: 1, reps: 1, pct: 0.989, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 1, pct: 0.89, type: "Deadlift" } ]
+  },
+  5: {
+    "Monday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.76, type: "Squat" }, { name: "Bench", sets: 1, reps: 2, pct: 0.6, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.7, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.744, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 3, pct: 0.909, type: "Deadlift" } ],
+    "Wednesday": [ { name: "Squat (Peak)", sets: 1, reps: 2, pct: 0.929, type: "Squat" }, { name: "Squat (Max Effort)", sets: 1, reps: 2, pct: 0.961, type: "Squat" }, { name: "Bench", sets: 1, reps: 3, pct: 0.889, type: "Bench" } ],
+    "Friday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 4, reps: 2, pct: 0.799, type: "Squat" } ],
+    "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
+  }
 };
-for(let i=2; i<=6; i++) { if(!andreData[i]) andreData[i] = andreData[1]; }
+// Week 6 Deload Generator
+andreData[6] = {}; 
+Object.keys(andreData[1]).forEach(day => { 
+    andreData[6][day] = andreData[1][day].filter(e => !(e.sets === 5 && e.reps === 5)).map(e => ({ ...e, name: `Tempo ${e.type}`, pct: e.pct * 0.85 })); 
+});
 
 const andreAccessories = {
   "Tuesday": [ { name: "Close Grip Bench", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.72 }, { name: "Larsen Press", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.68 }, { name: "Tricep Pushdowns", sets: "3x12", weeks: [1,2,3,6] } ],
@@ -27,26 +63,21 @@ const andreAccessories = {
   "Saturday": [ { name: "RDL", sets: "4x6", weeks: [1,2,3,4,6], base: 'Deadlift', basePct: 0.55 }, { name: "Hamstring Curls", sets: "5x10", weeks: [1,2,3,4,6] }, { name: "Leg Press (High Feet)", sets: "4x12", weeks: [1,2,3,6] }, { name: "GHR", sets: "3x3", weeks: [1,2,3,4,5,6] } ]
 };
 
-// FULL DATABASES
-const accessoryData = {
-  squat: [ { name: "ATG System", notes: "Full range." }, { name: "Behind-the-Back", notes: "Quads." }, { name: "High Bar Pause", notes: "Position." }, { name: "Belt Squats", notes: "No spine load." }, { name: "Hack Squats", notes: "Isolation." }, { name: "Leg Press", notes: "Mass." } ],
-  bench: [ { name: "Larson press", notes: "No leg drive." }, { name: "Floor press", notes: "Lockout." }, { name: "Push-ups", notes: "Volume." }, { name: "Dips", notes: "Chest/Tri." } ],
-  deadlift: [ { name: "Seal Rows", notes: "Back saver." }, { name: "Pause Deadlift", notes: "Technique." }, { name: "RDL", notes: "Hinge." }, { name: "Block Pulls", notes: "Overload." } ]
-};
-const ptDatabase = {
-  knees: [{name:"Spanish Squats", rx:"3x45s", context:"Heavy band. Max quad tension."},{name:"TKE", rx:"3x20", context:"Focus on VMO."}],
-  back: [{name:"McGill Big 3", rx:"3x10s", context:"Core stiffness."},{name:"Cat-Cow", rx:"10 reps", context:"Restore movement."}],
-  shoulders: [{name:"Dead Hangs", rx:"3x45s", context:"Decompress AC joint."},{name:"Face Pulls", rx:"3x20", context:"Upper back."}],
-  hips: [{name:"90/90 Switches", rx:"20 reps", context:"Internal/External rotation."},{name:"Couch Stretch", rx:"2 mins", context:"Psoas."}],
-  elbows: [{name:"Hammer Curls", rx:"3x15", context:"Elbow health."}]
-};
+// FULL TOOL DATABASES
+const accessoryData = { squat: [{name:"ATG Squats",notes:"Full depth"}, {name:"Pause Squat",notes:"Position"}], bench: [{name:"Larsen Press",notes:"No legs"}, {name:"Spoto Press",notes:"Pause off chest"}], deadlift: [{name:"Seal Rows",notes:"Back saver"}, {name:"RDL",notes:"Hinge"}] };
+const ptDatabase = { knees: [{name:"Spanish Squats", rx:"3x45s", context:"Max quad tension."}, {name:"TKE", rx:"3x20", context:"VMO Firing"}], back: [{name:"McGill Big 3", rx:"3x10s", context:"Core stiffness."}], shoulders: [{name:"Dead Hangs", rx:"3x30s", context:"Decompress"}] };
 
 const state = { maxes: { Squat:0, Bench:0, Deadlift:0, OHP:0 }, activeWeek: 1, unit: 'LBS', completed: {}, accWeights: {}, notes: {}, settings: { bw: '' } };
 const inputs = { Squat: document.getElementById('squatInput'), Bench: document.getElementById('benchInput'), Deadlift: document.getElementById('deadliftInput'), OHP: document.getElementById('ohpInput') };
 
 function init() {
+    // Input Listeners
     Object.keys(inputs).forEach(k => { inputs[k].addEventListener('input', e => { state.maxes[k] = parseFloat(e.target.value) || 0; saveToCloud(); render(); }); });
-    onAuthStateChanged(auth, user => { if(user) { loadFromCloud(user.uid); document.getElementById('login-btn').style.display='none'; } });
+
+    onAuthStateChanged(auth, user => {
+        if(user) { loadFromCloud(user.uid); document.getElementById('login-btn').style.display='none'; }
+    });
+    
     setupAuthButtons();
     
     // Globals
@@ -58,13 +89,33 @@ function init() {
     window.openAuthModal = () => document.getElementById('authModal').style.display='flex';
     window.closeModal = (id) => document.getElementById(id).style.display='none';
     window.saveSettings = () => { state.settings.bw = document.getElementById('bodyweight').value; saveToCloud(); };
+    window.copyData = () => alert("Data Saved");
+    window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
+
+    // TOOL FUNCTIONS
+    window.openMeetPlanner = () => { 
+        const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h='';
+        ['Squat','Bench','Deadlift'].forEach(x=>{ 
+            const mx=state.maxes[x]||0; 
+            h+=`<div class="meet-col"><h4>${x}</h4>
+            <div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div>
+            <div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div>
+            <div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; 
+        }); g.innerHTML=h; 
+    };
+    window.openPlateCalc = (w) => {
+        if(String(w).includes('%')) return; document.getElementById('plateModal').style.display='flex';
+        const wt=parseFloat(w); document.getElementById('plateTarget').innerText=wt+" "+state.unit;
+        document.getElementById('plateVisuals').innerHTML=getPlates(wt); document.getElementById('plateText').innerText="Per Side (45lb Bar)";
+    };
+    window.calculateOneRM = () => { const w=parseFloat(document.getElementById('calcWeight').value),r=parseFloat(document.getElementById('calcReps').value); if(w&&r) document.getElementById('oneRmResult').innerText = "Est 1RM: " + Math.round(w*(1+0.0333*r)); };
     
-    // WARMUP WITH CUES
+    // WARMUP
     window.calculateWarmup = () => {
-        const target=parseFloat(document.getElementById('wuTarget').value); 
+        const t=parseFloat(document.getElementById('wuTarget').value); 
         const style=document.getElementById('wuStyle').value; 
         const lift=document.getElementById('wuLiftType').value;
-        if(!target) return;
+        if(!t)return;
         
         let protocol = [];
         if (style === 'big') protocol = [{p:0.45,r:'5'}, {p:0.68,r:'3'}, {p:0.84,r:'1'}, {p:0.92,r:'1'}, {p:0.97,r:'OPT'}];
@@ -77,32 +128,21 @@ function init() {
             deadlift: ["Pull slack.", "Chest up.", "Squeeze lats.", "BELT ON.", "Comp speed.", "Final heavy feel."]
         };
 
-        let html = '';
+        let h=''; 
         protocol.forEach((s, i) => {
-            let lb = Math.round((target * s.p) / 5) * 5;
+            let lb = Math.round((t * s.p) / 5) * 5;
             let showBelt = (lift === 'squat' && s.p >= 0.70) || (lift === 'deadlift' && s.p >= 0.83);
             let cue = cues[lift][i] || "Focus on speed";
             let reps = s.r === 'OPT' ? 'Optional' : s.r + ' Reps';
-            
-            html += `<div class="warmup-row">
-                <div class="warmup-meta"><span class="warmup-weight">${lb} lbs ${showBelt?'<span class="belt-badge">BELT</span>':''}</span><span>${reps}</span></div>
-                <div class="warmup-cue">${cue}</div>
-            </div>`;
+            h += `<div class="warmup-row"><div class="warmup-meta"><span class="warmup-weight">${lb} lbs ${showBelt?'<span class="belt-badge">BELT</span>':''}</span><span>${reps}</span></div><div class="warmup-cue">${cue}</div></div>`;
         });
-        document.getElementById('warmupDisplay').innerHTML = html;
+        document.getElementById('warmupDisplay').innerHTML = h;
     };
 
     window.updatePtMovements = () => { const a=document.getElementById('ptArea').value; const m=document.getElementById('ptMovement'); m.innerHTML='<option>Select...</option>'; if(ptDatabase[a]) ptDatabase[a].forEach((x,i)=>{ let o=document.createElement('option'); o.value=i; o.innerText=x.name; m.appendChild(o); }); };
     window.displayPtLogic = () => { const a=document.getElementById('ptArea').value, i=document.getElementById('ptMovement').value; if(a&&i) { const d=ptDatabase[a][i]; document.getElementById('ptDisplay').style.display='block'; document.getElementById('ptDisplay').innerHTML=`<b>${d.name}</b><br>${d.context}<br><i>RX: ${d.rx}</i>`; } };
     window.updateAccOptions = () => { const c=document.getElementById('accCategory').value; const m=document.getElementById('accExercise'); m.innerHTML=''; accessoryData[c].forEach(x=>{ let o=document.createElement('option'); o.value=x.name; o.innerText=x.name; m.appendChild(o); }); };
     window.displayAccDetails = () => { const c=document.getElementById('accCategory').value, n=document.getElementById('accExercise').value; const d=accessoryData[c].find(x=>x.name===n); if(d) { document.getElementById('accDetails').style.display='block'; document.getElementById('accDetails').innerText = d.notes; } };
-    window.calculateOneRM = () => { const w=parseFloat(document.getElementById('calcWeight').value),r=parseFloat(document.getElementById('calcReps').value); if(w&&r) document.getElementById('oneRmResult').innerText = "Est 1RM: " + Math.round(w*(1+0.0333*r)); };
-    window.openMeetPlanner = () => { const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
-    window.openPlateCalc = (w) => {
-        if(String(w).includes('%')) return; document.getElementById('plateModal').style.display='flex';
-        const wt=parseFloat(w); document.getElementById('plateTarget').innerText=wt+" "+state.unit;
-        document.getElementById('plateVisuals').innerHTML=getPlates(wt); document.getElementById('plateText').innerText="Per Side (45lb Bar)";
-    };
 
     render();
 }
@@ -122,7 +162,7 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
-            if(d.maxes) { state.maxes.Squat = d.maxes.Squat||0; state.maxes.Bench = d.maxes.Bench||0; state.maxes.Deadlift = d.maxes.Deadlift||0; state.maxes.OHP = d.maxes.OHP||0; }
+            if(d.maxes) { state.maxes.Squat = d.maxes.Squat||d.maxes.squat||0; state.maxes.Bench = d.maxes.Bench||d.maxes.bench||0; state.maxes.Deadlift = d.maxes.Deadlift||d.maxes.deadlift||0; state.maxes.OHP = d.maxes.OHP||d.maxes.ohp||0; }
             if(d.activeWeek) state.activeWeek = d.activeWeek;
             if(d.completed) state.completed = d.completed;
             if(d.settings) state.settings = d.settings;
@@ -150,6 +190,7 @@ function render() {
     const cont = document.getElementById('programContent');
     cont.innerHTML = '';
     
+    // SAFETY CHECK
     let weekData = andreData[state.activeWeek];
     if(!weekData) { weekData = andreData[1]; state.activeWeek = 1; }
 
