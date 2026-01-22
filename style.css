@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
 :root { --bg-main: #0a0a0a; --bg-card: #141414; --accent: #d32f2f; --gold: #ffb300; --text-main: #e0e0e0; --text-dim: #757575; --border: #333; --input-bg: #222; --squat: #4caf50; --bench: #2196f3; --dead: #9c27b0; --ohp: #ff9800; }
 body { background-color: var(--bg-main); color: var(--text-main); font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; padding-bottom: 80px; }
-.app-container { max-width: 1400px; margin: 0 auto; }
+.app-container { max-width: 1400px; margin: 0 auto; } 
 header { margin-bottom: 20px; border-bottom: 2px solid var(--accent); padding-bottom: 15px; }
 .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
 .header-left { flex: 1; min-width: 200px; }
