@@ -23,7 +23,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 /* =========================================
-   2. YOUR PROGRAM DATA (Exact Copy)
+   2. YOUR PROGRAM DATA
    ========================================= */
 const programData = {
   1: {
@@ -340,17 +340,6 @@ async function saveToCloud() {
       console.log("Saved to Cloud!");
       
       // 3. FLASH GREEN LIGHT (Visual Feedback)
-      const brand = document.querySelector('.brand');
-      if(brand) {
-          brand.style.color = '#4caf50';
-          setTimeout(() => brand.style.color = '#fff', 500);
-      }
-  } catch(e) {
-      console.error("Save failed:", e);
-  }
-}
-      
-      // Flash Green Light on Header (Visual Feedback)
       const brand = document.querySelector('.brand');
       if(brand) {
           brand.style.color = '#4caf50';
