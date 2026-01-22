@@ -1,3 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Andre OG Program</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
 <div class="app-container">
   <header>
     <div class="header-content">
@@ -18,6 +28,13 @@
       </div>
 
       <div class="header-actions">
+        <button class="action-btn" id="login-btn">
+             <span class="icon">👤</span> Login
+        </button>
+        <button class="action-btn" id="logout-btn" style="display:none;">
+             <span class="icon">👋</span> Logout
+        </button>
+
         <button class="action-btn" onclick="openTools()">
           <span class="icon">🛠</span> Tools
         </button>
@@ -60,7 +77,7 @@
 
   <main id="programContent">
     </main>
-  
+   
   <footer>
     <p>Andre OG Program &copy; 2026</p>
   </footer>
@@ -172,24 +189,74 @@
     </div>
   </div>
 </div>
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M",
-  authDomain: "powerlifting-programs.firebaseapp.com",
-  projectId: "powerlifting-programs",
-  storageBucket: "powerlifting-programs.firebasestorage.app",
-  messagingSenderId: "961044250962",
-  appId: "1:961044250962:web:c45644c186e9bb6ee67a8b",
-  measurementId: "G-501TXRLMSQ"
-};
+<script type="module">
+  // 1. Import Tools
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+  // 2. YOUR REAL KEYS
+  const firebaseConfig = {
+    apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M",
+    authDomain: "powerlifting-programs.firebaseapp.com",
+    projectId: "powerlifting-programs",
+    storageBucket: "powerlifting-programs.firebasestorage.app",
+    messagingSenderId: "961044250962",
+    appId: "1:961044250962:web:c45644c186e9bb6ee67a8b",
+    measurementId: "G-501TXRLMSQ"
+  };
+
+  // 3. Initialize App
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  // 4. Button Logic
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  // Sign In
+  if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        signInWithPopup(auth, provider)
+          .then((result) => {
+            console.log("Logged in:", result.user.email);
+          })
+          .catch((error) => console.error("Login Error:", error));
+      });
+  }
+
+  // Sign Out
+  if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        signOut(auth).then(() => console.log("Logged out"));
+      });
+  }
+
+  // Monitor Login State
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      if(loginBtn) loginBtn.style.display = 'none';
+      if(logoutBtn) {
+          logoutBtn.style.display = 'inline-flex'; 
+          logoutBtn.innerHTML = `<span class="icon">👋</span> ${user.displayName.split(' ')[0]}`; // Show Name
+      }
+    } else {
+      if(loginBtn) loginBtn.style.display = 'inline-flex';
+      if(logoutBtn) logoutBtn.style.display = 'none';
+    }
+  });
+
+  // Make DB available to your other scripts if needed
+  window.db = db; 
+  window.auth = auth;
+</script>
+
+<script src="script.js"></script>
+
+</body>
+</html>
