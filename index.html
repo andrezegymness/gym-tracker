@@ -13,12 +13,20 @@
         .gate-btn.blue:hover { border-color: #2196f3; }
         .logo-text { font-size: 2rem; color: #fff; margin-bottom: 40px; font-weight: 900; letter-spacing: 2px; }
     </style>
+    <script>
+        // AUTO-REDIRECT LOGIC
+        const lastPage = localStorage.getItem('last_program_page');
+        if(lastPage && document.referrer.indexOf(window.location.host) === -1) {
+            // Only redirect if coming from outside (fresh load)
+            window.location.href = lastPage;
+        }
+    </script>
 </head>
 <body>
     <div class="gatekeeper">
         <div class="logo-text">ANDRE'S CALIBRATIONS</div>
-        <a href="andre.html" class="gate-btn">Andre Map Wave</a>
-        <a href="base.html" class="gate-btn blue">Base Map Linear</a>
+        <a href="andre.html" class="gate-btn" onclick="localStorage.setItem('last_program_page', 'andre.html')">Andre Map Wave</a>
+        <a href="base.html" class="gate-btn blue" onclick="localStorage.setItem('last_program_page', 'base.html')">Base Map Linear</a>
     </div>
 </body>
 </html>
