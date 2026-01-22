@@ -20,31 +20,23 @@ header { border-bottom: 2px solid var(--accent); padding-bottom: 15px; margin-bo
 .input-group label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
 input, select { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px; font-size: 1.1rem; border-radius: 4px; box-sizing: border-box; }
 
-/* WEEK NAV */
-.week-nav { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 15px; }
-.nav-btn { flex: 1; padding: 10px; background: var(--bg-card); border: 1px solid var(--border); color: #888; cursor: pointer; white-space: nowrap; border-radius: 4px; }
-.nav-btn.active { background: var(--accent); color: white; border-color: var(--accent); font-weight: bold; }
-
-/* DASHBOARD & MOBILE SLIDER */
+/* DASHBOARD & MOBILE */
 .dashboard-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 15px; }
 .dash-btn { height: 100%; background: #222; color: #888; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
-.dash-btn.active { background: #d35400; color: white; border-color: #e67e22; }
+.dash-btn.active { background: #d35400; color: white; border-color: #e67e22; box-shadow: 0 0 8px rgba(230, 126, 34, 0.4); }
 
-/* MOBILE NAVIGATION ARROWS */
 .mobile-nav { display: none; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border); }
 .mobile-nav button { background: #333; border: none; color: white; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
 .mobile-nav span { font-weight: 900; color: var(--gold); text-transform: uppercase; }
 
-/* THE GRID SYSTEM */
 .full-program-grid { display: flex; gap: 15px; width: 100%; }
 .week-column { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 15px; }
 .week-label { text-align: center; color: var(--gold); font-weight: 900; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
-/* RESPONSIVE LOGIC */
 @media (max-width: 900px) {
-    .mobile-nav { display: flex; } /* Show arrows on phone */
-    .week-column { display: none; } /* Hide all weeks by default */
-    .week-column.active-week { display: flex; } /* Show ONLY the active week */
+    .mobile-nav { display: flex; }
+    .week-column { display: none; }
+    .week-column.active-week { display: flex; }
     .grid-layout { grid-template-columns: 1fr; }
 }
 @media (min-width: 901px) {
@@ -52,7 +44,7 @@ input, select { width: 100%; background: #000; border: 1px solid var(--border); 
     .grid-layout { grid-template-columns: repeat(3, 1fr); gap: 15px; }
 }
 
-/* CARDS & TABLES */
+/* CARDS */
 .day-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 .day-header { background: #222; padding: 10px; border-bottom: 1px solid #333; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
 .warmup-btn { background: #d35400; color: white; border: none; font-size: 0.6rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
@@ -76,25 +68,20 @@ tr.completed { opacity: 0.4; text-decoration: line-through; }
 .acc-rec { color: var(--gold); font-size: 0.7rem; font-style: italic; }
 .acc-input { width: 60px; padding: 5px; text-align: center; border: 1px solid #444; background: #111; color: white; border-radius: 4px; }
 
-/* WARMUP UI (Cleaned Up) */
-.warmup-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #333; align-items: center; }
-.warmup-weight { font-weight: 900; color: #fff; font-size: 1.1rem; }
-.warmup-reps { color: #888; font-weight: bold; }
-.warmup-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: #333; color: #aaa; margin-left: 10px; }
+/* WARMUP UI (REBUILT) */
+.warmup-row { padding: 10px 0; border-bottom: 1px solid #333; }
+.warmup-meta { display: flex; justify-content: space-between; font-weight: bold; color: #fff; margin-bottom: 5px; }
+.warmup-cue { font-size: 0.75rem; color: #aaa; font-style: italic; background: #1a1a1a; padding: 5px; border-left: 2px solid var(--gold); }
+.belt-badge { background: var(--accent); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 3px; margin-left: 5px; text-transform: uppercase; }
 
 /* PLATE LOADER */
 .plate-display { text-align: center; padding: 20px; background: #222; border-radius: 8px; margin-top: 10px; }
 .target-weight { font-size: 2rem; font-weight: 900; color: #fff; margin-bottom: 10px; }
 .plate-visuals { display: flex; justify-content: center; align-items: center; gap: 3px; height: 80px; background: #333; border-radius: 4px; padding: 0 10px; overflow-x: auto; }
 .plate { height: 60px; border: 1px solid rgba(0,0,0,0.2); color: white; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border-radius: 2px; box-shadow: 2px 0 5px rgba(0,0,0,0.3); }
-.p45-lbs { background: #c0392b; width: 20px; } 
-.p35-lbs { background: #2980b9; width: 16px; } 
-.p25-lbs { background: #f1c40f; width: 16px; color: #000; } 
-.p10-lbs { background: #fff; width: 12px; color: #000; } 
-.p5-lbs { background: #888; width: 10px; color: #000; } 
-.p2_5-lbs { background: #333; width: 8px; border: 1px solid #666; }
+.p45-lbs { background: #c0392b; width: 20px; } .p35-lbs { background: #2980b9; width: 16px; } .p25-lbs { background: #f1c40f; width: 16px; color: #000; } .p10-lbs { background: #fff; width: 12px; color: #000; } .p5-lbs { background: #888; width: 10px; color: #000; } .p2_5-lbs { background: #333; width: 8px; border: 1px solid #666; }
 
-/* MODALS & TOOLS */
+/* MODALS */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
 .modal-content { background: #1a1a1a; padding: 25px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); position: relative; }
 .large-modal { max-width: 800px; }
