@@ -21,7 +21,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 /* =========================================
-   2. DATA: ANDRE MAP WAVE (Restored Full Data)
+   2. DATA: ANDRE MAP WAVE (FULL)
    ========================================= */
 const andreData = {
   1: {
@@ -466,11 +466,9 @@ window.openMeetPlanner = () => document.getElementById('meetModal').style.displa
 window.openPlateCalc = (w) => {
     document.getElementById('plateModal').style.display = 'flex';
     document.getElementById('plateTarget').innerText = w + " " + state.unit;
-    // Plate logic would go here, simplified for brevity
 }
 window.openWarmup = (t,w) => {
     document.getElementById('warmupModal').style.display = 'flex';
-    // Warmup logic
 }
 window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 window.saveSettings = () => {
