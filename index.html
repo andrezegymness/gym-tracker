@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Andre OG Program</title>
+    <title>Iron Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -13,8 +13,11 @@
   <header>
     <div class="header-content">
       <div class="header-left">
-        <div class="brand">ANDRE OG PROGRAM</div>
-        <div class="subtitle">Professional Powerlifting Periodization</div>
+        <select id="programSelect" class="program-selector" onchange="switchProgram(this.value)">
+            <option value="AndreOG">Andre OG Program</option>
+            <option value="Dashboard">Powerlifting Dashboard</option>
+        </select>
+        <div class="subtitle" id="programSubtitle">Select your training system</div>
       </div>
       
       <div class="header-stats">
@@ -37,10 +40,7 @@
         </button>
 
         <button class="action-btn" onclick="openTools()">
-          <span class="icon">🛠</span> Tools
-        </button>
-        <button class="action-btn" onclick="openMeetPlanner()">
-          <span class="icon">🏆</span> Plan
+          <span class="icon">🛠</span> Settings
         </button>
         <div class="unit-toggle" onclick="toggleUnit()">
           <span id="unitLabel">LBS</span>
@@ -52,8 +52,7 @@
 
   <section class="control-panel no-print">
     <div class="panel-header">
-      <h3>Current 1RM Inputs</h3>
-      <button id="resetBtn" class="btn-text">Reset</button>
+      <h3>Lifter 1RM Stats</h3>
     </div>
     <div class="inputs-grid">
       <div class="input-group"><label>Squat</label><input type="number" id="squatInput" placeholder="0"></div>
@@ -63,23 +62,124 @@
     </div>
   </section>
 
-  <nav class="week-nav no-print" id="weekNav">
-    <button class="nav-btn" onclick="setWeek(1)">Week 1</button>
-    <button class="nav-btn" onclick="setWeek(2)">Week 2</button>
-    <button class="nav-btn" onclick="setWeek(3)">Week 3</button>
-    <button class="nav-btn" onclick="setWeek(4)">Week 4</button>
-    <button class="nav-btn" onclick="setWeek(5)">Week 5 (Peak)</button>
-    <button class="nav-btn deload-btn" onclick="setWeek(6)">Deload</button>
-  </nav>
+  <div id="view-andre">
+      <nav class="week-nav no-print">
+        <button class="nav-btn" onclick="setWeek(1)">Week 1</button>
+        <button class="nav-btn" onclick="setWeek(2)">Week 2</button>
+        <button class="nav-btn" onclick="setWeek(3)">Week 3</button>
+        <button class="nav-btn" onclick="setWeek(4)">Week 4</button>
+        <button class="nav-btn" onclick="setWeek(5)">Week 5 (Peak)</button>
+        <button class="nav-btn deload-btn" onclick="setWeek(6)">Deload</button>
+      </nav>
 
-  <div class="progress-container no-print">
-    <div class="progress-bar" id="progressBar"></div>
+      <div class="progress-container no-print">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div id="andreContent" class="grid-layout"></div>
+      
+      <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+          <button class="action-btn" onclick="openMeetPlanner()">🏆 Meet Planner</button>
+          <button class="action-btn" onclick="openPlateCalc(45)">💿 Plate Loader</button>
+      </div>
   </div>
 
-  <main id="programContent"></main>
+  <div id="view-dashboard" style="display:none;">
+      <div class="dashboard-controls no-print">
+          <div class="dash-group">
+            <label>Mode</label>
+            <select id="dashMode" onchange="updateDashSettings()">
+                <option value="standard">Standard (4 Weeks)</option>
+                <option value="deload">Deload (2 Weeks)</option>
+                <option value="maintenance">Maintenance (6 Weeks)</option>
+                <option value="standard_acc">Standard + Accessories</option>
+                <option value="randomizer">Progression Randomizer</option>
+            </select>
+          </div>
+          <div class="dash-group">
+            <label>Reps</label>
+            <select id="dashReps" onchange="updateDashSettings()">
+                <option value="5">5 Reps</option>
+                <option value="4">4 Reps</option>
+                <option value="3" selected>3 Reps</option>
+                <option value="2">2 Reps</option>
+                <option value="1">1 Rep</option>
+            </select>
+          </div>
+          <div class="dash-group">
+             <label>Diet</label>
+             <button id="fastedBtn" class="dash-btn" onclick="toggleFasted()">Fasted: OFF</button>
+          </div>
+      </div>
+
+      <div class="mobile-nav no-print" id="dashMobileNav">
+        <button onclick="changeMobileWeek(-1)">← Prev</button>
+        <span id="mobileWeekLabel">Week 1</span>
+        <button onclick="changeMobileWeek(1)">Next →</button>
+      </div>
+
+      <div id="dashboardGrid" class="full-program-grid"></div>
+
+      <div id="randomizerCard" class="tool-card" style="display:none; margin-top:20px; border: 2px solid #2196f3;">
+        <h2>Progression Randomizer</h2>
+        <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
+          <select id="randGoal" style="grid-column: span 2;">
+            <option value="strength">Strength (+4% Weight / -1 Rep)</option>
+            <option value="recovery">Recovery (-7% Weight / +2 Reps)</option>
+            <option value="pump">Pump (+2% Weight / +1 Rep)</option>
+          </select>
+          <input type="number" id="prevWeight" placeholder="Last Weight">
+          <input type="number" id="prevReps" placeholder="Last Reps">
+        </div>
+        <button class="full-btn" onclick="runRandomizer()" style="background:#2196f3; margin-top:10px;">Generate Target</button>
+        <div id="randomizerResult" class="stat-box" style="display:none; margin-top:15px; background:#111;">
+          <div id="randOutputText"></div>
+        </div>
+      </div>
+
+      <div class="footer-tools no-print">
+        <div class="tool-card">
+          <h3>1RM Estimator</h3>
+          <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
+            <input type="number" id="calcWeight" placeholder="Weight">
+            <input type="number" id="calcReps" placeholder="Reps">
+          </div>
+          <button class="full-btn" onclick="calculateOneRM()">Estimate</button>
+          <div id="oneRmResults" style="display:none; margin-top:10px;">
+              <table class="calc-table"><tbody id="formulaBody"></tbody></table>
+          </div>
+        </div>
+
+        <div class="tool-card">
+          <h3>DOTS Calculator</h3>
+          <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
+            <input type="number" id="dotsTotalInput" placeholder="Total">
+            <input type="number" id="bodyWeightInput" placeholder="BW">
+          </div>
+          <select id="genderInput" style="width:100%; margin-top:5px;"><option value="male">Male</option><option value="female">Female</option></select>
+          <button class="full-btn" onclick="calculateDotsOnly()">Calc DOTS</button>
+          <div id="dotsResults" style="display:none; margin-top:10px;"><div class="stat-box"><span id="dotsDisplay">0.00</span></div></div>
+        </div>
+
+        <div class="tool-card">
+          <h3>Accessory Library</h3>
+          <select id="accCategory" onchange="updateAccOptions()" style="width:100%; margin-bottom:5px;">
+            <option value="squat">Squat Help</option>
+            <option value="bench">Bench Accessories</option>
+            <option value="deadlift">Deadlift Accessories</option>
+          </select>
+          <select id="accExercise" onchange="displayAccDetails()" style="width:100%;"></select>
+          <div id="accDetails" class="acc-details-box" style="display:none;">
+            <span class="tier-badge" id="accTier"></span>
+            <h4 id="accName"></h4>
+            <p id="accNotes"></p>
+          </div>
+        </div>
+      </div>
+  </div>
    
   <footer>
-    <p>Andre OG Program &copy; 2026</p>
+    <p>Iron Systems &copy; 2026</p>
   </footer>
 </div>
 
@@ -90,16 +190,12 @@
     <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
         <input type="email" id="emailInput" placeholder="Enter Email" style="padding:10px; background:#222; border:1px solid #444; color:white;">
         <input type="password" id="passInput" placeholder="Enter Password" style="padding:10px; background:#222; border:1px solid #444; color:white;">
-        
         <button class="full-btn" id="emailLoginBtn">Log In with Email</button>
         <button class="full-btn outline" id="emailSignupBtn">Create Account</button>
-        
         <div style="text-align:center; margin:10px 0; color:#666;">- OR -</div>
-        
         <button class="full-btn" id="googleLoginBtn" style="background:#4285F4; border:none;">
           <i class="fab fa-google" style="margin-right:8px;"></i> Sign in with Google
         </button>
-
         <button class="full-btn" id="anonLoginBtn" style="background:#333; border:none; margin-top:5px;">
           <i class="fas fa-user-secret" style="margin-right:8px;"></i> Continue as Guest
         </button>
@@ -168,7 +264,7 @@
 <div id="toolsModal" class="modal">
   <div class="modal-content large-modal">
     <span class="close-modal" onclick="closeModal('toolsModal')">&times;</span>
-    <h2>Lifter's Utility Belt</h2>
+    <h2>Global Settings</h2>
     <div class="tools-layout">
       <div class="tool-card">
         <h3>Gym Bag Settings</h3>
@@ -181,7 +277,7 @@
           <input type="text" id="rackBench" placeholder="e.g. 8" onchange="saveSettings()">
         </div>
         <div class="setting-row">
-          <label>Bodyweight (for DOTS)</label>
+          <label>Bodyweight (Global)</label>
           <input type="number" id="bodyweight" placeholder="lbs/kg" onchange="saveSettings()">
         </div>
       </div>
@@ -190,23 +286,7 @@
         <p>Copy this code to save your data externally.</p>
         <textarea id="exportArea" readonly onclick="this.select()"></textarea>
         <button class="full-btn" onclick="copyData()">Copy Save Code</button>
-        <div style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
-          <input type="text" id="importInput" placeholder="Paste Save Code Here">
-          <button class="full-btn outline" onclick="importData()">Restore Data</button>
-        </div>
       </div>
-    </div>
-    <div class="rpe-chart">
-      <h3>RPE Reference</h3>
-      <table>
-        <thead><tr><th>RPE</th><th>Reps In Reserve</th><th>Feeling</th></tr></thead>
-        <tbody>
-          <tr><td>@10</td><td>0</td><td>Max Effort (No reps left)</td></tr>
-          <tr><td>@9</td><td>1</td><td>Heavy (Could do 1 more)</td></tr>
-          <tr><td>@8</td><td>2</td><td>Fast (Could do 2 more)</td></tr>
-          <tr><td>@7</td><td>3</td><td>Warm-up / Speed Work</td></tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </div>
