@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Andre Map Wave</title>
+    <title>Base Map Linear</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,8 +12,8 @@
   <header>
     <div class="header-content">
       <div class="header-left">
-        <a href="index.html" class="back-link">← Menu</a>
-        <div class="brand">ANDRE MAP WAVE</div>
+        <a href="index.html" class="back-link">← Main Menu</a>
+        <div class="brand" style="color:#2196f3;">BASE MAP LINEAR</div>
       </div>
       <div class="header-stats">
          <div class="stat-box"><span class="stat-label">TOTAL</span><span class="stat-val" id="currentTotal">0</span></div>
@@ -21,12 +21,12 @@
       </div>
       <div class="header-actions">
         <button class="action-btn" id="login-btn" onclick="openAuthModal()">Login</button>
-        <button class="action-btn" onclick="openTools()">Settings & Tools</button>
+        <button class="action-btn" onclick="openTools()">Tools</button>
       </div>
     </div>
   </header>
 
-  <section class="control-panel">
+  <section class="control-panel no-print">
     <div class="inputs-grid">
       <div class="input-group"><label>Squat</label><input type="number" id="squatInput" placeholder="0"></div>
       <div class="input-group"><label>Bench</label><input type="number" id="benchInput" placeholder="0"></div>
@@ -35,16 +35,22 @@
     </div>
   </section>
 
-  <nav class="week-nav">
-    <button class="nav-btn" onclick="setWeek(1)">Week 1</button>
-    <button class="nav-btn" onclick="setWeek(2)">Week 2</button>
-    <button class="nav-btn" onclick="setWeek(3)">Week 3</button>
-    <button class="nav-btn" onclick="setWeek(4)">Week 4</button>
-    <button class="nav-btn" onclick="setWeek(5)">Week 5</button>
-    <button class="nav-btn deload-btn" onclick="setWeek(6)">Deload</button>
-  </nav>
+  <div class="dashboard-controls no-print">
+      <div class="dash-group"><label>Mode</label><select id="dashMode" onchange="updateDashSettings()"><option value="standard">Standard</option><option value="deload">Deload</option><option value="maintenance">Maintenance</option><option value="standard_acc">Standard + Acc</option><option value="randomizer">Randomizer</option></select></div>
+      <div class="dash-group"><label>Reps</label><select id="dashReps" onchange="updateDashSettings()"><option value="5">5 Reps</option><option value="4">4 Reps</option><option value="3">3 Reps</option><option value="2">2 Reps</option><option value="1">1 Rep</option></select></div>
+      <div class="dash-group"><label>Diet</label><button id="fastedBtn" class="dash-btn" onclick="toggleFasted()">Fasted: OFF</button></div>
+  </div>
 
-  <div id="programContent" class="grid-layout"></div>
+  <div class="mobile-nav no-print"><button onclick="changeMobileWeek(-1)">←</button><span id="mobileWeekLabel">Week 1</span><button onclick="changeMobileWeek(1)">→</button></div>
+
+  <div id="dashboardGrid" class="full-program-grid"></div>
+
+  <div id="randomizerCard" class="tool-card" style="display:none; margin-top:20px; border: 2px solid #2196f3;">
+    <h3>Randomizer</h3>
+    <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;"><select id="randGoal" style="grid-column: span 2;"><option value="strength">Strength</option><option value="recovery">Recovery</option><option value="pump">Pump</option></select><input type="number" id="prevWeight" placeholder="Last Weight"><input type="number" id="prevReps" placeholder="Last Reps"></div>
+    <button class="full-btn" onclick="runRandomizer()">Generate</button>
+    <div id="randomizerResult" class="stat-box" style="display:none; margin-top:15px; background:#111;"><div id="randOutputText"></div></div>
+  </div>
 
   <footer><p>Andre's Calibrations &copy; 2026</p></footer>
 </div>
@@ -53,83 +59,26 @@
   <div class="modal-content large-modal">
     <span class="close-modal" onclick="closeModal('toolsModal')">&times;</span>
     <h2>Lifter's Toolkit</h2>
-    
     <div class="tools-layout">
-        <div class="tool-card">
-            <h3>Global Settings</h3>
-            <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
-                <input type="number" id="bodyweight" placeholder="Bodyweight" onchange="saveSettings()">
-                <button class="action-btn" onclick="copyData()">Backup Data</button>
-            </div>
-        </div>
+        <div class="tool-card"><h3>Global Settings</h3><div class="inputs-grid" style="grid-template-columns:1fr 1fr;"><input type="number" id="bodyweight" placeholder="Bodyweight" onchange="saveSettings()"><button class="full-btn" onclick="copyData()">Backup Data</button></div></div>
+        
+        <div class="tool-card"><h3>Warm-up Generator</h3><div class="inputs-grid" style="grid-template-columns:1fr 1fr;"><input type="number" id="wuTarget" placeholder="Target Weight"><select id="wuLiftType"><option value="squat">Squat</option><option value="bench">Bench</option><option value="deadlift">Deadlift</option></select></div><button class="full-btn" onclick="calculateWarmup()">Generate</button><div id="warmupDisplay" style="margin-top:10px;"></div></div>
 
-        <div class="tool-card">
-            <h3>1RM Estimator</h3>
-            <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
-                <input type="number" id="calcWeight" placeholder="Weight">
-                <input type="number" id="calcReps" placeholder="Reps">
-            </div>
-            <button class="full-btn" onclick="calculateOneRM()">Calculate</button>
-            <div id="oneRmResult" style="margin-top:10px; font-weight:bold; color:var(--gold);"></div>
-        </div>
+        <div class="tool-card"><h3>1RM Estimator</h3><div class="inputs-grid" style="grid-template-columns:1fr 1fr;"><input type="number" id="calcWeight" placeholder="Weight"><input type="number" id="calcReps" placeholder="Reps"></div><button class="full-btn" onclick="calculateOneRM()">Calculate</button><div id="oneRmResult" style="margin-top:10px; color:var(--gold); font-weight:bold;"></div></div>
 
-        <div class="tool-card">
-            <h3>Warm-up Generator</h3>
-            <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
-                <input type="number" id="wuTarget" placeholder="Target Weight">
-                <select id="wuLiftType"><option value="squat">Squat</option><option value="bench">Bench</option><option value="deadlift">Deadlift</option></select>
-            </div>
-            <button class="full-btn" onclick="calculateWarmup()">Generate Warm-up</button>
-            <div id="warmupDisplay"></div>
-        </div>
-
-        <div class="tool-card">
-            <h3>Accessory Glossary</h3>
-            <select id="accCategory" onchange="updateAccOptions()" style="width:100%; margin-bottom:5px;">
-                <option value="squat">Squat Help</option>
-                <option value="bench">Bench Help</option>
-                <option value="deadlift">Deadlift Help</option>
-            </select>
-            <select id="accExercise" onchange="displayAccDetails()" style="width:100%;"></select>
-            <div id="accDetails" class="cue-box" style="display:none;"></div>
-        </div>
-
-        <div class="tool-card">
-            <h3>Elite Joint Mobilization</h3>
-            <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
-                <select id="ptArea" onchange="updatePtMovements()">
-                    <option value="">Select Area</option><option value="knees">Knees</option><option value="back">Back</option><option value="shoulders">Shoulders</option><option value="hips">Hips</option>
-                </select>
-                <select id="ptMovement" onchange="displayPtLogic()"></select>
-            </div>
-            <div id="ptDisplay" class="cue-box" style="display:none;"></div>
-        </div>
+        <div class="tool-card"><h3>Elite Mobility</h3><select id="ptArea" onchange="updatePtMovements()" style="width:100%; margin-bottom:5px;"><option>Select Area...</option><option value="knees">Knees</option><option value="back">Back</option><option value="shoulders">Shoulders</option></select><select id="ptMovement" onchange="displayPtLogic()" style="width:100%;"></select><div id="ptDisplay" class="cue-box" style="display:none;"></div></div>
+        
+        <div class="tool-card"><h3>Accessory Glossary</h3><select id="accCategory" onchange="updateAccOptions()" style="width:100%; margin-bottom:5px;"><option value="squat">Squat Accessories</option><option value="bench">Bench Accessories</option><option value="deadlift">Deadlift Accessories</option></select><select id="accExercise" onchange="displayAccDetails()" style="width:100%;"></select><div id="accDetails" class="cue-box" style="display:none;"></div></div>
     </div>
   </div>
 </div>
 
-<div id="meetModal" class="modal">
-    <div class="modal-content large-modal">
-        <span class="close-modal" onclick="closeModal('meetModal')">&times;</span>
-        <h2>Competition Attempts</h2>
-        <div class="meet-grid" id="meetGrid"></div>
-    </div>
-</div>
+<div id="plateModal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal('plateModal')">&times;</span><h3>Plate Loader</h3><div class="plate-display"><div class="target-weight" id="plateTarget">0</div><div class="plate-visuals" id="plateVisuals"></div><div class="plate-text" id="plateText"></div></div></div></div>
 
-<div id="plateModal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeModal('plateModal')">&times;</span>
-        <h3>Plate Loader</h3>
-        <div class="plate-display">
-            <div class="target-weight" id="plateTarget">0</div>
-            <div class="plate-visuals" id="plateVisuals"></div>
-            <div class="plate-text" id="plateText"></div>
-        </div>
-    </div>
-</div>
+<div id="meetModal" class="modal"><div class="modal-content large-modal"><span class="close-modal" onclick="closeModal('meetModal')">&times;</span><h2>Competition Attempts</h2><div class="meet-grid" id="meetGrid"></div></div></div>
 
 <div id="authModal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal('authModal')">&times;</span><h3>Login</h3><div style="display:flex; flex-direction:column; gap:10px;"><input type="email" id="emailInput" placeholder="Email"><input type="password" id="passInput" placeholder="Password"><button class="full-btn" id="emailLoginBtn">Log In</button><button class="full-btn" id="googleLoginBtn" style="background:#4285F4;">Google</button></div></div></div>
 
-<script type="module" src="script_andre.js"></script>
+<script type="module" src="script_base.js"></script>
 </body>
 </html>
