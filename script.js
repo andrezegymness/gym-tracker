@@ -71,7 +71,7 @@ if(andreData[1]) {
     });
 }
 
-// Andre Accessories
+// Andre Accessories (with Base Calculation data)
 const andreAccessories = {
   "Tuesday": [ { name: "Close Grip Bench", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.72 }, { name: "Larsen Press", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.68 }, { name: "Tricep Pushdowns", sets: "3x12", weeks: [1,2,3,6] } ],
   "Wednesday": [ { name: "Leg Extensions", sets: "3x15", weeks: [1,2,3,4,6] }, { name: "Pendulum Squat", sets: "3x8", weeks: [1,2,3,4,6] }, { name: "Walking Lunges", sets: "3x12", weeks: [1,2,3,6] }, { name: "Leg Press", sets: "4x10", weeks: [1,2,3,4,6] }, { name: "GHR", sets: "3x8", weeks: [1,2,3,4,6] } ],
@@ -122,7 +122,8 @@ const state = {
   accWeights: {}, 
   notes: {}, 
   ownerEmail: null,
-  settings: { rackSquat: '', rackBench: '', bw: '' }
+  settings: { rackSquat: '', rackBench: '', bw: '' },
+  timer: 180, timerRunning: false, timerInterval: null
 };
 
 const inputs = {
@@ -158,8 +159,134 @@ function init() {
   });
 
   setupAuthButtons();
-  window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; }
+  
+  // Attach Global Window Functions so HTML Buttons work
+  window.switchProgram = (prog) => { state.activeProgram = prog; deferredSave(); render(); };
+  window.setWeek = (n) => { state.activeWeek = n; deferredSave(); render(); };
+  window.toggleUnit = () => { state.unit = state.unit === 'LBS' ? 'KG' : 'LBS'; deferredSave(); render(); };
+  window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; deferredSave(); render(); };
+  window.toggleAcc = (day) => { state.accOpen = state.accOpen || {}; state.accOpen[day] = !state.accOpen[day]; render(); };
+  window.updateAccWeight = (id, val) => { state.accWeights[id] = val; deferredSave(); };
+  window.updateNote = (id, val) => { state.notes[id] = val; deferredSave(); };
+  window.updateDashSettings = () => {
+      state.dashMode = document.getElementById('dashMode').value;
+      state.dashReps = document.getElementById('dashReps').value;
+      state.dashMobileWeek = 0; 
+      deferredSave(); render();
+  };
+  window.changeMobileWeek = (dir) => {
+      let numWeeks = (state.dashMode === 'maintenance' ? 6 : (state.dashMode === 'deload' ? 2 : 4));
+      state.dashMobileWeek = Math.max(0, Math.min(numWeeks - 1, state.dashMobileWeek + dir));
+      render();
+  };
+  window.toggleFasted = () => { state.dashFasted = !state.dashFasted; deferredSave(); render(); };
+  window.saveSettings = () => {
+      state.settings.bw = document.getElementById('bodyweight').value;
+      state.settings.rackSquat = document.getElementById('rackSquat').value;
+      state.settings.rackBench = document.getElementById('rackBench').value;
+      deferredSave(); render();
+  };
+  
+  // Modals
+  window.openTools = () => document.getElementById('toolsModal').style.display = 'flex';
+  window.openAuthModal = () => document.getElementById('authModal').style.display = 'flex';
+  window.openMeetPlanner = () => {
+      const m = document.getElementById('meetModal'); const g = document.getElementById('meetGrid');
+      m.style.display='flex';
+      const l = ['Squat','Bench','Deadlift']; let h='';
+      l.forEach(x => {
+          const mx = state.maxes[x]||0;
+          h+=`<div class="meet-col"><h4 style="border-color:var(--${x.toLowerCase()})">${x}</h4>
+          <div class="attempt-row"><span class="attempt-label">Opener</span><span class="attempt-val">${mx>0?getLoad(0.91,mx)+' '+state.unit:'-'}</span></div>
+          <div class="attempt-row"><span class="attempt-label">2nd</span><span class="attempt-val">${mx>0?getLoad(0.96,mx)+' '+state.unit:'-'}</span></div>
+          <div class="attempt-row"><span class="attempt-label">3rd</span><span class="attempt-val pr">${mx>0?getLoad(1.02,mx)+' '+state.unit:'-'}</span></div></div>`;
+      });
+      g.innerHTML=h;
+  };
+  window.openPlateCalc = (w) => {
+      if(String(w).includes('%')) return;
+      document.getElementById('plateModal').style.display = 'flex';
+      const wt = parseFloat(w);
+      document.getElementById('plateTarget').innerText = wt + " " + state.unit;
+      const b = state.unit==='LBS'?45:20; let r=(wt-b)/2;
+      const v = document.getElementById('plateVisuals'); const t = document.getElementById('plateText');
+      v.innerHTML='';
+      if(r<0){t.innerText="Weight < Bar";return;}
+      const p = state.unit==='LBS'?[45,35,25,10,5,2.5]:[25,20,15,10,5,2.5,1.25];
+      let m={}; let h='';
+      p.forEach(x=>{ while(r>=x){ r-=x; m[x]=(m[x]||0)+1; let c=`p-${String(x).replace('.','-')}${state.unit==='LBS'&&x<45&&x>2.5?'-lbs':''}`; h+=`<div class="plate ${c}"></div>`; } });
+      v.innerHTML=h; t.innerText=Object.entries(m).sort((a,b)=>b[0]-a[0]).map(([k,v])=>`${v}x${k}`).join(', ')+" /side";
+  };
+  window.openWarmup = (type, w) => {
+      document.getElementById('warmupModal').style.display = 'flex';
+      // Simple warmup rendering logic
+      const t = parseFloat(w);
+      document.getElementById('warmupTable').innerHTML = `<tr><td>Bar</td><td>-</td></tr><tr><td>50%</td><td>${getLoad(0.5,t*2)}</td></tr><tr><td>Working</td><td>${t}</td></tr>`;
+  };
+  window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+  window.copyData = () => { document.getElementById('exportArea').value = JSON.stringify(state); alert("Copied!"); };
+  
+  // Tools
+  window.calculateOneRM = () => {
+      const w = parseFloat(document.getElementById('calcWeight').value);
+      const r = parseFloat(document.getElementById('calcReps').value);
+      if(w && r) {
+          document.getElementById('oneRmResults').style.display = 'block';
+          const epley = Math.round(w * (1 + 0.0333 * r));
+          document.getElementById('formulaBody').innerHTML = `<tr><td>Est 1RM</td><td>${epley} ${state.unit}</td></tr>`;
+      }
+  };
+  window.calculateDotsOnly = () => {
+      const t = document.getElementById('dotsTotalInput').value;
+      const b = document.getElementById('bodyWeightInput').value;
+      if(t && b) {
+          document.getElementById('dotsResults').style.display = 'block';
+          document.getElementById('dotsDisplay').innerText = calculateDots(t, b, state.unit);
+      }
+  };
+  window.runRandomizer = () => {
+      const goal = document.getElementById('randGoal').value;
+      const w = parseFloat(document.getElementById('prevWeight').value);
+      if(w) {
+          let res = Math.round((w * 1.04)/5)*5;
+          document.getElementById('randomizerResult').style.display = 'block';
+          document.getElementById('randOutputText').innerText = `Target: ${res} ${state.unit}`;
+      }
+  };
+  window.updateAccOptions = () => {
+      const cat = document.getElementById('accCategory').value;
+      document.getElementById('accExercise').innerHTML = accessoryData[cat].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
+      window.displayAccDetails();
+  };
+  window.displayAccDetails = () => {
+      const cat = document.getElementById('accCategory').value;
+      const name = document.getElementById('accExercise').value;
+      const d = accessoryData[cat].find(e => e.name === name);
+      if(d) {
+          document.getElementById('accDetails').style.display = 'block';
+          document.getElementById('accName').innerText = d.name;
+          document.getElementById('accNotes').innerText = d.notes;
+          document.getElementById('accTier').innerText = d.tier + " TIER";
+      }
+  };
+  
+  // Timer
+  window.toggleTimer = () => {
+      if(state.timerRunning){ clearInterval(state.timerInterval); state.timerRunning=false; document.getElementById('timerToggle').innerText="Start"; }
+      else { state.timerRunning=true; document.getElementById('timerToggle').innerText="Pause"; state.timerInterval=setInterval(()=>{ if(state.timer>0){state.timer--; updateTimerDisplay();} else {clearInterval(state.timerInterval); alert("Time!"); resetTimer();} },1000); }
+  };
+  window.adjustTimer = (s) => { state.timer+=s; if(state.timer<0)state.timer=0; updateTimerDisplay(); };
+  window.resetTimer = () => { clearInterval(state.timerInterval); state.timerRunning=false; state.timer=180; document.getElementById('timerToggle').innerText="Start"; updateTimerDisplay(); };
+
+  window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; };
+  
   render();
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay(){
+    const m=Math.floor(state.timer/60); const s=state.timer%60;
+    document.getElementById('timerText').innerText=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
 function updateAuthUI(user) {
@@ -262,12 +389,23 @@ function renderAndreOG() {
         });
         html += `</table>`;
         
-        // Accessories
+        // Accessories (RESTORED PROGRESSIVE OVERLOAD LOGIC)
         if(showAcc) {
             let accHtml = `<div class="acc-section"><div class="acc-toggle" onclick="toggleAcc('${day}')"><span>Accessories</span><span>▼</span></div><div class="acc-content ${state.accOpen && state.accOpen[day]?'open':''}">`;
             accList.filter(a => a.weeks.includes(state.activeWeek)).forEach(a => {
                 const accId = `acc-${day}-${a.name}`;
-                accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span></div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${state.accWeights[accId]||''}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
+                // THE LOST LOGIC RESTORED:
+                let recHtml = '';
+                if(a.base && state.maxes[a.base] > 0) {
+                    let weeksElapsed = state.activeWeek - 1;
+                    if(state.activeWeek === 6) weeksElapsed = 0;
+                    const overload = weeksElapsed * 0.025;
+                    const currentPct = a.basePct + overload;
+                    const recLoad = getLoad(currentPct, state.maxes[a.base]);
+                    recHtml = `<span class="acc-rec">Rec: ${recLoad} ${state.unit}</span>`;
+                }
+                
+                accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${state.accWeights[accId]||''}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
             });
             html += accHtml + `</div></div>`;
         }
@@ -372,44 +510,6 @@ function renderDashboard() {
     }
 }
 
-/* =========================================
-   7. UTILS & HELPERS
-   ========================================= */
-window.switchProgram = (prog) => { state.activeProgram = prog; deferredSave(); render(); }
-window.setWeek = (n) => { state.activeWeek = n; deferredSave(); render(); }
-window.toggleUnit = () => { state.unit = state.unit === 'LBS' ? 'KG' : 'LBS'; deferredSave(); render(); }
-window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; deferredSave(); render(); }
-window.toggleAcc = (day) => { state.accOpen = state.accOpen || {}; state.accOpen[day] = !state.accOpen[day]; render(); }
-window.updateAccWeight = (id, val) => { state.accWeights[id] = val; deferredSave(); }
-window.updateNote = (id, val) => { state.notes[id] = val; deferredSave(); }
-window.updateDashSettings = () => {
-    state.dashMode = document.getElementById('dashMode').value;
-    state.dashReps = document.getElementById('dashReps').value;
-    state.dashMobileWeek = 0; // Reset mobile view when mode changes
-    deferredSave(); render();
-}
-window.changeMobileWeek = (dir) => {
-    let numWeeks = (state.dashMode === 'maintenance' ? 6 : (state.dashMode === 'deload' ? 2 : 4));
-    state.dashMobileWeek = Math.max(0, Math.min(numWeeks - 1, state.dashMobileWeek + dir));
-    render();
-}
-window.toggleFasted = () => { state.dashFasted = !state.dashFasted; deferredSave(); render(); }
-
-window.runRandomizer = () => {
-    const goal = document.getElementById('randGoal').value;
-    const w = parseFloat(document.getElementById('prevWeight').value);
-    const r = parseFloat(document.getElementById('prevReps').value);
-    if(!w || !r) return;
-    let outW, outR, msg;
-    if(goal==='strength') { outW = Math.round((w*1.04)/5)*5; outR = Math.max(1,r-1); msg="Peak Load"; }
-    else if(goal==='recovery') { outW = Math.round((w*0.93)/5)*5; outR = r+2; msg="Volume"; }
-    else { outW = Math.round((w*1.02)/5)*5; outR = r+1; msg="Hypertrophy"; }
-    
-    const div = document.getElementById('randomizerResult');
-    div.style.display = 'block';
-    document.getElementById('randOutputText').innerHTML = `Target: <strong>${outW} ${state.unit} x ${outR}</strong><br><small>${msg}</small>`;
-}
-
 // Math
 function getLoad(pct, max) { let val = max * pct; return state.unit==='KG' ? Math.round(val/2.5)*2.5 : Math.round(val/5)*5; }
 function updateStats() {
@@ -422,62 +522,6 @@ function calculateDots(total, bw, unit) {
     if (unit === 'LBS') { w /= 2.20462; t /= 2.20462; }
     const denominator = -0.000001093 * Math.pow(w, 4) + 0.0007391293 * Math.pow(w, 3) - 0.1918751679 * Math.pow(w, 2) + 24.0900756 * w - 307.75076;
     return (t * (500 / denominator)).toFixed(2);
-}
-
-// Tools
-window.calculateOneRM = () => {
-    const w = parseFloat(document.getElementById('calcWeight').value);
-    const r = parseFloat(document.getElementById('calcReps').value);
-    if(w && r) {
-        document.getElementById('oneRmResults').style.display = 'block';
-        const epley = Math.round(w * (1 + 0.0333 * r));
-        document.getElementById('formulaBody').innerHTML = `<tr><td>Est 1RM</td><td>${epley} ${state.unit}</td></tr>`;
-    }
-}
-window.calculateDotsOnly = () => {
-    const t = document.getElementById('dotsTotalInput').value;
-    const b = document.getElementById('bodyWeightInput').value;
-    if(t && b) {
-        document.getElementById('dotsResults').style.display = 'block';
-        document.getElementById('dotsDisplay').innerText = calculateDots(t, b, state.unit);
-    }
-}
-window.updateAccOptions = () => {
-    const cat = document.getElementById('accCategory').value;
-    document.getElementById('accExercise').innerHTML = accessoryData[cat].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
-    window.displayAccDetails();
-}
-window.displayAccDetails = () => {
-    const cat = document.getElementById('accCategory').value;
-    const name = document.getElementById('accExercise').value;
-    const d = accessoryData[cat].find(e => e.name === name);
-    if(d) {
-        document.getElementById('accDetails').style.display = 'block';
-        document.getElementById('accName').innerText = d.name;
-        document.getElementById('accNotes').innerText = d.notes;
-        document.getElementById('accTier').innerText = d.tier + " TIER";
-    }
-}
-
-// Modals
-window.openTools = () => document.getElementById('toolsModal').style.display = 'flex';
-window.openAuthModal = () => document.getElementById('authModal').style.display = 'flex';
-window.openMeetPlanner = () => document.getElementById('meetModal').style.display = 'flex';
-window.openPlateCalc = (w) => {
-    document.getElementById('plateModal').style.display = 'flex';
-    document.getElementById('plateTarget').innerText = w + " " + state.unit;
-}
-window.openWarmup = (t,w) => {
-    document.getElementById('warmupModal').style.display = 'flex';
-}
-window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-window.saveSettings = () => {
-    state.settings.bw = document.getElementById('bodyweight').value;
-    deferredSave(); render();
-}
-window.copyData = () => {
-    document.getElementById('exportArea').value = JSON.stringify(state);
-    alert("Copied!");
 }
 
 // Saving
@@ -501,6 +545,12 @@ async function loadFromCloud(uid) {
             if(d.completed) state.completed = d.completed;
             if(d.accWeights) state.accWeights = d.accWeights;
             if(d.notes) state.notes = d.notes;
+            if(d.settings) {
+                state.settings = d.settings;
+                document.getElementById('bodyweight').value = state.settings.bw || '';
+                document.getElementById('rackSquat').value = state.settings.rackSquat || '';
+                document.getElementById('rackBench').value = state.settings.rackBench || '';
+            }
             
             Object.keys(inputs).forEach(k => { if(inputs[k]) inputs[k].value = state.maxes[k]; });
             render();
