@@ -17,7 +17,7 @@
             <option value="AndreMapWave">Andre Map Wave</option>
             <option value="BaseMapLinear">Base Map Linear</option>
         </select>
-        <div class="subtitle" id="programSubtitle">Professional Periodization</div>
+        <div class="subtitle">Professional Periodization</div>
       </div>
       
       <div class="header-stats">
@@ -40,7 +40,7 @@
         </button>
 
         <button class="action-btn" onclick="openTools()">
-          <span class="icon">🛠</span> Settings
+          <span class="icon">🛠</span> Tools
         </button>
         <div class="unit-toggle" onclick="toggleUnit()">
           <span id="unitLabel">LBS</span>
@@ -78,9 +78,8 @@
 
       <div id="andreContent" class="grid-layout"></div>
       
-      <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+      <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;" class="no-print">
           <button class="action-btn" onclick="openMeetPlanner()">🏆 Meet Planner</button>
-          <button class="action-btn" onclick="openPlateCalc(45)">💿 Plate Loader</button>
       </div>
   </div>
 
@@ -136,10 +135,21 @@
           <div id="randOutputText"></div>
         </div>
       </div>
+  </div>
+   
+  <footer>
+    <p>Andre's Calibrations &copy; 2026</p>
+  </footer>
+</div>
 
-      <div class="footer-tools no-print">
+<div id="toolsModal" class="modal">
+  <div class="modal-content large-modal">
+    <span class="close-modal" onclick="closeModal('toolsModal')">&times;</span>
+    <h2>Lifter's Toolkit</h2>
+    
+    <div class="tools-layout">
         <div class="tool-card">
-          <h3>1RM Estimator</h3>
+          <h3>1RM Multi-Formula</h3>
           <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
             <input type="number" id="calcWeight" placeholder="Weight">
             <input type="number" id="calcReps" placeholder="Reps">
@@ -154,75 +164,30 @@
           <h3>DOTS Calculator</h3>
           <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
             <input type="number" id="dotsTotalInput" placeholder="Total">
-            <input type="number" id="bodyWeightInput" placeholder="BW">
+            <input type="number" id="bodyWeightInput" placeholder="Bodyweight" oninput="saveSettings()">
           </div>
           <select id="genderInput" style="width:100%; margin-top:5px;"><option value="male">Male</option><option value="female">Female</option></select>
           <button class="full-btn" onclick="calculateDotsOnly()">Calc DOTS</button>
-          <div id="dotsResults" style="display:none; margin-top:10px;"><div class="stat-box"><span id="dotsDisplay">0.00</span></div></div>
+          <div id="dotsResults" style="display:none; margin-top:10px;"><div class="stat-box" style="background:#27ae60;"><span id="dotsDisplay">0.00</span></div></div>
         </div>
 
-        <div class="tool-card">
-          <h3>Accessory Library</h3>
-          <select id="accCategory" onchange="updateAccOptions()" style="width:100%; margin-bottom:5px;">
-            <option value="squat">Squat Help</option>
-            <option value="bench">Bench Accessories</option>
-            <option value="deadlift">Deadlift Accessories</option>
-          </select>
-          <select id="accExercise" onchange="displayAccDetails()" style="width:100%;"></select>
-          <div id="accDetails" class="acc-details-box" style="display:none;">
-            <span class="tier-badge" id="accTier"></span>
-            <h4 id="accName"></h4>
-            <p id="accNotes"></p>
-          </div>
+        <div class="tool-card" style="grid-column: 1 / -1;">
+            <h3>Elite Joint Mobilization</h3>
+            <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
+                <select id="ptArea" onchange="updatePtMovements()"><option value="">Select Area</option><option value="knees">Knees</option><option value="back">Back</option><option value="shoulders">Shoulders</option><option value="hips">Hips</option><option value="elbows">Elbows</option></select>
+                <select id="ptMovement" onchange="displayPtLogic()"></select>
+            </div>
+            <div id="ptDisplay" class="pt-output" style="display:none;">
+                <div class="pt-header"><span id="ptTitle"></span> <span id="ptPrescription" class="belt-badge"></span></div>
+                <div id="ptContext" class="cue-box"></div>
+            </div>
         </div>
-      </div>
-  </div>
-   
-  <footer>
-    <p>Andre's Calibrations &copy; 2026</p>
-  </footer>
-</div>
 
-<div id="authModal" class="modal">
-  <div class="modal-content">
-    <span class="close-modal" onclick="closeModal('authModal')">&times;</span>
-    <h3>Join the Team</h3>
-    <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
-        <input type="email" id="emailInput" placeholder="Enter Email" style="padding:10px; background:#222; border:1px solid #444; color:white;">
-        <input type="password" id="passInput" placeholder="Enter Password" style="padding:10px; background:#222; border:1px solid #444; color:white;">
-        <button class="full-btn" id="emailLoginBtn">Log In with Email</button>
-        <button class="full-btn outline" id="emailSignupBtn">Create Account</button>
-        <div style="text-align:center; margin:10px 0; color:#666;">- OR -</div>
-        <button class="full-btn" id="googleLoginBtn" style="background:#4285F4; border:none;">
-          <i class="fab fa-google" style="margin-right:8px;"></i> Sign in with Google
-        </button>
-        <button class="full-btn" id="anonLoginBtn" style="background:#333; border:none; margin-top:5px;">
-          <i class="fas fa-user-secret" style="margin-right:8px;"></i> Continue as Guest
-        </button>
-    </div>
-  </div>
-</div>
-
-<div id="restTimer" class="rest-timer no-print">
-  <div class="timer-display">
-    <span id="timerText">03:00</span>
-    <div class="timer-controls">
-      <button class="timer-btn" onclick="adjustTimer(-30)">-30</button>
-      <button class="timer-btn" onclick="toggleTimer()" id="timerToggle">Start</button>
-      <button class="timer-btn" onclick="adjustTimer(30)">+30</button>
-    </div>
-  </div>
-  <button class="close-timer" onclick="resetTimer()">↺</button>
-</div>
-
-<div id="plateModal" class="modal">
-  <div class="modal-content">
-    <span class="close-modal" onclick="closeModal('plateModal')">&times;</span>
-    <h3>Plate Loader</h3>
-    <div class="plate-display">
-      <div class="target-weight" id="plateTarget">0</div>
-      <div class="plate-visuals" id="plateVisuals"></div>
-      <div class="plate-text" id="plateText">Loading...</div>
+        <div class="tool-card" style="grid-column: 1 / -1;">
+            <h3>Data Backup</h3>
+            <textarea id="exportArea" readonly onclick="this.select()" style="height:40px;"></textarea>
+            <button class="full-btn outline" onclick="copyData()">Copy Save Code</button>
+        </div>
     </div>
   </div>
 </div>
@@ -230,26 +195,28 @@
 <div id="warmupModal" class="modal">
   <div class="modal-content large-modal">
     <span class="close-modal" onclick="closeModal('warmupModal')">&times;</span>
-    <div class="warmup-header">
-      <h2 id="warmupTitle">Warm-up</h2>
-      <div class="warmup-controls">
-        <label>Strategy:</label>
-        <select id="warmupStrategy" onchange="renderWarmup()">
-          <option value="aggressive">Aggressive</option>
-          <option value="conservative">Conservative</option>
-        </select>
-      </div>
+    <h2>Advanced Warm-up</h2>
+    
+    <div class="input-row" style="margin-bottom:15px;">
+        <div class="input-group">
+            <label>Lift</label>
+            <select id="wuLiftType" onchange="calculateWarmup()">
+                <option value="squat">Squat</option><option value="bench">Bench</option><option value="deadlift">Deadlift</option><option value="ohp">OHP</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Style</label>
+            <select id="wuStyle" onchange="calculateWarmup()">
+                <option value="standard">Standard</option><option value="big">Aggressive</option><option value="tight">High Prime</option>
+            </select>
+        </div>
     </div>
-    <div class="warmup-grid">
-      <div class="warmup-list">
-        <h4>Sets</h4>
-        <table id="warmupTable"></table>
-      </div>
-      <div class="warmup-cues">
-        <h4>Cues</h4>
-        <ul id="cuesList"></ul>
-      </div>
+    <div class="input-group">
+        <label>Target Top Set</label>
+        <input type="number" id="wuTarget" placeholder="e.g. 315" oninput="calculateWarmup()">
     </div>
+
+    <div id="warmupDisplay" style="margin-top:15px;"></div>
   </div>
 </div>
 
@@ -261,37 +228,33 @@
   </div>
 </div>
 
-<div id="toolsModal" class="modal">
-  <div class="modal-content large-modal">
-    <span class="close-modal" onclick="closeModal('toolsModal')">&times;</span>
-    <h2>Global Settings</h2>
-    <div class="tools-layout">
-      <div class="tool-card">
-        <h3>Gym Bag Settings</h3>
-        <div class="setting-row">
-          <label>Squat Rack Height</label>
-          <input type="text" id="rackSquat" placeholder="e.g. 12" onchange="saveSettings()">
-        </div>
-        <div class="setting-row">
-          <label>Bench Rack Height</label>
-          <input type="text" id="rackBench" placeholder="e.g. 8" onchange="saveSettings()">
-        </div>
-        <div class="setting-row">
-          <label>Bodyweight (Global)</label>
-          <input type="number" id="bodyweight" placeholder="lbs/kg" onchange="saveSettings()">
-        </div>
-      </div>
-      <div class="tool-card">
-        <h3>Data Backup</h3>
-        <p>Copy this code to save your data externally.</p>
-        <textarea id="exportArea" readonly onclick="this.select()"></textarea>
-        <button class="full-btn" onclick="copyData()">Copy Save Code</button>
-      </div>
+<div id="authModal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeModal('authModal')">&times;</span>
+    <h3>Join the Team</h3>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+        <input type="email" id="emailInput" placeholder="Email" style="padding:10px; background:#222; border:1px solid #444; color:white;">
+        <input type="password" id="passInput" placeholder="Password" style="padding:10px; background:#222; border:1px solid #444; color:white;">
+        <button class="full-btn" id="emailLoginBtn">Log In</button>
+        <button class="full-btn outline" id="emailSignupBtn">Create Account</button>
+        <div style="text-align:center; color:#666;">- OR -</div>
+        <button class="full-btn" id="googleLoginBtn" style="background:#4285F4;">Google Login</button>
+        <button class="full-btn" id="anonLoginBtn" style="background:#333;">Guest Mode</button>
     </div>
   </div>
 </div>
 
-<script type="module" src="script.js"></script>
+<div id="restTimer" class="rest-timer no-print">
+  <div class="timer-display"><span id="timerText">03:00</span>
+    <div class="timer-controls">
+      <button class="timer-btn" onclick="adjustTimer(-30)">-30</button>
+      <button class="timer-btn" onclick="toggleTimer()" id="timerToggle">Start</button>
+      <button class="timer-btn" onclick="adjustTimer(30)">+30</button>
+    </div>
+  </div>
+  <button class="close-timer" onclick="resetTimer()">↺</button>
+</div>
 
+<script type="module" src="script.js"></script>
 </body>
 </html>
