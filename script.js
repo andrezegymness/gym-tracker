@@ -2,7 +2,8 @@
    1. FIREBASE SETUP & IMPORTS
    ========================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// Removed FacebookAuthProvider
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // YOUR KEYS
@@ -20,7 +21,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+const googleProvider = new GoogleAuthProvider();
 
 /* =========================================
    2. YOUR PROGRAM DATA
@@ -276,26 +277,40 @@ function init() {
   Object.keys(inputs).forEach(key => {
     inputs[key].addEventListener('input', (e) => {
       state.maxes[key] = parseFloat(e.target.value) || 0;
-      deferredSave(); // Save to Cloud when done typing
+      deferredSave(); 
       render();
     });
   });
 
-  // 2. Auth Listener (The Key to Firebase)
+  // 2. CHECK FOR REDIRECT RESULT (Safari Catcher)
+  getRedirectResult(auth)
+    .then((result) => {
+        if (result && result.user) {
+            console.log("Logged in via Redirect:", result.user.email);
+            // AuthStateChanged will take over
+        }
+    })
+    .catch((error) => console.error("Redirect Error:", error));
+
+  // 3. Auth Listener
   onAuthStateChanged(auth, (user) => {
       if (user) {
-          console.log("User found, loading cloud data...");
+          console.log("User found:", user.uid);
           loadFromCloud(user.uid);
-          // Update Login Button to show Logout
           const loginBtn = document.getElementById('login-btn');
           const logoutBtn = document.getElementById('logout-btn');
           if(loginBtn) loginBtn.style.display = 'none';
           if(logoutBtn) {
              logoutBtn.style.display = 'flex';
-             logoutBtn.innerHTML = `<span class="icon">👋</span> ${user.displayName.split(' ')[0]}`;
+             let name = "Lifter";
+             if(user.displayName) name = user.displayName.split(' ')[0];
+             else if(user.email) name = user.email.split('@')[0];
+             else if(user.isAnonymous) name = "Guest";
+             logoutBtn.innerHTML = `<span class="icon">👋</span> ${name}`;
           }
+          closeModal('authModal');
       } else {
-          console.log("No user, empty state.");
+          console.log("No user.");
           const loginBtn = document.getElementById('login-btn');
           const logoutBtn = document.getElementById('logout-btn');
           if(loginBtn) loginBtn.style.display = 'flex';
@@ -304,35 +319,61 @@ function init() {
       }
   });
 
-  // 3. Login/Logout Buttons
-  const loginBtn = document.getElementById('login-btn');
+  // 4. BUTTON LISTENERS
+  const emailLoginBtn = document.getElementById('emailLoginBtn');
+  const emailSignupBtn = document.getElementById('emailSignupBtn');
+  const googleLoginBtn = document.getElementById('googleLoginBtn');
+  const anonLoginBtn = document.getElementById('anonLoginBtn');
   const logoutBtn = document.getElementById('logout-btn');
 
-  if(loginBtn) {
-      loginBtn.addEventListener('click', () => {
-        // USE POPUP FOR EVERYONE (Redirect is blocked by Safari ITP)
-        signInWithPopup(auth, provider)
-          .then((result) => {
-             console.log("Login Success:", result.user);
-          })
-          .catch((error) => {
-             console.error("Login Failed:", error);
-             alert("Login Failed: " + error.message);
-          });
+  // EMAIL
+  if(emailLoginBtn) {
+      emailLoginBtn.addEventListener('click', () => {
+          const email = document.getElementById('emailInput').value;
+          const pass = document.getElementById('passInput').value;
+          if(!email || !pass) { alert("Please enter email and password"); return; }
+          signInWithEmailAndPassword(auth, email, pass).catch(e => alert(e.message));
       });
   }
-  if(logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-          signOut(auth).then(() => {
-              location.reload(); 
-          });
+  if(emailSignupBtn) {
+      emailSignupBtn.addEventListener('click', () => {
+          const email = document.getElementById('emailInput').value;
+          const pass = document.getElementById('passInput').value;
+          if(!email || !pass) { alert("Please enter email and password"); return; }
+          createUserWithEmailAndPassword(auth, email, pass).catch(e => alert(e.message));
       });
   }
 
-  // 4. Modal Closer
-  window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; }
+  // GOOGLE (Mobile Logic)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if(googleLoginBtn) {
+      googleLoginBtn.addEventListener('click', () => {
+          if(isMobile) signInWithRedirect(auth, googleProvider);
+          else signInWithPopup(auth, googleProvider).catch(e => alert(e.message));
+      });
+  }
+
+  // ANONYMOUS
+  if(anonLoginBtn) {
+      anonLoginBtn.addEventListener('click', () => {
+          signInAnonymously(auth).catch(e => alert(e.message));
+      });
+  }
+
+  // LOGOUT
+  if(logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+          signOut(auth).then(() => location.reload());
+      });
+  }
+
+  // 5. Modal Closer
+  window.onclick = function(e) { 
+      if (e.target.classList.contains('modal')) e.target.style.display = "none"; 
+  }
   
-  // 5. Initial Render
+  // 6. Initial Render
   render();
   updateTimerDisplay();
 }
@@ -348,8 +389,8 @@ async function saveToCloud() {
   const user = auth.currentUser;
   if (!user) return; 
 
-  state.ownerEmail = user.email;
-  state.ownerName = user.displayName;
+  state.ownerEmail = user.email || "Anonymous";
+  state.ownerName = user.displayName || "Guest";
   state.lastSaved = new Date().toDateString();
 
   try {
@@ -411,6 +452,7 @@ window.saveSettings = () => {
 
 // --- TOOLS ---
 window.openTools = () => { document.getElementById('toolsModal').style.display = 'flex'; }
+window.openAuthModal = () => { document.getElementById('authModal').style.display = 'flex'; }
 window.copyData = () => {
   const code = JSON.stringify(state);
   document.getElementById("exportArea").value = code;
