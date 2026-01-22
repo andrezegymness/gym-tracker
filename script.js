@@ -1,5 +1,5 @@
 /* =========================================
-   1. FIREBASE SETUP
+   1. FIREBASE SETUP & IMPORTS
    ========================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -223,14 +223,8 @@ function init() {
       document.getElementById('plateModal').style.display = 'flex';
       const wt = parseFloat(w);
       document.getElementById('plateTarget').innerText = wt + " " + state.unit;
-      const b = state.unit==='LBS'?45:20; let r=(wt-b)/2;
-      const v = document.getElementById('plateVisuals'); const t = document.getElementById('plateText');
-      v.innerHTML='';
-      if(r<0){t.innerText="Weight < Bar";return;}
-      const p = state.unit==='LBS'?[45,35,25,10,5,2.5]:[25,20,15,10,5,2.5,1.25];
-      let m={}; let h='';
-      p.forEach(x=>{ while(r>=x){ r-=x; m[x]=(m[x]||0)+1; let c=`p-${String(x).replace('.','_')}${state.unit==='LBS'?'-lbs':''}`; h+=`<div class="plate ${c}"></div>`; } });
-      v.innerHTML=h; t.innerText=Object.entries(m).sort((a,b)=>b[0]-a[0]).map(([k,v])=>`${v}x${k}`).join(', ')+" /side";
+      document.getElementById('plateVisuals').innerHTML = getPlates(wt);
+      document.getElementById('plateText').innerText = "Load per side (Bar = " + (state.unit==='LBS'?45:20) + ")";
   };
   window.openWarmup = (lift, w) => {
       document.getElementById('warmupModal').style.display = 'flex';
@@ -281,8 +275,7 @@ function init() {
       
       protocol.forEach((s,i) => {
           let lb = Math.round((target * s.p)/5)*5;
-          let plates = getPlates(lb); // Re-use plate helper
-          // Strip the HTML tags from getPlates for cleaner list if needed, or render as is
+          let plates = getPlates(lb);
           html += `<div class="warmup-row"><div class="warmup-header"><span>${lb} lbs</span><span>${s.r} reps</span></div><div class="cue-box">${cues[lift]?.[i] || "Focus speed"}</div><div class="plate-stack" style="transform:scale(0.8); transform-origin:left;">${plates}</div></div>`;
       });
       document.getElementById('warmupDisplay').innerHTML = html;
@@ -688,7 +681,11 @@ let saveTimeout;
 function deferredSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(saveToCloud, 1500); }
 async function saveToCloud() {
     const user = auth.currentUser; if(!user) return;
-    try { await setDoc(doc(db, "users", user.uid), state, { merge: true }); } catch(e) { console.error(e); }
+    try { 
+        await setDoc(doc(db, "users", user.uid), state, { merge: true }); 
+        const brand = document.querySelector('.subtitle'); 
+        if(brand) { brand.style.color = '#4caf50'; setTimeout(() => brand.style.color = '#757575', 1000); }
+    } catch(e) { console.error(e); }
 }
 async function loadFromCloud(uid) {
     try {
