@@ -2,7 +2,8 @@
    1. FIREBASE SETUP & IMPORTS
    ========================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// ADDED: signInWithRedirect
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // YOUR KEYS
@@ -250,7 +251,6 @@ const technicalCues = {
    ========================================= */
 
 // --- APP STATE ---
-// We keep this to track what is happening on the screen
 const state = {
   maxes: { Squat: 0, Bench: 0, Deadlift: 0, OHP: 0 },
   activeWeek: 1,
@@ -271,7 +271,7 @@ const inputs = {
   OHP: document.getElementById('ohpInput')
 };
 
-// --- INIT (Modified for Firebase) ---
+// --- INIT ---
 function init() {
   // 1. Listen for Inputs (Typing)
   Object.keys(inputs).forEach(key => {
@@ -283,13 +283,14 @@ function init() {
   });
 
   // 2. Auth Listener (The Key to Firebase)
+  // This detects when you come back from Google Login
   onAuthStateChanged(auth, (user) => {
       if (user) {
           console.log("User found, loading cloud data...");
           loadFromCloud(user.uid);
       } else {
           console.log("No user, empty state.");
-          render(); // Show empty program
+          render(); 
       }
   });
 
@@ -299,13 +300,22 @@ function init() {
 
   if(loginBtn) {
       loginBtn.addEventListener('click', () => {
-          signInWithPopup(auth, provider).catch(console.error);
+          // MOBILE FRIENDLY LOGIN
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+          
+          if (isMobile) {
+            // Use REDIRECT on phones (Page reloads)
+            signInWithRedirect(auth, provider);
+          } else {
+            // Use POPUP on computers (Stays on page)
+            signInWithPopup(auth, provider).catch(console.error);
+          }
       });
   }
   if(logoutBtn) {
       logoutBtn.addEventListener('click', () => {
           signOut(auth).then(() => {
-              location.reload(); // Refresh to clear data
+              location.reload(); 
           });
       });
   }
@@ -318,28 +328,25 @@ function init() {
   updateTimerDisplay();
 }
 
-// --- CLOUD SAVING (Replaces LocalStorage) ---
+// --- CLOUD SAVING ---
 let saveTimeout;
 function deferredSave() {
   clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(saveToCloud, 1500); // Wait 1.5s after typing
+  saveTimeout = setTimeout(saveToCloud, 1500); 
 }
 
 async function saveToCloud() { 
   const user = auth.currentUser;
-  if (!user) return; // Don't save if not logged in
+  if (!user) return; 
 
-  // 1. ADD OWNER INFO
   state.ownerEmail = user.email;
   state.ownerName = user.displayName;
   state.lastSaved = new Date().toDateString();
 
   try {
-      // 2. SAVE TO FIREBASE
       await setDoc(doc(db, "users", user.uid), state, { merge: true });
       console.log("Saved to Cloud!");
       
-      // 3. FLASH GREEN LIGHT (Visual Feedback)
       const brand = document.querySelector('.brand');
       if(brand) {
           brand.style.color = '#4caf50';
@@ -356,7 +363,6 @@ async function loadFromCloud(uid) {
       if (docSnap.exists()) {
           const cloudData = docSnap.data();
           
-          // Overwrite State with Cloud Data
           if(cloudData.maxes) state.maxes = cloudData.maxes;
           if(cloudData.activeWeek) state.activeWeek = cloudData.activeWeek;
           if(cloudData.unit) state.unit = cloudData.unit;
@@ -365,7 +371,6 @@ async function loadFromCloud(uid) {
           if(cloudData.notes) state.notes = cloudData.notes;
           if(cloudData.settings) state.settings = cloudData.settings;
           
-          // Update Inputs on Screen
           Object.keys(state.maxes).forEach(k => { 
             if(inputs[k] && state.maxes[k] > 0) inputs[k].value = state.maxes[k]; 
           });
@@ -373,14 +378,14 @@ async function loadFromCloud(uid) {
           document.getElementById('rackBench').value = state.settings.rackBench || '';
           document.getElementById('bodyweight').value = state.settings.bw || '';
 
-          render(); // Re-draw everything with new data
+          render(); 
       }
   } catch(e) {
       console.error("Load failed:", e);
   }
 }
 
-// --- GLOBAL ACTIONS (Attached to Window for HTML Buttons) ---
+// --- GLOBAL ACTIONS ---
 window.setWeek = (n) => { state.activeWeek = n; deferredSave(); render(); }
 window.toggleUnit = () => { state.unit = state.unit === 'LBS' ? 'KG' : 'LBS'; deferredSave(); render(); }
 window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; deferredSave(); render(); }
@@ -421,16 +426,14 @@ function getLoad(pct, max) {
   return v;
 }
 
-// --- RENDER (Your Logic) ---
+// --- RENDER ---
 function render() {
   document.getElementById('unitLabel').innerText = state.unit;
   
-  // Stats
   const total = (state.maxes.Squat || 0) + (state.maxes.Bench || 0) + (state.maxes.Deadlift || 0);
   document.getElementById('currentTotal').innerText = total > 0 ? `${total}` : '0';
   document.getElementById('currentDots').innerText = calculateDots(total, state.settings.bw, state.unit);
   
-  // Progress
   let totalItems = 0; let completedItems = 0;
   const wd = programData[state.activeWeek];
   if(wd) {
@@ -444,7 +447,6 @@ function render() {
   const pct = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
   document.getElementById('progressBar').style.width = `${pct}%`;
 
-  // Navigation
   document.querySelectorAll('.nav-btn').forEach(b => {
     b.classList.remove('active');
     if(b.innerText.includes(`Week ${state.activeWeek}`) || b.innerText === `Week ${state.activeWeek}` || (state.activeWeek===6 && b.innerText.includes('Deload'))) b.classList.add('active');
@@ -466,7 +468,6 @@ function render() {
     const card = document.createElement('div');
     card.className = 'day-container';
     
-    // Header
     let head = `<div class="day-header"><span>${day}</span>`;
     if(exs) {
       const main = exs.find(e => ["Squat","Bench","Deadlift","OHP"].includes(e.type));
@@ -476,7 +477,6 @@ function render() {
     }
     head += `</div>`;
     
-    // Table
     let table = '';
     if(exs) {
       let rows = exs.map((m, i) => {
@@ -494,7 +494,6 @@ function render() {
       table = `<table><thead><tr><th>Lift</th><th>Sets</th><th>Reps</th><th>Load</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
     
-    // Accessories
     let accHtml = '';
     if(showAcc) {
       const relevantAcc = accList.filter(a => a.weeks.includes(state.activeWeek));
