@@ -12,7 +12,7 @@
   <header>
     <div class="header-content">
       <div class="header-left">
-        <a href="index.html" class="back-link">← Main Menu</a>
+        <a href="index.html" class="back-link">← Menu</a>
         <div class="brand" style="color:#2196f3;">BASE MAP LINEAR</div>
       </div>
       <div class="header-stats">
@@ -62,11 +62,24 @@
     <div class="tools-layout">
         <div class="tool-card"><h3>Global Settings</h3><div class="inputs-grid" style="grid-template-columns:1fr 1fr;"><input type="number" id="bodyweight" placeholder="Bodyweight" onchange="saveSettings()"><button class="full-btn" onclick="copyData()">Backup Data</button></div></div>
         
-        <div class="tool-card"><h3>Warm-up Generator</h3><div class="inputs-grid" style="grid-template-columns:1fr 1fr;"><input type="number" id="wuTarget" placeholder="Target Weight"><select id="wuLiftType"><option value="squat">Squat</option><option value="bench">Bench</option><option value="deadlift">Deadlift</option></select></div><button class="full-btn" onclick="calculateWarmup()">Generate</button><div id="warmupDisplay" style="margin-top:10px;"></div></div>
+        <div class="tool-card">
+            <h3>Warm-up Generator</h3>
+            <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
+                <input type="number" id="wuTarget" placeholder="Target Weight">
+                <select id="wuLiftType"><option value="squat">Squat</option><option value="bench">Bench</option><option value="deadlift">Deadlift</option></select>
+            </div>
+            <select id="wuStyle" style="width:100%; margin-top:5px;">
+                <option value="standard">Standard Jumps</option>
+                <option value="big">Aggressive (Big Jumps)</option>
+                <option value="tight">High Prime (Small Jumps)</option>
+            </select>
+            <button class="full-btn" onclick="calculateWarmup()">Generate Warm-up</button>
+            <div id="warmupDisplay" style="margin-top:10px;"></div>
+        </div>
 
         <div class="tool-card"><h3>1RM Estimator</h3><div class="inputs-grid" style="grid-template-columns:1fr 1fr;"><input type="number" id="calcWeight" placeholder="Weight"><input type="number" id="calcReps" placeholder="Reps"></div><button class="full-btn" onclick="calculateOneRM()">Calculate</button><div id="oneRmResult" style="margin-top:10px; color:var(--gold); font-weight:bold;"></div></div>
 
-        <div class="tool-card"><h3>Elite Mobility</h3><select id="ptArea" onchange="updatePtMovements()" style="width:100%; margin-bottom:5px;"><option>Select Area...</option><option value="knees">Knees</option><option value="back">Back</option><option value="shoulders">Shoulders</option></select><select id="ptMovement" onchange="displayPtLogic()" style="width:100%;"></select><div id="ptDisplay" class="cue-box" style="display:none;"></div></div>
+        <div class="tool-card"><h3>Elite Mobility</h3><select id="ptArea" onchange="updatePtMovements()" style="width:100%; margin-bottom:5px;"><option>Select Area...</option><option value="knees">Knees</option><option value="back">Back</option><option value="shoulders">Shoulders</option><option value="hips">Hips</option><option value="elbows">Elbows</option></select><select id="ptMovement" onchange="displayPtLogic()" style="width:100%;"></select><div id="ptDisplay" class="cue-box" style="display:none;"></div></div>
         
         <div class="tool-card"><h3>Accessory Glossary</h3><select id="accCategory" onchange="updateAccOptions()" style="width:100%; margin-bottom:5px;"><option value="squat">Squat Accessories</option><option value="bench">Bench Accessories</option><option value="deadlift">Deadlift Accessories</option></select><select id="accExercise" onchange="displayAccDetails()" style="width:100%;"></select><div id="accDetails" class="cue-box" style="display:none;"></div></div>
     </div>
@@ -74,9 +87,7 @@
 </div>
 
 <div id="plateModal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal('plateModal')">&times;</span><h3>Plate Loader</h3><div class="plate-display"><div class="target-weight" id="plateTarget">0</div><div class="plate-visuals" id="plateVisuals"></div><div class="plate-text" id="plateText"></div></div></div></div>
-
 <div id="meetModal" class="modal"><div class="modal-content large-modal"><span class="close-modal" onclick="closeModal('meetModal')">&times;</span><h2>Competition Attempts</h2><div class="meet-grid" id="meetGrid"></div></div></div>
-
 <div id="authModal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal('authModal')">&times;</span><h3>Login</h3><div style="display:flex; flex-direction:column; gap:10px;"><input type="email" id="emailInput" placeholder="Email"><input type="password" id="passInput" placeholder="Password"><button class="full-btn" id="emailLoginBtn">Log In</button><button class="full-btn" id="googleLoginBtn" style="background:#4285F4;">Google</button></div></div></div>
 
 <script type="module" src="script_base.js"></script>
