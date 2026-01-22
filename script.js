@@ -1,5 +1,5 @@
 /* =========================================
-   1. FIREBASE SETUP
+   1. FIREBASE SETUP & IMPORTS
    ========================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -21,7 +21,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 /* =========================================
-   2. DATA: ANDRE MAP WAVE (Restored)
+   2. DATA: ANDRE MAP WAVE (FULL)
    ========================================= */
 const andreData = {
   1: {
@@ -32,10 +32,34 @@ const andreData = {
     "Friday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.799, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 1, pct: 0.903, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ],
     "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.756, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
   },
-  2: { "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.773, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.831, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" } ], "Tuesday": [ { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.811, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.778, type: "Bench" } ], "Wednesday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } ], "Thursday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" } ], "Saturday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } ] },
-  3: { "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 2, pct: 0.779, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.89, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.826, type: "OHP" } ], "Tuesday": [ { name: "Bench", sets: 2, reps: 7, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 2, reps: 6, pct: 0.8, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.789, type: "Bench" } ], "Wednesday": [ { name: "Squat", sets: 1, reps: 7, pct: 0.76, type: "Squat" }, { name: "Squat", sets: 2, reps: 6, pct: 0.799, type: "Squat" }, { name: "OHP", sets: 4, reps: 6, pct: 0.783, type: "OHP" } ], "Thursday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.7, type: "Bench" } ], "Friday": [ { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Pause Squat", sets: 3, reps: 2, pct: 0.727, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.783, type: "OHP" } ], "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.841, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.738, type: "Deadlift" } ] },
-  4: { "Monday": [ { name: "Squat", sets: 1, reps: 4, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.773, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 4, pct: 0.903, type: "Squat" }, { name: "Squat (Backoff)", sets: 1, reps: 4, pct: 0.87, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.738, type: "Deadlift" } ], "Wednesday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.792, type: "Squat" }, { name: "Bench", sets: 1, reps: 4, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.8, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.867, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.903, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.942, type: "Squat" } ], "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.8, type: "Bench" }, { name: "Bench (Peak)", sets: 1, reps: 1, pct: 0.989, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 1, pct: 0.89, type: "Deadlift" } ] },
-  5: { "Monday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.76, type: "Squat" }, { name: "Bench", sets: 1, reps: 2, pct: 0.6, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.7, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.744, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 3, pct: 0.909, type: "Deadlift" } ], "Wednesday": [ { name: "Squat (Peak)", sets: 1, reps: 2, pct: 0.929, type: "Squat" }, { name: "Squat (Max Effort)", sets: 1, reps: 2, pct: 0.961, type: "Squat" }, { name: "Bench", sets: 1, reps: 3, pct: 0.889, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 4, reps: 2, pct: 0.799, type: "Squat" } ], "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ] }
+  2: {
+    "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.773, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.831, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" } ],
+    "Tuesday": [ { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.811, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.778, type: "Bench" } ],
+    "Wednesday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } ],
+    "Thursday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ],
+    "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" } ],
+    "Saturday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } ]
+  },
+  3: {
+    "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 2, pct: 0.779, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.89, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.826, type: "OHP" } ],
+    "Tuesday": [ { name: "Bench", sets: 2, reps: 7, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 2, reps: 6, pct: 0.8, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.789, type: "Bench" } ],
+    "Wednesday": [ { name: "Squat", sets: 1, reps: 7, pct: 0.76, type: "Squat" }, { name: "Squat", sets: 2, reps: 6, pct: 0.799, type: "Squat" }, { name: "OHP", sets: 4, reps: 6, pct: 0.783, type: "OHP" } ],
+    "Thursday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.7, type: "Bench" } ],
+    "Friday": [ { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Pause Squat", sets: 3, reps: 2, pct: 0.727, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.783, type: "OHP" } ],
+    "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.841, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.738, type: "Deadlift" } ]
+  },
+  4: {
+    "Monday": [ { name: "Squat", sets: 1, reps: 4, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.773, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 4, pct: 0.903, type: "Squat" }, { name: "Squat (Backoff)", sets: 1, reps: 4, pct: 0.87, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.738, type: "Deadlift" } ],
+    "Wednesday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.792, type: "Squat" }, { name: "Bench", sets: 1, reps: 4, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.8, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.867, type: "Bench" } ],
+    "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.903, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.942, type: "Squat" } ],
+    "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.8, type: "Bench" }, { name: "Bench (Peak)", sets: 1, reps: 1, pct: 0.989, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 1, pct: 0.89, type: "Deadlift" } ]
+  },
+  5: {
+    "Monday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.76, type: "Squat" }, { name: "Bench", sets: 1, reps: 2, pct: 0.6, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.7, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.744, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 3, pct: 0.909, type: "Deadlift" } ],
+    "Wednesday": [ { name: "Squat (Peak)", sets: 1, reps: 2, pct: 0.929, type: "Squat" }, { name: "Squat (Max Effort)", sets: 1, reps: 2, pct: 0.961, type: "Squat" }, { name: "Bench", sets: 1, reps: 3, pct: 0.889, type: "Bench" } ],
+    "Friday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 4, reps: 2, pct: 0.799, type: "Squat" } ],
+    "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
+  }
 };
 andreData[6] = {};
 if(andreData[1]) {
@@ -167,7 +191,12 @@ function init() {
   };
   
   // Modals
-  window.openTools = () => document.getElementById('toolsModal').style.display = 'flex';
+  window.openTools = () => {
+      document.getElementById('toolsModal').style.display = 'flex';
+      const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
+      document.getElementById('dotsTotalInput').value = total;
+      document.getElementById('bodyWeightInput').value = state.settings.bw || '';
+  };
   window.openAuthModal = () => document.getElementById('authModal').style.display = 'flex';
   window.openMeetPlanner = () => {
       const m = document.getElementById('meetModal'); const g = document.getElementById('meetGrid');
@@ -193,14 +222,18 @@ function init() {
       if(r<0){t.innerText="Weight < Bar";return;}
       const p = state.unit==='LBS'?[45,35,25,10,5,2.5]:[25,20,15,10,5,2.5,1.25];
       let m={}; let h='';
-      p.forEach(x=>{ while(r>=x){ r-=x; m[x]=(m[x]||0)+1; let c=`p-${String(x).replace('.','-')}${state.unit==='LBS'&&x<45&&x>2.5?'-lbs':''}`; h+=`<div class="plate ${c}"></div>`; } });
+      p.forEach(x=>{ while(r>=x){ r-=x; m[x]=(m[x]||0)+1; let c=`p-${String(x).replace('.','_')}${state.unit==='LBS'?'-lbs':''}`; h+=`<div class="plate ${c}"></div>`; } });
       v.innerHTML=h; t.innerText=Object.entries(m).sort((a,b)=>b[0]-a[0]).map(([k,v])=>`${v}x${k}`).join(', ')+" /side";
   };
   window.openWarmup = (lift, w) => {
       document.getElementById('warmupModal').style.display = 'flex';
       document.getElementById('wuTarget').value = parseFloat(w) || 0;
-      document.getElementById('wuLiftType').value = lift.toLowerCase().includes('bench') ? 'bench' : (lift.toLowerCase().includes('dead') ? 'deadlift' : 'squat');
-      calculateWarmup();
+      let simpleLift = 'squat';
+      if(lift.toLowerCase().includes('bench')) simpleLift = 'bench';
+      else if(lift.toLowerCase().includes('dead')) simpleLift = 'deadlift';
+      else if(lift.toLowerCase().includes('ohp')) simpleLift = 'ohp';
+      document.getElementById('wuLiftType').value = simpleLift;
+      window.calculateWarmup(); 
   };
   window.closeModal = (id) => document.getElementById(id).style.display = 'none';
   window.copyData = () => { document.getElementById('exportArea').value = JSON.stringify(state); alert("Copied!"); };
@@ -213,7 +246,7 @@ function init() {
           document.getElementById('oneRmResults').style.display = 'block';
           const epley = Math.round(w * (1 + 0.0333 * r));
           const brzycki = Math.round(w * (36 / (37 - r)));
-          document.getElementById('formulaBody').innerHTML = `<tr><td>Epley</td><td>${epley}</td></tr><tr><td>Brzycki</td><td>${brzycki}</td></tr><tr><td><strong>Average</strong></td><td><strong>${Math.round((epley+brzycki)/2)}</strong></td></tr>`;
+          document.getElementById('formulaBody').innerHTML = `<tr><td>Epley</td><td>${epley} ${state.unit}</td></tr><tr><td>Brzycki</td><td>${brzycki} ${state.unit}</td></tr><tr><td><strong>Average</strong></td><td><strong>${Math.round((epley+brzycki)/2)} ${state.unit}</strong></td></tr>`;
       }
   };
   window.calculateDotsOnly = () => {
@@ -241,8 +274,9 @@ function init() {
       
       protocol.forEach((s,i) => {
           let lb = Math.round((target * s.p)/5)*5;
-          let plates = getPlates(lb);
-          html += `<div class="warmup-row"><div class="warmup-header"><span>${lb} lbs</span><span>${s.r} reps</span></div><div class="cue-box">${cues[lift]?.[i] || "Focus speed"}</div><div class="plate-stack">${plates}</div></div>`;
+          let plates = getPlates(lb); // Re-use plate helper
+          // Strip the HTML tags from getPlates for cleaner list if needed, or render as is
+          html += `<div class="warmup-row"><div class="warmup-header"><span>${lb} lbs</span><span>${s.r} reps</span></div><div class="cue-box">${cues[lift]?.[i] || "Focus speed"}</div><div class="plate-stack" style="transform:scale(0.8); transform-origin:left;">${plates}</div></div>`;
       });
       document.getElementById('warmupDisplay').innerHTML = html;
   };
@@ -509,44 +543,6 @@ function renderDashboard() {
         });
         cont.appendChild(weekCol);
     }
-}
-
-/* =========================================
-   7. UTILS & HELPERS
-   ========================================= */
-window.switchProgram = (prog) => { state.activeProgram = prog; deferredSave(); render(); }
-window.setWeek = (n) => { state.activeWeek = n; deferredSave(); render(); }
-window.toggleUnit = () => { state.unit = state.unit === 'LBS' ? 'KG' : 'LBS'; deferredSave(); render(); }
-window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; deferredSave(); render(); }
-window.toggleAcc = (day) => { state.accOpen = state.accOpen || {}; state.accOpen[day] = !state.accOpen[day]; render(); }
-window.updateAccWeight = (id, val) => { state.accWeights[id] = val; deferredSave(); }
-window.updateNote = (id, val) => { state.notes[id] = val; deferredSave(); }
-window.updateDashSettings = () => {
-    state.dashMode = document.getElementById('dashMode').value;
-    state.dashReps = document.getElementById('dashReps').value;
-    state.dashMobileWeek = 0; 
-    deferredSave(); render();
-}
-window.changeMobileWeek = (dir) => {
-    let numWeeks = (state.dashMode === 'maintenance' ? 6 : (state.dashMode === 'deload' ? 2 : 4));
-    state.dashMobileWeek = Math.max(0, Math.min(numWeeks - 1, state.dashMobileWeek + dir));
-    render();
-}
-window.toggleFasted = () => { state.dashFasted = !state.dashFasted; deferredSave(); render(); }
-
-window.runRandomizer = () => {
-    const goal = document.getElementById('randGoal').value;
-    const w = parseFloat(document.getElementById('prevWeight').value);
-    const r = parseFloat(document.getElementById('prevReps').value);
-    if(!w || !r) return;
-    let outW, outR, msg;
-    if(goal==='strength') { outW = Math.round((w*1.04)/5)*5; outR = Math.max(1,r-1); msg="Peak Load"; }
-    else if(goal==='recovery') { outW = Math.round((w*0.93)/5)*5; outR = r+2; msg="Volume"; }
-    else { outW = Math.round((w*1.02)/5)*5; outR = r+1; msg="Hypertrophy"; }
-    
-    const div = document.getElementById('randomizerResult');
-    div.style.display = 'block';
-    document.getElementById('randOutputText').innerHTML = `Target: <strong>${outW} ${state.unit} x ${outR}</strong><br><small>${msg}</small>`;
 }
 
 // Math
