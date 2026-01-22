@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Map Linear</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<div class="app-container">
+  <header>
+    <div class="header-content">
+      <div class="header-left">
+        <a href="index.html" class="back-link">← Back to Menu</a>
+        <div class="brand" style="color:#2196f3;">BASE MAP LINEAR</div>
+      </div>
+      <div class="header-stats">
+         <div class="stat-box"><span class="stat-label">TOTAL</span><span class="stat-val" id="currentTotal">0</span></div>
+         <div class="stat-box"><span class="stat-label">DOTS</span><span class="stat-val" id="currentDots">-</span></div>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn" id="login-btn" onclick="openAuthModal()">Login</button>
+        <button class="action-btn" id="logout-btn" style="display:none;">Logout</button>
+        <button class="action-btn" onclick="openTools()">Settings</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="control-panel no-print">
+    <div class="panel-header"><h3>1RM Inputs</h3></div>
+    <div class="inputs-grid">
+      <div class="input-group"><label>Squat</label><input type="number" id="squatInput" placeholder="0"></div>
+      <div class="input-group"><label>Bench</label><input type="number" id="benchInput" placeholder="0"></div>
+      <div class="input-group"><label>Deadlift</label><input type="number" id="deadliftInput" placeholder="0"></div>
+      <div class="input-group"><label>OHP</label><input type="number" id="ohpInput" placeholder="0"></div>
+    </div>
+  </section>
+
+  <div class="dashboard-controls no-print">
+      <div class="dash-group"><label>Mode</label><select id="dashMode" onchange="updateDashSettings()"><option value="standard">Standard</option><option value="deload">Deload</option><option value="maintenance">Maintenance</option><option value="standard_acc">Standard + Acc</option><option value="randomizer">Randomizer</option></select></div>
+      <div class="dash-group"><label>Reps</label><select id="dashReps" onchange="updateDashSettings()"><option value="5">5 Reps</option><option value="4">4 Reps</option><option value="3">3 Reps</option><option value="2">2 Reps</option><option value="1">1 Rep</option></select></div>
+      <div class="dash-group"><label>Diet</label><button id="fastedBtn" class="dash-btn" onclick="toggleFasted()">Fasted: OFF</button></div>
+  </div>
+
+  <div class="mobile-nav no-print"><button onclick="changeMobileWeek(-1)">←</button><span id="mobileWeekLabel">Week 1</span><button onclick="changeMobileWeek(1)">→</button></div>
+
+  <div id="dashboardGrid" class="full-program-grid"></div>
+
+  <div id="randomizerCard" class="tool-card" style="display:none; margin-top:20px; border: 2px solid #2196f3;">
+    <h2>Randomizer</h2>
+    <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;"><select id="randGoal" style="grid-column: span 2;"><option value="strength">Strength</option><option value="recovery">Recovery</option><option value="pump">Pump</option></select><input type="number" id="prevWeight" placeholder="Last Weight"><input type="number" id="prevReps" placeholder="Last Reps"></div>
+    <button class="full-btn" onclick="runRandomizer()">Generate</button>
+    <div id="randomizerResult" class="stat-box" style="display:none; margin-top:15px; background:#111;"><div id="randOutputText"></div></div>
+  </div>
+
+  <div class="footer-tools no-print">
+    <div class="tool-card"><h3>1RM Estimator</h3><div class="inputs-grid" style="grid-template-columns: 1fr 1fr;"><input type="number" id="calcWeight" placeholder="Weight"><input type="number" id="calcReps" placeholder="Reps"></div><button class="full-btn" onclick="calculateOneRM()">Estimate</button><div id="oneRmResults" style="display:none;"><table class="calc-table"><tbody id="formulaBody"></tbody></table></div></div>
+    <div class="tool-card"><h3>DOTS</h3><div class="inputs-grid" style="grid-template-columns: 1fr 1fr;"><input type="number" id="dotsTotalInput" placeholder="Total"><input type="number" id="bodyWeightInput" placeholder="BW"></div><button class="full-btn" onclick="calculateDotsOnly()">Calc</button><div id="dotsResults" style="display:none;"><div class="stat-box" style="background:#27ae60;"><span id="dotsDisplay">0.00</span></div></div></div>
+  </div>
+
+  <footer><p>Andre's Calibrations &copy; 2026</p></footer>
+</div>
+
+<div id="authModal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal('authModal')">&times;</span><h3>Login</h3><div style="display:flex; flex-direction:column; gap:10px;"><input type="email" id="emailInput" placeholder="Email"><input type="password" id="passInput" placeholder="Password"><button class="full-btn" id="emailLoginBtn">Log In</button><button class="full-btn" id="googleLoginBtn" style="background:#4285F4;">Google</button></div></div></div>
+<div id="toolsModal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal('toolsModal')">&times;</span><h2>Settings</h2><input type="number" id="bodyweight" placeholder="Bodyweight (Global)" oninput="saveSettings()"><button class="full-btn" onclick="copyData()">Backup Data</button></div></div>
+<div id="plateModal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal('plateModal')">&times;</span><h3>Plate Loader</h3><div class="plate-display"><div class="target-weight" id="plateTarget">0</div><div class="plate-visuals" id="plateVisuals"></div><div class="plate-text" id="plateText"></div></div></div></div>
+
+<script type="module" src="script_base.js"></script>
+</body>
+</html>
