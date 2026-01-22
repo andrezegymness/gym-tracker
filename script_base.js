@@ -17,23 +17,46 @@ const state = { maxes: { Squat:0, Bench:0, Deadlift:0, OHP:0 }, dashMode: 'stand
 const inputs = { Squat: document.getElementById('squatInput'), Bench: document.getElementById('benchInput'), Deadlift: document.getElementById('deadliftInput'), OHP: document.getElementById('ohpInput') };
 
 function init() {
-    Object.keys(inputs).forEach(k => { inputs[k].addEventListener('input', e => { state.maxes[k] = parseFloat(e.target.value) || 0; saveToCloud(); render(); }); });
+    // Save last page
+    localStorage.setItem('last_program_page', 'base.html');
+
+    // Input Listeners
+    ['squatInput','benchInput','deadliftInput','ohpInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', (e) => {
+            let key = id.replace('Input',''); key = key.charAt(0).toUpperCase() + key.slice(1);
+            state.maxes[key] = parseFloat(e.target.value) || 0;
+            saveToCloud(); render();
+        });
+    });
+
     getRedirectResult(auth).then(() => {});
     onAuthStateChanged(auth, user => {
-        if(user) { loadFromCloud(user.uid); updateAuthUI(true); closeModal('authModal'); } else { updateAuthUI(false); render(); }
+        if(user) { 
+            loadFromCloud(user.uid); 
+            document.getElementById('login-btn').style.display='none'; 
+            document.getElementById('logout-btn').style.display='inline-block'; 
+        } else {
+            render();
+        }
     });
-    setupAuthButtons();
+    
+    // Auth Buttons & Globals
+    const gBtn = document.getElementById('googleLoginBtn'); if(gBtn) gBtn.addEventListener('click', () => { if(/iPhone|iPad/i.test(navigator.userAgent)) signInWithRedirect(auth, provider); else signInWithPopup(auth, provider); });
+    const eBtn = document.getElementById('emailLoginBtn'); if(eBtn) eBtn.addEventListener('click', () => { signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passInput').value); });
+    const lBtn = document.getElementById('logout-btn'); if(lBtn) lBtn.addEventListener('click', () => signOut(auth).then(()=>location.reload()));
+
     window.updateDashSettings = () => { state.dashMode = document.getElementById('dashMode').value; state.dashReps = document.getElementById('dashReps').value; state.dashMobileWeek = 0; saveToCloud(); render(); };
     window.changeMobileWeek = (dir) => { let max = (state.dashMode==='maintenance'?6:(state.dashMode==='deload'?2:4)); state.dashMobileWeek = Math.max(0, Math.min(max-1, state.dashMobileWeek+dir)); render(); };
     window.toggleFasted = () => { state.dashFasted = !state.dashFasted; saveToCloud(); render(); };
     window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; saveToCloud(); render(); };
-    window.saveSettings = () => { state.settings.bw = document.getElementById('bodyweight').value; saveToCloud(); };
+    window.saveSettings = () => { state.settings.bw = document.getElementById('bodyWeightInput').value; saveToCloud(); };
     
-    // Tools Logic
+    // Tools
     window.calculateOneRM = () => { const w=parseFloat(document.getElementById('calcWeight').value), r=parseFloat(document.getElementById('calcReps').value); if(w&&r) { document.getElementById('oneRmResults').style.display='block'; document.getElementById('formulaBody').innerHTML=`<tr><td>Est 1RM</td><td>${Math.round(w*(1+0.0333*r))}</td></tr>`; } };
     window.calculateDotsOnly = () => { const t=document.getElementById('dotsTotalInput').value, b=document.getElementById('bodyWeightInput').value; if(t&&b) { document.getElementById('dotsResults').style.display='block'; document.getElementById('dotsDisplay').innerText=calculateDots(t,b); } };
     window.calculateWarmup = () => {
-        const target = parseFloat(document.getElementById('wuTarget').value), lift=document.getElementById('wuLiftType').value;
+        const target = parseFloat(document.getElementById('wuTarget').value);
         if(!target) return;
         const p = [{p:0.5,r:5},{p:0.7,r:3},{p:0.9,r:1}];
         let h=''; p.forEach(x=>{ h+=`<div class="warmup-row"><div class="warmup-header"><span>${Math.round((target*x.p)/5)*5} lbs</span><span>${x.r} reps</span></div></div>`; });
@@ -48,18 +71,6 @@ function init() {
     render();
 }
 
-function updateAuthUI(loggedIn) {
-    if(loggedIn) { document.getElementById('login-btn').style.display='none'; document.getElementById('logout-btn').style.display='flex'; }
-    else { document.getElementById('login-btn').style.display='flex'; document.getElementById('logout-btn').style.display='none'; }
-}
-
-function setupAuthButtons() {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    document.getElementById('googleLoginBtn').addEventListener('click', () => { if(isMobile) signInWithRedirect(auth, provider); else signInWithPopup(auth, provider); });
-    document.getElementById('emailLoginBtn').addEventListener('click', () => { signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passInput').value); });
-    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(()=>location.reload()));
-}
-
 async function saveToCloud() {
     const user = auth.currentUser; if(!user) return;
     try { await setDoc(doc(db, "users", user.uid), state, { merge: true }); 
@@ -71,6 +82,7 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
+            // 1. DATA HYDRATION (CASE INSENSITIVE)
             if(d.maxes) {
                 state.maxes.Squat = d.maxes.Squat || d.maxes.squat || 0;
                 state.maxes.Bench = d.maxes.Bench || d.maxes.bench || 0;
@@ -82,11 +94,11 @@ async function loadFromCloud(uid) {
             if(d.completed) state.completed = d.completed;
             if(d.settings) { state.settings = d.settings; if(document.getElementById('bodyWeightInput')) document.getElementById('bodyWeightInput').value = state.settings.bw || ''; }
 
-            // FORCE VISUAL UPDATE
-            inputs.Squat.value = state.maxes.Squat || '';
-            inputs.Bench.value = state.maxes.Bench || '';
-            inputs.Deadlift.value = state.maxes.Deadlift || '';
-            inputs.OHP.value = state.maxes.OHP || '';
+            // 2. FORCE VISUAL UPDATE TO INPUT BOXES
+            const sIn = document.getElementById('squatInput'); if(sIn) sIn.value = state.maxes.Squat || '';
+            const bIn = document.getElementById('benchInput'); if(bIn) bIn.value = state.maxes.Bench || '';
+            const dIn = document.getElementById('deadliftInput'); if(dIn) dIn.value = state.maxes.Deadlift || '';
+            const oIn = document.getElementById('ohpInput'); if(oIn) oIn.value = state.maxes.OHP || '';
 
             render();
         }
