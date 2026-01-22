@@ -2,8 +2,7 @@
    1. FIREBASE SETUP & IMPORTS
    ========================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-// ADDED: getRedirectResult to the imports
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // YOUR KEYS
@@ -282,20 +281,7 @@ function init() {
     });
   });
 
-  // 2. CHECK FOR REDIRECT RESULT (The Mobile "Catcher")
-  // This looks for the "return ticket" from Google after a page reload
-  getRedirectResult(auth)
-    .then((result) => {
-        if (result && result.user) {
-            console.log("Returned from Redirect Login:", result.user.email);
-            // The onAuthStateChanged listener will handle the actual loading
-        }
-    })
-    .catch((error) => {
-        console.error("Redirect Error:", error);
-    });
-
-  // 3. Auth Listener (The Key to Firebase)
+  // 2. Auth Listener (The Key to Firebase)
   onAuthStateChanged(auth, (user) => {
       if (user) {
           console.log("User found, loading cloud data...");
@@ -318,22 +304,21 @@ function init() {
       }
   });
 
-  // 4. Login/Logout Buttons
+  // 3. Login/Logout Buttons
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
 
   if(loginBtn) {
       loginBtn.addEventListener('click', () => {
-          // MOBILE FRIENDLY LOGIN CHECK
-          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-          
-          if (isMobile) {
-            // Use REDIRECT on phones (Page reloads)
-            signInWithRedirect(auth, provider);
-          } else {
-            // Use POPUP on computers (Stays on page)
-            signInWithPopup(auth, provider).catch(console.error);
-          }
+        // USE POPUP FOR EVERYONE (Redirect is blocked by Safari ITP)
+        signInWithPopup(auth, provider)
+          .then((result) => {
+             console.log("Login Success:", result.user);
+          })
+          .catch((error) => {
+             console.error("Login Failed:", error);
+             alert("Login Failed: " + error.message);
+          });
       });
   }
   if(logoutBtn) {
@@ -344,10 +329,10 @@ function init() {
       });
   }
 
-  // 5. Modal Closer
+  // 4. Modal Closer
   window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; }
   
-  // 6. Initial Render
+  // 5. Initial Render
   render();
   updateTimerDisplay();
 }
