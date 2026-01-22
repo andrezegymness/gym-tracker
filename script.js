@@ -61,7 +61,6 @@ const andreData = {
     "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
   }
 };
-// Deload Generation for Andre
 andreData[6] = {};
 if(andreData[1]) {
     Object.keys(andreData[1]).forEach(day => {
@@ -71,7 +70,7 @@ if(andreData[1]) {
     });
 }
 
-// Andre Accessories (with Base Calculation data)
+// Andre Accessories
 const andreAccessories = {
   "Tuesday": [ { name: "Close Grip Bench", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.72 }, { name: "Larsen Press", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.68 }, { name: "Tricep Pushdowns", sets: "3x12", weeks: [1,2,3,6] } ],
   "Wednesday": [ { name: "Leg Extensions", sets: "3x15", weeks: [1,2,3,4,6] }, { name: "Pendulum Squat", sets: "3x8", weeks: [1,2,3,4,6] }, { name: "Walking Lunges", sets: "3x12", weeks: [1,2,3,6] }, { name: "Leg Press", sets: "4x10", weeks: [1,2,3,4,6] }, { name: "GHR", sets: "3x8", weeks: [1,2,3,4,6] } ],
@@ -147,7 +146,6 @@ function init() {
     inputs[key].addEventListener('input', (e) => {
       state.maxes[key] = parseFloat(e.target.value) || 0;
       deferredSave(); 
-      // Force render on input so it updates immediately
       render();
     });
   });
@@ -162,7 +160,6 @@ function init() {
           closeModal('authModal');
       } else {
           updateAuthUI(null);
-          // Always render defaults even if not logged in
           render();
       }
   });
@@ -650,7 +647,7 @@ window.openPlateCalc = (w) => {
     document.getElementById('plateTarget').innerText = wt + " " + state.unit;
     document.getElementById('plateVisuals').innerHTML = getPlates(wt);
     document.getElementById('plateText').innerText = "Load per side (Bar = " + (state.unit==='LBS'?45:20) + ")";
-}
+};
 window.openWarmup = (lift, w) => {
     document.getElementById('warmupModal').style.display = 'flex';
     document.getElementById('wuTarget').value = parseFloat(w) || 0;
@@ -692,7 +689,13 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
-            if(d.maxes) state.maxes = d.maxes;
+            if(d.maxes) {
+                // FORCE CAPITALIZATION MATCH
+                state.maxes.Squat = d.maxes.Squat || d.maxes.squat || 0;
+                state.maxes.Bench = d.maxes.Bench || d.maxes.bench || 0;
+                state.maxes.Deadlift = d.maxes.Deadlift || d.maxes.deadlift || 0;
+                state.maxes.OHP = d.maxes.OHP || d.maxes.ohp || 0;
+            }
             if(d.activeProgram) state.activeProgram = d.activeProgram;
             if(d.activeWeek) state.activeWeek = d.activeWeek;
             if(d.dashMode) state.dashMode = d.dashMode;
@@ -708,7 +711,12 @@ async function loadFromCloud(uid) {
                 document.getElementById('rackBench').value = state.settings.rackBench || '';
             }
             
-            Object.keys(inputs).forEach(k => { if(inputs[k]) inputs[k].value = state.maxes[k]; });
+            // MANUALLY FILL INPUTS
+            if(inputs.Squat) inputs.Squat.value = state.maxes.Squat || '';
+            if(inputs.Bench) inputs.Bench.value = state.maxes.Bench || '';
+            if(inputs.Deadlift) inputs.Deadlift.value = state.maxes.Deadlift || '';
+            if(inputs.OHP) inputs.OHP.value = state.maxes.OHP || '';
+
             render();
         }
     } catch(e) { console.error(e); }
