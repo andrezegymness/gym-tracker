@@ -8,7 +8,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// YOUR DATA
+// ANDRE DATA
 const andreData = {
   1: { "Monday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.701, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 3, pct: 0.721, type: "Squat" }, { name: "Pause Squat", sets: 2, reps: 2, pct: 0.74, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ], "Tuesday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.733, type: "Bench" }, { name: "Bench", sets: 4, reps: 3, pct: 0.844, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.756, type: "Bench" } ], "Wednesday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 3, pct: 0.799, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.838, type: "Squat" }, { name: "OHP", sets: 4, reps: 3, pct: 0.804, type: "OHP" } ], "Thursday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.844, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.799, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 1, pct: 0.903, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ], "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.756, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ] },
   2: { "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.773, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.831, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" } ], "Tuesday": [ { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.811, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.778, type: "Bench" } ], "Wednesday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } ], "Thursday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" } ], "Saturday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } ] },
@@ -27,27 +27,40 @@ const andreAccessories = {
 };
 
 const state = { maxes: { Squat:0, Bench:0, Deadlift:0, OHP:0 }, activeWeek: 1, unit: 'LBS', completed: {}, accWeights: {}, notes: {}, settings: { bw: '' } };
-const inputs = { Squat: document.getElementById('squatInput'), Bench: document.getElementById('benchInput'), Deadlift: document.getElementById('deadliftInput'), OHP: document.getElementById('ohpInput') };
 
 function init() {
-    Object.keys(inputs).forEach(k => {
-        inputs[k].addEventListener('input', (e) => {
-            state.maxes[k] = parseFloat(e.target.value) || 0;
+    // Save last page
+    localStorage.setItem('last_program_page', 'andre.html');
+
+    // Input Listeners
+    ['squatInput','benchInput','deadliftInput','ohpInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', (e) => {
+            // Capitalize first letter to match DB keys
+            let key = id.replace('Input',''); key = key.charAt(0).toUpperCase() + key.slice(1);
+            state.maxes[key] = parseFloat(e.target.value) || 0;
             saveToCloud(); render();
         });
     });
+
     getRedirectResult(auth).then(() => {});
     onAuthStateChanged(auth, user => {
         if(user) { 
             loadFromCloud(user.uid); 
             document.getElementById('login-btn').style.display='none'; 
             document.getElementById('logout-btn').style.display='inline-block'; 
+        } else {
+            // If Guest, still allow render but no save
+            render();
         }
     });
-    document.getElementById('googleLoginBtn').addEventListener('click', () => { if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) signInWithRedirect(auth, provider); else signInWithPopup(auth, provider); });
-    document.getElementById('emailLoginBtn').addEventListener('click', () => { signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passInput').value); });
-    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(()=>location.reload()));
     
+    // Auth Buttons
+    const gBtn = document.getElementById('googleLoginBtn'); if(gBtn) gBtn.addEventListener('click', () => { if(/iPhone|iPad/i.test(navigator.userAgent)) signInWithRedirect(auth, provider); else signInWithPopup(auth, provider); });
+    const eBtn = document.getElementById('emailLoginBtn'); if(eBtn) eBtn.addEventListener('click', () => { signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passInput').value); });
+    const lBtn = document.getElementById('logout-btn'); if(lBtn) lBtn.addEventListener('click', () => signOut(auth).then(()=>location.reload()));
+
+    // Globals
     window.setWeek = (n) => { state.activeWeek = n; saveToCloud(); render(); };
     window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; saveToCloud(); render(); };
     window.toggleAcc = (day) => { state.accOpen = state.accOpen || {}; state.accOpen[day] = !state.accOpen[day]; render(); };
@@ -60,7 +73,7 @@ function init() {
     window.closeModal = (id) => document.getElementById(id).style.display='none';
     window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
     
-    // CALCULATORS
+    // Tools
     window.calculateOneRM = () => { const w=parseFloat(document.getElementById('calcWeight').value), r=parseFloat(document.getElementById('calcReps').value); if(w&&r) { document.getElementById('oneRmResults').style.display='block'; document.getElementById('formulaBody').innerHTML=`<tr><td>Est 1RM</td><td>${Math.round(w*(1+0.0333*r))}</td></tr>`; } };
     window.calculateDotsOnly = () => { const t=document.getElementById('dotsTotalInput').value, b=document.getElementById('bodyWeightInput').value; if(t&&b) { document.getElementById('dotsResults').style.display='block'; document.getElementById('dotsDisplay').innerText=calculateDots(t,b); } };
     window.openMeetPlanner = () => { const m = document.getElementById('meetModal'); const g = document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span>${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span>${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span>${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
@@ -69,7 +82,7 @@ function init() {
         const wt = parseFloat(w); document.getElementById('plateTarget').innerText = wt + " " + state.unit;
         document.getElementById('plateVisuals').innerHTML = getPlates(wt); document.getElementById('plateText').innerText = "Load per side";
     };
-
+    
     render();
 }
 
@@ -84,7 +97,7 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
-            // 1. FILL STATE
+            // 1. DATA HYDRATION (CASE INSENSITIVE)
             if(d.maxes) {
                 state.maxes.Squat = d.maxes.Squat || d.maxes.squat || 0;
                 state.maxes.Bench = d.maxes.Bench || d.maxes.bench || 0;
@@ -98,11 +111,12 @@ async function loadFromCloud(uid) {
             if(d.notes) state.notes = d.notes;
             if(d.settings) state.settings = d.settings;
 
-            // 2. FORCE VISUAL UPDATE TO INPUTS (THE FIX)
-            if(inputs.Squat) inputs.Squat.value = state.maxes.Squat || '';
-            if(inputs.Bench) inputs.Bench.value = state.maxes.Bench || '';
-            if(inputs.Deadlift) inputs.Deadlift.value = state.maxes.Deadlift || '';
-            if(inputs.OHP) inputs.OHP.value = state.maxes.OHP || '';
+            // 2. FORCE VISUAL UPDATE TO INPUT BOXES
+            const sIn = document.getElementById('squatInput'); if(sIn) sIn.value = state.maxes.Squat || '';
+            const bIn = document.getElementById('benchInput'); if(bIn) bIn.value = state.maxes.Bench || '';
+            const dIn = document.getElementById('deadliftInput'); if(dIn) dIn.value = state.maxes.Deadlift || '';
+            const oIn = document.getElementById('ohpInput'); if(oIn) oIn.value = state.maxes.OHP || '';
+            
             if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
 
             render();
@@ -117,7 +131,6 @@ function getPlates(weight) { let target = parseFloat(weight); if(isNaN(target)) 
 function render() {
     const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
     document.getElementById('currentTotal').innerText = total;
-    if(document.getElementById('unitLabel')) document.getElementById('unitLabel').innerText = state.unit;
     document.getElementById('currentDots').innerText = calculateDots(total, state.settings.bw);
 
     document.querySelectorAll('.nav-btn').forEach(b => {
@@ -142,7 +155,7 @@ function render() {
         exs.forEach((m, i) => {
             const uid = `Andre-${state.activeWeek}-${day}-${i}`;
             const max = state.maxes[m.type] || 0;
-            let load = (max > 0) ? Math.round((max * m.pct)/5)*5 + " " + state.unit : Math.round(m.pct*100) + "%";
+            let load = (max > 0) ? Math.round((max * m.pct)/5)*5 + " LBS" : Math.round(m.pct*100) + "%";
             html += `<tr class="row-${m.type} ${state.completed[uid]?'completed':''}" onclick="toggleComplete('${uid}')"><td>${m.name}</td><td>${m.sets}</td><td>${m.reps}</td><td class="load-cell" onclick="event.stopPropagation();openPlateCalc('${getLoad(m.pct, max)}')">${load}</td></tr>`;
         });
         html += `</table>`;
@@ -155,7 +168,7 @@ function render() {
                 if(a.base && state.maxes[a.base] > 0) {
                     let w = state.activeWeek === 6 ? 0 : state.activeWeek - 1;
                     let load = Math.round((state.maxes[a.base] * (a.basePct + (w * 0.025)))/5)*5;
-                    recHtml = `<span class="acc-rec">Rec: ${load} ${state.unit}</span>`;
+                    recHtml = `<span class="acc-rec">Rec: ${load} LBS</span>`;
                 }
                 accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${state.accWeights[accId]||''}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
             });
