@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"; 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -8,6 +8,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+// YOUR DATA
 const andreData = {
   1: { "Monday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.701, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 3, pct: 0.721, type: "Squat" }, { name: "Pause Squat", sets: 2, reps: 2, pct: 0.74, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ], "Tuesday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.733, type: "Bench" }, { name: "Bench", sets: 4, reps: 3, pct: 0.844, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.756, type: "Bench" } ], "Wednesday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 3, pct: 0.799, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.838, type: "Squat" }, { name: "OHP", sets: 4, reps: 3, pct: 0.804, type: "OHP" } ], "Thursday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.844, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.799, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 1, pct: 0.903, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ], "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.756, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ] },
   2: { "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.773, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.831, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" } ], "Tuesday": [ { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.811, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.778, type: "Bench" } ], "Wednesday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } ], "Thursday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" } ], "Saturday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } ] },
@@ -29,52 +30,53 @@ const state = { maxes: { Squat:0, Bench:0, Deadlift:0, OHP:0 }, activeWeek: 1, u
 const inputs = { Squat: document.getElementById('squatInput'), Bench: document.getElementById('benchInput'), Deadlift: document.getElementById('deadliftInput'), OHP: document.getElementById('ohpInput') };
 
 function init() {
-    Object.keys(inputs).forEach(k => { inputs[k].addEventListener('input', e => { state.maxes[k] = parseFloat(e.target.value) || 0; saveToCloud(); render(); }); });
+    Object.keys(inputs).forEach(k => {
+        inputs[k].addEventListener('input', (e) => {
+            state.maxes[k] = parseFloat(e.target.value) || 0;
+            saveToCloud(); render();
+        });
+    });
     getRedirectResult(auth).then(() => {});
     onAuthStateChanged(auth, user => {
-        if(user) { loadFromCloud(user.uid); updateAuthUI(true); closeModal('authModal'); } else { updateAuthUI(false); render(); }
+        if(user) { 
+            loadFromCloud(user.uid); 
+            document.getElementById('login-btn').style.display='none'; 
+            document.getElementById('logout-btn').style.display='inline-block'; 
+        }
     });
-    setupAuthButtons();
+    document.getElementById('googleLoginBtn').addEventListener('click', () => { if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) signInWithRedirect(auth, provider); else signInWithPopup(auth, provider); });
+    document.getElementById('emailLoginBtn').addEventListener('click', () => { signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passInput').value); });
+    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(()=>location.reload()));
+    
     window.setWeek = (n) => { state.activeWeek = n; saveToCloud(); render(); };
     window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; saveToCloud(); render(); };
     window.toggleAcc = (day) => { state.accOpen = state.accOpen || {}; state.accOpen[day] = !state.accOpen[day]; render(); };
     window.updateAccWeight = (id, val) => { state.accWeights[id] = val; saveToCloud(); };
     window.updateNote = (id, val) => { state.notes[id] = val; saveToCloud(); };
     window.saveSettings = () => { state.settings.bw = document.getElementById('bodyweight').value; saveToCloud(); render(); };
+    
     window.openTools = () => { document.getElementById('toolsModal').style.display='flex'; if(state.settings.bw) document.getElementById('bodyweight').value = state.settings.bw; };
     window.openAuthModal = () => document.getElementById('authModal').style.display='flex';
     window.closeModal = (id) => document.getElementById(id).style.display='none';
-    window.openMeetPlanner = () => { const m = document.getElementById('meetModal'); const g = document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span>${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span>${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span>${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
-    window.copyData = () => { alert("Data saved."); };
     window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
     
-    // Tools
+    // CALCULATORS
     window.calculateOneRM = () => { const w=parseFloat(document.getElementById('calcWeight').value), r=parseFloat(document.getElementById('calcReps').value); if(w&&r) { document.getElementById('oneRmResults').style.display='block'; document.getElementById('formulaBody').innerHTML=`<tr><td>Est 1RM</td><td>${Math.round(w*(1+0.0333*r))}</td></tr>`; } };
     window.calculateDotsOnly = () => { const t=document.getElementById('dotsTotalInput').value, b=document.getElementById('bodyWeightInput').value; if(t&&b) { document.getElementById('dotsResults').style.display='block'; document.getElementById('dotsDisplay').innerText=calculateDots(t,b); } };
+    window.openMeetPlanner = () => { const m = document.getElementById('meetModal'); const g = document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span>${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span>${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span>${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
     window.openPlateCalc = (w) => {
         if(String(w).includes('%')) return; document.getElementById('plateModal').style.display = 'flex';
         const wt = parseFloat(w); document.getElementById('plateTarget').innerText = wt + " " + state.unit;
         document.getElementById('plateVisuals').innerHTML = getPlates(wt); document.getElementById('plateText').innerText = "Load per side";
     };
-    
+
     render();
-}
-
-function updateAuthUI(loggedIn) {
-    if(loggedIn) { document.getElementById('login-btn').style.display='none'; document.getElementById('logout-btn').style.display='flex'; }
-    else { document.getElementById('login-btn').style.display='flex'; document.getElementById('logout-btn').style.display='none'; }
-}
-
-function setupAuthButtons() {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    document.getElementById('googleLoginBtn').addEventListener('click', () => { if(isMobile) signInWithRedirect(auth, provider); else signInWithPopup(auth, provider); });
-    document.getElementById('emailLoginBtn').addEventListener('click', () => { signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passInput').value); });
-    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(()=>location.reload()));
 }
 
 async function saveToCloud() {
     const user = auth.currentUser; if(!user) return;
-    try { await setDoc(doc(db, "users", user.uid), state, { merge: true }); } catch(e) {}
+    try { await setDoc(doc(db, "users", user.uid), state, { merge: true }); 
+    const t = document.querySelector('.brand'); if(t) { t.style.color='#4caf50'; setTimeout(()=>t.style.color='', 500); } } catch(e) {}
 }
 
 async function loadFromCloud(uid) {
@@ -82,6 +84,7 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
+            // 1. FILL STATE
             if(d.maxes) {
                 state.maxes.Squat = d.maxes.Squat || d.maxes.squat || 0;
                 state.maxes.Bench = d.maxes.Bench || d.maxes.bench || 0;
@@ -89,20 +92,22 @@ async function loadFromCloud(uid) {
                 state.maxes.OHP = d.maxes.OHP || d.maxes.ohp || 0;
             }
             if(d.activeWeek) state.activeWeek = d.activeWeek;
+            if(d.unit) state.unit = d.unit;
             if(d.completed) state.completed = d.completed;
             if(d.accWeights) state.accWeights = d.accWeights;
             if(d.notes) state.notes = d.notes;
             if(d.settings) state.settings = d.settings;
 
-            // FORCE VISUAL UPDATE
-            inputs.Squat.value = state.maxes.Squat || '';
-            inputs.Bench.value = state.maxes.Bench || '';
-            inputs.Deadlift.value = state.maxes.Deadlift || '';
-            inputs.OHP.value = state.maxes.OHP || '';
-            
+            // 2. FORCE VISUAL UPDATE TO INPUTS (THE FIX)
+            if(inputs.Squat) inputs.Squat.value = state.maxes.Squat || '';
+            if(inputs.Bench) inputs.Bench.value = state.maxes.Bench || '';
+            if(inputs.Deadlift) inputs.Deadlift.value = state.maxes.Deadlift || '';
+            if(inputs.OHP) inputs.OHP.value = state.maxes.OHP || '';
+            if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
+
             render();
         }
-    } catch(e) {}
+    } catch(e) { console.log(e); }
 }
 
 function getLoad(pct, max) { let val = max * pct; return state.unit==='KG' ? Math.round(val/2.5)*2.5 : Math.round(val/5)*5; }
@@ -112,6 +117,7 @@ function getPlates(weight) { let target = parseFloat(weight); if(isNaN(target)) 
 function render() {
     const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
     document.getElementById('currentTotal').innerText = total;
+    if(document.getElementById('unitLabel')) document.getElementById('unitLabel').innerText = state.unit;
     document.getElementById('currentDots').innerText = calculateDots(total, state.settings.bw);
 
     document.querySelectorAll('.nav-btn').forEach(b => {
