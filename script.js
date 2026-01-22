@@ -1,5 +1,5 @@
 /* =========================================
-   1. FIREBASE SETUP & IMPORTS
+   1. FIREBASE SETUP
    ========================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -61,6 +61,7 @@ const andreData = {
     "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
   }
 };
+// Deload Generation for Andre
 andreData[6] = {};
 if(andreData[1]) {
     Object.keys(andreData[1]).forEach(day => {
@@ -70,7 +71,7 @@ if(andreData[1]) {
     });
 }
 
-// Andre Accessories
+// Andre Accessories (with Base Calculation data)
 const andreAccessories = {
   "Tuesday": [ { name: "Close Grip Bench", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.72 }, { name: "Larsen Press", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.68 }, { name: "Tricep Pushdowns", sets: "3x12", weeks: [1,2,3,6] } ],
   "Wednesday": [ { name: "Leg Extensions", sets: "3x15", weeks: [1,2,3,4,6] }, { name: "Pendulum Squat", sets: "3x8", weeks: [1,2,3,4,6] }, { name: "Walking Lunges", sets: "3x12", weeks: [1,2,3,6] }, { name: "Leg Press", sets: "4x10", weeks: [1,2,3,4,6] }, { name: "GHR", sets: "3x8", weeks: [1,2,3,4,6] } ],
@@ -80,7 +81,7 @@ const andreAccessories = {
 };
 
 /* =========================================
-   3. DATA: BASE MAP LINEAR
+   3. DATA: BASE MAP LINEAR (Dynamic Logic)
    ========================================= */
 const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
 const standardProg = 0.0425, maintProg = 0.02, tempoStartPct = 0.71, tempoProg = 0.04;
@@ -123,7 +124,10 @@ const state = {
   dashFasted: false,
   dashMobileWeek: 0,
   unit: 'LBS',
-  completed: {}, accWeights: {}, notes: {}, 
+  completed: {}, 
+  accWeights: {}, 
+  notes: {}, 
+  ownerEmail: null,
   settings: { rackSquat: '', rackBench: '', bw: '' },
   timer: 180, timerRunning: false, timerInterval: null
 };
@@ -142,7 +146,9 @@ function init() {
   Object.keys(inputs).forEach(key => {
     inputs[key].addEventListener('input', (e) => {
       state.maxes[key] = parseFloat(e.target.value) || 0;
-      deferredSave(); render();
+      deferredSave(); 
+      // Force render on input so it updates immediately
+      render();
     });
   });
 
@@ -156,6 +162,7 @@ function init() {
           closeModal('authModal');
       } else {
           updateAuthUI(null);
+          // Always render defaults even if not logged in
           render();
       }
   });
@@ -315,6 +322,7 @@ function init() {
 
   window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; };
   
+  // Force initial render even before cloud sync
   render();
   updateTimerDisplay();
 }
