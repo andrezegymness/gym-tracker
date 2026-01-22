@@ -328,7 +328,15 @@ function deferredSave() {
 async function saveToCloud() { 
   const user = auth.currentUser;
   if (!user) return; // Don't save if not logged in
+// --- ADD THESE 3 NEW LINES HERE ---
+  state.ownerEmail = user.email;
+  state.ownerName = user.displayName;
+  state.lastSaved = new Date().toDateString();
+  // ----------------------------------
 
+  try {
+      // Save the entire STATE object to Firestore
+      await setDoc(doc(db, "users", user.uid), state, { merge: true });
   try {
       // Save the entire STATE object to Firestore
       await setDoc(doc(db, "users", user.uid), state, { merge: true });
