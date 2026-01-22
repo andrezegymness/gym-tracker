@@ -2,8 +2,8 @@
    1. FIREBASE SETUP & IMPORTS
    ========================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-// ADDED: signInWithRedirect
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// ADDED: getRedirectResult to the imports
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // YOUR KEYS
@@ -282,25 +282,49 @@ function init() {
     });
   });
 
-  // 2. Auth Listener (The Key to Firebase)
-  // This detects when you come back from Google Login
+  // 2. CHECK FOR REDIRECT RESULT (The Mobile "Catcher")
+  // This looks for the "return ticket" from Google after a page reload
+  getRedirectResult(auth)
+    .then((result) => {
+        if (result && result.user) {
+            console.log("Returned from Redirect Login:", result.user.email);
+            // The onAuthStateChanged listener will handle the actual loading
+        }
+    })
+    .catch((error) => {
+        console.error("Redirect Error:", error);
+    });
+
+  // 3. Auth Listener (The Key to Firebase)
   onAuthStateChanged(auth, (user) => {
       if (user) {
           console.log("User found, loading cloud data...");
           loadFromCloud(user.uid);
+          // Update Login Button to show Logout
+          const loginBtn = document.getElementById('login-btn');
+          const logoutBtn = document.getElementById('logout-btn');
+          if(loginBtn) loginBtn.style.display = 'none';
+          if(logoutBtn) {
+             logoutBtn.style.display = 'flex';
+             logoutBtn.innerHTML = `<span class="icon">👋</span> ${user.displayName.split(' ')[0]}`;
+          }
       } else {
           console.log("No user, empty state.");
+          const loginBtn = document.getElementById('login-btn');
+          const logoutBtn = document.getElementById('logout-btn');
+          if(loginBtn) loginBtn.style.display = 'flex';
+          if(logoutBtn) logoutBtn.style.display = 'none';
           render(); 
       }
   });
 
-  // 3. Login/Logout Buttons
+  // 4. Login/Logout Buttons
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
 
   if(loginBtn) {
       loginBtn.addEventListener('click', () => {
-          // MOBILE FRIENDLY LOGIN
+          // MOBILE FRIENDLY LOGIN CHECK
           const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
           
           if (isMobile) {
@@ -320,10 +344,10 @@ function init() {
       });
   }
 
-  // 4. Modal Closer
+  // 5. Modal Closer
   window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; }
   
-  // 5. Initial Render
+  // 6. Initial Render
   render();
   updateTimerDisplay();
 }
