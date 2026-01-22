@@ -21,7 +21,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 /* =========================================
-   2. DATA: ANDRE MAP WAVE (FULL DATA)
+   2. DATA: ANDRE MAP WAVE (FULL)
    ========================================= */
 const andreData = {
   1: {
@@ -61,6 +61,7 @@ const andreData = {
     "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
   }
 };
+// Deload Generation for Andre
 andreData[6] = {};
 if(andreData[1]) {
     Object.keys(andreData[1]).forEach(day => {
@@ -80,7 +81,7 @@ const andreAccessories = {
 };
 
 /* =========================================
-   3. DATA: BASE MAP LINEAR
+   3. DATA: BASE MAP LINEAR (Dynamic Logic)
    ========================================= */
 const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
 const standardProg = 0.0425, maintProg = 0.02, tempoStartPct = 0.71, tempoProg = 0.04;
@@ -131,23 +132,28 @@ const state = {
   timer: 180, timerRunning: false, timerInterval: null
 };
 
-const inputs = {
-  Squat: document.getElementById('squatInput'),
-  Bench: document.getElementById('benchInput'),
-  Deadlift: document.getElementById('deadliftInput'),
-  OHP: document.getElementById('ohpInput')
-};
+// Global Inputs
+const inputs = {};
 
 /* =========================================
    5. INIT
    ========================================= */
 function init() {
+  // Grab inputs ONCE
+  inputs.Squat = document.getElementById('squatInput');
+  inputs.Bench = document.getElementById('benchInput');
+  inputs.Deadlift = document.getElementById('deadliftInput');
+  inputs.OHP = document.getElementById('ohpInput');
+
+  // Attach Listeners
   Object.keys(inputs).forEach(key => {
-    inputs[key].addEventListener('input', (e) => {
-      state.maxes[key] = parseFloat(e.target.value) || 0;
-      deferredSave(); 
-      render();
-    });
+    if(inputs[key]) {
+        inputs[key].addEventListener('input', (e) => {
+          state.maxes[key] = parseFloat(e.target.value) || 0;
+          deferredSave(); 
+          render();
+        });
+    }
   });
 
   getRedirectResult(auth).then((result) => { if (result && result.user) console.log("Redirect OK"); });
@@ -160,7 +166,6 @@ function init() {
           closeModal('authModal');
       } else {
           updateAuthUI(null);
-          // Always render defaults even if not logged in
           render();
       }
   });
@@ -317,7 +322,6 @@ function init() {
 
   window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; };
   
-  // Force initial render even before cloud sync
   render();
   updateTimerDisplay();
 }
@@ -362,17 +366,18 @@ function setupAuthButtons() {
    6. RENDER LOGIC
    ========================================= */
 function render() {
+    // 1. UPDATE STATS
+    const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
+    document.getElementById('currentTotal').innerText = total;
     document.getElementById('unitLabel').innerText = state.unit;
-    updateStats();
-    
+    document.getElementById('currentDots').innerText = calculateDots(total, state.settings.bw, state.unit);
+
+    // 2. SET PROGRAM DROPDOWN & VISIBILITY
+    const progSelect = document.getElementById('programSelect');
+    if(progSelect.value !== state.activeProgram) progSelect.value = state.activeProgram;
+
     const andreView = document.getElementById('view-andre');
     const dashView = document.getElementById('view-dashboard');
-    const progSelect = document.getElementById('programSelect');
-    
-    // Ensure dropdown matches state
-    if(progSelect.value !== state.activeProgram) {
-        progSelect.value = state.activeProgram;
-    }
 
     if (state.activeProgram === "AndreMapWave") {
         andreView.style.display = 'block';
@@ -383,14 +388,21 @@ function render() {
         dashView.style.display = 'block';
         
         // Sync Dashboard Inputs
-        if(document.getElementById('dashMode').value !== state.dashMode) document.getElementById('dashMode').value = state.dashMode;
-        if(document.getElementById('dashReps').value !== state.dashReps) document.getElementById('dashReps').value = state.dashReps;
-        
+        const dMode = document.getElementById('dashMode');
+        const dReps = document.getElementById('dashReps');
         const fBtn = document.getElementById('fastedBtn');
-        fBtn.innerText = state.dashFasted ? "Fasted: ON" : "Fasted: OFF";
-        fBtn.classList.toggle('active', state.dashFasted);
         
-        document.getElementById('mobileWeekLabel').innerText = "Week " + (state.dashMobileWeek + 1);
+        if(dMode && dMode.value !== state.dashMode) dMode.value = state.dashMode;
+        if(dReps && dReps.value !== state.dashReps) dReps.value = state.dashReps;
+        
+        if(fBtn) {
+            fBtn.innerText = state.dashFasted ? "Fasted: ON" : "Fasted: OFF";
+            fBtn.classList.toggle('active', state.dashFasted);
+        }
+        
+        const mobLabel = document.getElementById('mobileWeekLabel');
+        if(mobLabel) mobLabel.innerText = "Week " + (state.dashMobileWeek + 1);
+        
         renderDashboard();
     }
 }
@@ -431,12 +443,12 @@ function renderAndreOG() {
         });
         html += `</table>`;
         
-        // Accessories (RESTORED PROGRESSIVE OVERLOAD LOGIC)
+        // Accessories
         if(showAcc) {
             let accHtml = `<div class="acc-section"><div class="acc-toggle" onclick="toggleAcc('${day}')"><span>Accessories</span><span>▼</span></div><div class="acc-content ${state.accOpen && state.accOpen[day]?'open':''}">`;
             accList.filter(a => a.weeks.includes(state.activeWeek)).forEach(a => {
                 const accId = `acc-${day}-${a.name}`;
-                // THE LOST LOGIC RESTORED:
+                // PROGRESSIVE OVERLOAD LOGIC
                 let recHtml = '';
                 if(a.base && state.maxes[a.base] > 0) {
                     let weeksElapsed = state.activeWeek - 1;
@@ -589,99 +601,6 @@ function getPlates(weight) {
     return html;
 }
 
-// Tools
-window.calculateOneRM = () => {
-    const w = parseFloat(document.getElementById('calcWeight').value);
-    const r = parseFloat(document.getElementById('calcReps').value);
-    if(w && r) {
-        document.getElementById('oneRmResults').style.display = 'block';
-        const epley = Math.round(w * (1 + 0.0333 * r));
-        const brzycki = Math.round(w * (36 / (37 - r)));
-        document.getElementById('formulaBody').innerHTML = `<tr><td>Epley</td><td>${epley} ${state.unit}</td></tr><tr><td>Brzycki</td><td>${brzycki} ${state.unit}</td></tr><tr><td><strong>Average</strong></td><td><strong>${Math.round((epley+brzycki)/2)} ${state.unit}</strong></td></tr>`;
-    }
-}
-window.calculateDotsOnly = () => {
-    const t = document.getElementById('dotsTotalInput').value;
-    const b = document.getElementById('bodyWeightInput').value;
-    if(t && b) {
-        document.getElementById('dotsResults').style.display = 'block';
-        document.getElementById('dotsDisplay').innerText = calculateDots(t, b, state.unit);
-        // Save BW to settings for next time
-        state.settings.bw = b; deferredSave();
-    }
-}
-window.updateAccOptions = () => {
-    const cat = document.getElementById('accCategory').value;
-    document.getElementById('accExercise').innerHTML = accessoryData[cat].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
-    window.displayAccDetails();
-}
-window.displayAccDetails = () => {
-    const cat = document.getElementById('accCategory').value;
-    const name = document.getElementById('accExercise').value;
-    const d = accessoryData[cat].find(e => e.name === name);
-    if(d) {
-        document.getElementById('accDetails').style.display = 'block';
-        document.getElementById('accName').innerText = d.name;
-        document.getElementById('accNotes').innerText = d.notes;
-        document.getElementById('accTier').innerText = d.tier + " TIER";
-    }
-}
-
-// Modals
-window.openTools = () => {
-    document.getElementById('toolsModal').style.display = 'flex';
-    // Auto-fill DOTS inputs if data exists
-    const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
-    document.getElementById('dotsTotalInput').value = total;
-    document.getElementById('bodyWeightInput').value = state.settings.bw || '';
-};
-window.openAuthModal = () => document.getElementById('authModal').style.display = 'flex';
-window.openMeetPlanner = () => {
-    const m = document.getElementById('meetModal'); const g = document.getElementById('meetGrid');
-    m.style.display='flex';
-    const l = ['Squat','Bench','Deadlift']; let h='';
-    l.forEach(x => {
-        const mx = state.maxes[x]||0;
-        h+=`<div class="meet-col"><h4 style="border-color:var(--${x.toLowerCase()})">${x}</h4>
-        <div class="attempt-row"><span class="attempt-label">Opener</span><span class="attempt-val">${mx>0?getLoad(0.91,mx)+' '+state.unit:'-'}</span></div>
-        <div class="attempt-row"><span class="attempt-label">2nd</span><span class="attempt-val">${mx>0?getLoad(0.96,mx)+' '+state.unit:'-'}</span></div>
-        <div class="attempt-row"><span class="attempt-label">3rd</span><span class="attempt-val pr">${mx>0?getLoad(1.02,mx)+' '+state.unit:'-'}</span></div></div>`;
-    });
-    g.innerHTML=h;
-};
-window.openPlateCalc = (w) => {
-    if(String(w).includes('%')) return;
-    document.getElementById('plateModal').style.display = 'flex';
-    const wt = parseFloat(w);
-    document.getElementById('plateTarget').innerText = wt + " " + state.unit;
-    document.getElementById('plateVisuals').innerHTML = getPlates(wt);
-    document.getElementById('plateText').innerText = "Load per side (Bar = " + (state.unit==='LBS'?45:20) + ")";
-};
-window.openWarmup = (lift, w) => {
-    document.getElementById('warmupModal').style.display = 'flex';
-    document.getElementById('wuTarget').value = parseFloat(w) || 0;
-    // Map internal types to simple types for dropdown
-    let simpleLift = 'squat';
-    if(lift.toLowerCase().includes('bench')) simpleLift = 'bench';
-    else if(lift.toLowerCase().includes('dead')) simpleLift = 'deadlift';
-    else if(lift.toLowerCase().includes('ohp')) simpleLift = 'ohp';
-    
-    document.getElementById('wuLiftType').value = simpleLift;
-    window.calculateWarmup(); // Trigger calculation immediately
-}
-window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-window.saveSettings = () => {
-    state.settings.bw = document.getElementById('bodyweight').value;
-    if(document.getElementById('bodyWeightInput')) document.getElementById('bodyWeightInput').value = state.settings.bw;
-    state.settings.rackSquat = document.getElementById('rackSquat').value;
-    state.settings.rackBench = document.getElementById('rackBench').value;
-    deferredSave(); render();
-}
-window.copyData = () => {
-    document.getElementById('exportArea').value = JSON.stringify(state);
-    alert("Copied!");
-}
-
 // Saving
 let saveTimeout;
 function deferredSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(saveToCloud, 1500); }
@@ -693,6 +612,7 @@ async function saveToCloud() {
         if(brand) { brand.style.color = '#4caf50'; setTimeout(() => brand.style.color = '#757575', 1000); }
     } catch(e) { console.error(e); }
 }
+
 async function loadFromCloud(uid) {
     try {
         const snap = await getDoc(doc(db, "users", uid));
@@ -701,7 +621,7 @@ async function loadFromCloud(uid) {
             
             // 1. POPULATE STATE
             if(d.maxes) {
-                // Ensure case insensitivity and defaults
+                // FORCE CASE INSENSITIVE LOADING
                 state.maxes.Squat = d.maxes.Squat || d.maxes.squat || 0;
                 state.maxes.Bench = d.maxes.Bench || d.maxes.bench || 0;
                 state.maxes.Deadlift = d.maxes.Deadlift || d.maxes.deadlift || 0;
@@ -722,14 +642,17 @@ async function loadFromCloud(uid) {
                 document.getElementById('rackBench').value = state.settings.rackBench || '';
             }
             
-            // 2. FORCE INPUTS TO VISUALLY UPDATE (The Missing Step)
-            if(document.getElementById('squatInput')) document.getElementById('squatInput').value = state.maxes.Squat || '';
-            if(document.getElementById('benchInput')) document.getElementById('benchInput').value = state.maxes.Bench || '';
-            if(document.getElementById('deadliftInput')) document.getElementById('deadliftInput').value = state.maxes.Deadlift || '';
-            if(document.getElementById('ohpInput')) document.getElementById('ohpInput').value = state.maxes.OHP || '';
+            // 2. FORCE VISUAL UPDATE OF INPUTS (Crucial Fix)
+            if(inputs.Squat) inputs.Squat.value = state.maxes.Squat || '';
+            if(inputs.Bench) inputs.Bench.value = state.maxes.Bench || '';
+            if(inputs.Deadlift) inputs.Deadlift.value = state.maxes.Deadlift || '';
+            if(inputs.OHP) inputs.OHP.value = state.maxes.OHP || '';
 
-            // 3. FORCE PROGRAM RENDER
+            // 3. FORCE RENDER
             render();
+            
+            // 4. SAFETY RE-RENDER (Catch-all for slow DOM)
+            setTimeout(render, 500); 
         }
     } catch(e) { console.error(e); }
 }
