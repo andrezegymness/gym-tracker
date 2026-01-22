@@ -2,8 +2,8 @@
    1. FIREBASE SETUP & IMPORTS
    ========================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-// ADDED: setPersistence, browserLocalPersistence
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, getRedirectResult, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// BACK TO BASICS: Only importing the essentials
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // YOUR KEYS
@@ -277,29 +277,17 @@ function init() {
   Object.keys(inputs).forEach(key => {
     inputs[key].addEventListener('input', (e) => {
       state.maxes[key] = parseFloat(e.target.value) || 0;
-      deferredSave(); 
+      deferredSave(); // Save to Cloud when done typing
       render();
     });
   });
 
-  // 2. CHECK FOR REDIRECT RESULT (The "Catcher" Logic)
-  // This must run before Auth State Listener
-  getRedirectResult(auth)
-    .then((result) => {
-        if (result && result.user) {
-            console.log("Returned from Redirect Login:", result.user.email);
-            // We don't need to do anything else, the AuthListener below will handle the rest
-        }
-    })
-    .catch((error) => {
-        console.error("Redirect Error:", error);
-    });
-
-  // 3. Auth Listener (The Key to Firebase)
+  // 2. Auth Listener (The Key to Firebase)
   onAuthStateChanged(auth, (user) => {
       if (user) {
           console.log("User found, loading cloud data...");
           loadFromCloud(user.uid);
+          // Update Login Button to show Logout
           const loginBtn = document.getElementById('login-btn');
           const logoutBtn = document.getElementById('logout-btn');
           if(loginBtn) loginBtn.style.display = 'none';
@@ -317,28 +305,18 @@ function init() {
       }
   });
 
-  // 4. Login/Logout Buttons
+  // 3. Login/Logout Buttons
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
 
   if(loginBtn) {
       loginBtn.addEventListener('click', () => {
-          // MOBILE FIX: Set Persistence FIRST, then Redirect
-          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-          
-          if (isMobile) {
-            // Force browser to REMEMBER the user before redirecting
-            setPersistence(auth, browserLocalPersistence)
-                .then(() => {
-                    return signInWithRedirect(auth, provider);
-                })
-                .catch((error) => {
-                    alert("Login Error: " + error.message);
-                });
-          } else {
-            // Computers: Use Popup
-            signInWithPopup(auth, provider).catch(console.error);
-          }
+         // IMMEDIATE POPUP - NO DELAY
+         // This bypasses the mobile popup blocker because it is instant
+         signInWithPopup(auth, provider)
+            .catch((error) => {
+                alert("Login Error: " + error.message);
+            });
       });
   }
   if(logoutBtn) {
@@ -349,10 +327,10 @@ function init() {
       });
   }
 
-  // 5. Modal Closer
+  // 4. Modal Closer
   window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; }
   
-  // 6. Initial Render
+  // 5. Initial Render
   render();
   updateTimerDisplay();
 }
