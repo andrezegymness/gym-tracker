@@ -1,5 +1,5 @@
 /* =========================================
-   1. FIREBASE SETUP & IMPORTS
+   1. FIREBASE SETUP
    ========================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -21,7 +21,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 /* =========================================
-   2. DATA: ANDRE MAP WAVE (FULL)
+   2. DATA: ANDRE MAP WAVE (Restored)
    ========================================= */
 const andreData = {
   1: {
@@ -32,36 +32,11 @@ const andreData = {
     "Friday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.799, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 1, pct: 0.903, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ],
     "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.756, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
   },
-  2: {
-    "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.773, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.831, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" } ],
-    "Tuesday": [ { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.811, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.778, type: "Bench" } ],
-    "Wednesday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } ],
-    "Thursday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ],
-    "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" } ],
-    "Saturday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } ]
-  },
-  3: {
-    "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 2, pct: 0.779, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.89, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.826, type: "OHP" } ],
-    "Tuesday": [ { name: "Bench", sets: 2, reps: 7, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 2, reps: 6, pct: 0.8, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.789, type: "Bench" } ],
-    "Wednesday": [ { name: "Squat", sets: 1, reps: 7, pct: 0.76, type: "Squat" }, { name: "Squat", sets: 2, reps: 6, pct: 0.799, type: "Squat" }, { name: "OHP", sets: 4, reps: 6, pct: 0.783, type: "OHP" } ],
-    "Thursday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.7, type: "Bench" } ],
-    "Friday": [ { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Pause Squat", sets: 3, reps: 2, pct: 0.727, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.783, type: "OHP" } ],
-    "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.841, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.738, type: "Deadlift" } ]
-  },
-  4: {
-    "Monday": [ { name: "Squat", sets: 1, reps: 4, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.773, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 4, pct: 0.903, type: "Squat" }, { name: "Squat (Backoff)", sets: 1, reps: 4, pct: 0.87, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.738, type: "Deadlift" } ],
-    "Wednesday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.792, type: "Squat" }, { name: "Bench", sets: 1, reps: 4, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.8, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.867, type: "Bench" } ],
-    "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.903, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.942, type: "Squat" } ],
-    "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.8, type: "Bench" }, { name: "Bench (Peak)", sets: 1, reps: 1, pct: 0.989, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 1, pct: 0.89, type: "Deadlift" } ]
-  },
-  5: {
-    "Monday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.76, type: "Squat" }, { name: "Bench", sets: 1, reps: 2, pct: 0.6, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.7, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.744, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 3, pct: 0.909, type: "Deadlift" } ],
-    "Wednesday": [ { name: "Squat (Peak)", sets: 1, reps: 2, pct: 0.929, type: "Squat" }, { name: "Squat (Max Effort)", sets: 1, reps: 2, pct: 0.961, type: "Squat" }, { name: "Bench", sets: 1, reps: 3, pct: 0.889, type: "Bench" } ],
-    "Friday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 4, reps: 2, pct: 0.799, type: "Squat" } ],
-    "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
-  }
+  2: { "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.773, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.831, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" } ], "Tuesday": [ { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.811, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.778, type: "Bench" } ], "Wednesday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } ], "Thursday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" } ], "Saturday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } ] },
+  3: { "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 2, pct: 0.779, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.89, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.826, type: "OHP" } ], "Tuesday": [ { name: "Bench", sets: 2, reps: 7, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 2, reps: 6, pct: 0.8, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.789, type: "Bench" } ], "Wednesday": [ { name: "Squat", sets: 1, reps: 7, pct: 0.76, type: "Squat" }, { name: "Squat", sets: 2, reps: 6, pct: 0.799, type: "Squat" }, { name: "OHP", sets: 4, reps: 6, pct: 0.783, type: "OHP" } ], "Thursday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.7, type: "Bench" } ], "Friday": [ { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Pause Squat", sets: 3, reps: 2, pct: 0.727, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.783, type: "OHP" } ], "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.841, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.738, type: "Deadlift" } ] },
+  4: { "Monday": [ { name: "Squat", sets: 1, reps: 4, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.773, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 4, pct: 0.903, type: "Squat" }, { name: "Squat (Backoff)", sets: 1, reps: 4, pct: 0.87, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.738, type: "Deadlift" } ], "Wednesday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.792, type: "Squat" }, { name: "Bench", sets: 1, reps: 4, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.8, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.867, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.903, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.942, type: "Squat" } ], "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.8, type: "Bench" }, { name: "Bench (Peak)", sets: 1, reps: 1, pct: 0.989, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 1, pct: 0.89, type: "Deadlift" } ] },
+  5: { "Monday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.76, type: "Squat" }, { name: "Bench", sets: 1, reps: 2, pct: 0.6, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.7, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.744, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 3, pct: 0.909, type: "Deadlift" } ], "Wednesday": [ { name: "Squat (Peak)", sets: 1, reps: 2, pct: 0.929, type: "Squat" }, { name: "Squat (Max Effort)", sets: 1, reps: 2, pct: 0.961, type: "Squat" }, { name: "Bench", sets: 1, reps: 3, pct: 0.889, type: "Bench" } ], "Friday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 4, reps: 2, pct: 0.799, type: "Squat" } ], "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ] }
 };
-// Deload Generation for Andre
 andreData[6] = {};
 if(andreData[1]) {
     Object.keys(andreData[1]).forEach(day => {
@@ -71,7 +46,7 @@ if(andreData[1]) {
     });
 }
 
-// Andre Accessories (with Base Calculation data)
+// Andre Accessories
 const andreAccessories = {
   "Tuesday": [ { name: "Close Grip Bench", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.72 }, { name: "Larsen Press", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.68 }, { name: "Tricep Pushdowns", sets: "3x12", weeks: [1,2,3,6] } ],
   "Wednesday": [ { name: "Leg Extensions", sets: "3x15", weeks: [1,2,3,4,6] }, { name: "Pendulum Squat", sets: "3x8", weeks: [1,2,3,4,6] }, { name: "Walking Lunges", sets: "3x12", weeks: [1,2,3,6] }, { name: "Leg Press", sets: "4x10", weeks: [1,2,3,4,6] }, { name: "GHR", sets: "3x8", weeks: [1,2,3,4,6] } ],
@@ -81,7 +56,7 @@ const andreAccessories = {
 };
 
 /* =========================================
-   3. DATA: BASE MAP LINEAR (Dynamic Logic)
+   3. DATA: BASE MAP LINEAR
    ========================================= */
 const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
 const standardProg = 0.0425, maintProg = 0.02, tempoStartPct = 0.71, tempoProg = 0.04;
@@ -104,7 +79,13 @@ const accessoryData = {
   deadlift: [ { name: "Seal Rows", tier: "S", notes: "Back saver." }, { name: "Pause Deadlift", tier: "S", notes: "Technique." }, { name: "RDL", tier: "A", notes: "Hinge." }, { name: "Block Pulls", tier: "A", notes: "Overload." } ]
 };
 
-const technicalCues = { Squat: ["Root feet", "Brace 360", "Pull bar"], Bench: ["Retract scap", "Leg drive"], Deadlift: ["Slack out", "Wedge"], OHP: ["Glutes", "Head through"], Tempo: ["3-2-1", "Explode"] };
+const ptDatabase = {
+  knees: [{name:"Spanish Squats", rx:"3x45s", context:"Heavy band behind knees. Max quad tension."},{name:"TKE", rx:"3x20", context:"Focus on VMO firing."}],
+  back: [{name:"McGill Big 3", rx:"3x10s", context:"Gold standard core stiffness."},{name:"Cat-Cow", rx:"10 reps", context:"Move segmental vertebrae."}],
+  shoulders: [{name:"Dead Hangs", rx:"3x45s", context:"Decompresses AC joint."},{name:"Face Pulls", rx:"3x20", context:"Upper back health."}],
+  hips: [{name:"90/90 Switches", rx:"20 reps", context:"Internal/External rotation."},{name:"Couch Stretch", rx:"2 mins", context:"Targeting psoas."}],
+  elbows: [{name:"Hammer Curls", rx:"3x15", context:"Builds pad for elbow joint."}]
+};
 
 /* =========================================
    4. APP STATE
@@ -112,16 +93,13 @@ const technicalCues = { Squat: ["Root feet", "Brace 360", "Pull bar"], Bench: ["
 const state = {
   activeProgram: "AndreMapWave",
   maxes: { Squat: 0, Bench: 0, Deadlift: 0, OHP: 0 },
-  activeWeek: 1, // Andre Week
+  activeWeek: 1, 
   dashMode: "standard",
   dashReps: "3",
   dashFasted: false,
   dashMobileWeek: 0,
   unit: 'LBS',
-  completed: {}, 
-  accWeights: {}, 
-  notes: {}, 
-  ownerEmail: null,
+  completed: {}, accWeights: {}, notes: {}, 
   settings: { rackSquat: '', rackBench: '', bw: '' },
   timer: 180, timerRunning: false, timerInterval: null
 };
@@ -134,7 +112,7 @@ const inputs = {
 };
 
 /* =========================================
-   5. INIT & AUTH
+   5. INIT
    ========================================= */
 function init() {
   Object.keys(inputs).forEach(key => {
@@ -160,7 +138,7 @@ function init() {
 
   setupAuthButtons();
   
-  // Attach Global Window Functions so HTML Buttons work
+  // Attach Window Functions
   window.switchProgram = (prog) => { state.activeProgram = prog; deferredSave(); render(); };
   window.setWeek = (n) => { state.activeWeek = n; deferredSave(); render(); };
   window.toggleUnit = () => { state.unit = state.unit === 'LBS' ? 'KG' : 'LBS'; deferredSave(); render(); };
@@ -182,6 +160,7 @@ function init() {
   window.toggleFasted = () => { state.dashFasted = !state.dashFasted; deferredSave(); render(); };
   window.saveSettings = () => {
       state.settings.bw = document.getElementById('bodyweight').value;
+      if(document.getElementById('bodyWeightInput')) document.getElementById('bodyWeightInput').value = state.settings.bw;
       state.settings.rackSquat = document.getElementById('rackSquat').value;
       state.settings.rackBench = document.getElementById('rackBench').value;
       deferredSave(); render();
@@ -217,11 +196,11 @@ function init() {
       p.forEach(x=>{ while(r>=x){ r-=x; m[x]=(m[x]||0)+1; let c=`p-${String(x).replace('.','-')}${state.unit==='LBS'&&x<45&&x>2.5?'-lbs':''}`; h+=`<div class="plate ${c}"></div>`; } });
       v.innerHTML=h; t.innerText=Object.entries(m).sort((a,b)=>b[0]-a[0]).map(([k,v])=>`${v}x${k}`).join(', ')+" /side";
   };
-  window.openWarmup = (type, w) => {
+  window.openWarmup = (lift, w) => {
       document.getElementById('warmupModal').style.display = 'flex';
-      // Simple warmup rendering logic
-      const t = parseFloat(w);
-      document.getElementById('warmupTable').innerHTML = `<tr><td>Bar</td><td>-</td></tr><tr><td>50%</td><td>${getLoad(0.5,t*2)}</td></tr><tr><td>Working</td><td>${t}</td></tr>`;
+      document.getElementById('wuTarget').value = parseFloat(w) || 0;
+      document.getElementById('wuLiftType').value = lift.toLowerCase().includes('bench') ? 'bench' : (lift.toLowerCase().includes('dead') ? 'deadlift' : 'squat');
+      calculateWarmup();
   };
   window.closeModal = (id) => document.getElementById(id).style.display = 'none';
   window.copyData = () => { document.getElementById('exportArea').value = JSON.stringify(state); alert("Copied!"); };
@@ -233,7 +212,8 @@ function init() {
       if(w && r) {
           document.getElementById('oneRmResults').style.display = 'block';
           const epley = Math.round(w * (1 + 0.0333 * r));
-          document.getElementById('formulaBody').innerHTML = `<tr><td>Est 1RM</td><td>${epley} ${state.unit}</td></tr>`;
+          const brzycki = Math.round(w * (36 / (37 - r)));
+          document.getElementById('formulaBody').innerHTML = `<tr><td>Epley</td><td>${epley}</td></tr><tr><td>Brzycki</td><td>${brzycki}</td></tr><tr><td><strong>Average</strong></td><td><strong>${Math.round((epley+brzycki)/2)}</strong></td></tr>`;
       }
   };
   window.calculateDotsOnly = () => {
@@ -242,34 +222,55 @@ function init() {
       if(t && b) {
           document.getElementById('dotsResults').style.display = 'block';
           document.getElementById('dotsDisplay').innerText = calculateDots(t, b, state.unit);
+          state.settings.bw = b; deferredSave();
       }
   };
-  window.runRandomizer = () => {
-      const goal = document.getElementById('randGoal').value;
-      const w = parseFloat(document.getElementById('prevWeight').value);
-      if(w) {
-          let res = Math.round((w * 1.04)/5)*5;
-          document.getElementById('randomizerResult').style.display = 'block';
-          document.getElementById('randOutputText').innerText = `Target: ${res} ${state.unit}`;
-      }
-  };
-  window.updateAccOptions = () => {
-      const cat = document.getElementById('accCategory').value;
-      document.getElementById('accExercise').innerHTML = accessoryData[cat].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
-      window.displayAccDetails();
-  };
-  window.displayAccDetails = () => {
-      const cat = document.getElementById('accCategory').value;
-      const name = document.getElementById('accExercise').value;
-      const d = accessoryData[cat].find(e => e.name === name);
-      if(d) {
-          document.getElementById('accDetails').style.display = 'block';
-          document.getElementById('accName').innerText = d.name;
-          document.getElementById('accNotes').innerText = d.notes;
-          document.getElementById('accTier').innerText = d.tier + " TIER";
-      }
+  window.calculateWarmup = () => {
+      const target = parseFloat(document.getElementById('wuTarget').value);
+      const lift = document.getElementById('wuLiftType').value;
+      const style = document.getElementById('wuStyle').value;
+      if(!target) return;
+      
+      let protocol = [];
+      if(style === 'big') protocol = [{p:0.45,r:'5'}, {p:0.68,r:'3'}, {p:0.84,r:'1'}, {p:0.92,r:'1'}, {p:0.97,r:'OPT'}];
+      else if(style === 'tight') protocol = [{p:0.40,r:'8'}, {p:0.52,r:'5'}, {p:0.64,r:'3'}, {p:0.75,r:'2'}, {p:0.84,r:'1'}, {p:0.90,r:'1'}, {p:0.94,r:'1'}, {p:0.98,r:'OPT'}];
+      else protocol = [{p:0.505,r:'5'}, {p:0.608,r:'3'}, {p:0.72,r:'2'}, {p:0.834,r:'1'}, {p:0.93,r:'1'}, {p:0.97,r:'OPT'}];
+
+      let html = '';
+      const cues = { squat: ["Open hips", "Foot pressure", "Brace core", "BELT ON"], bench: ["Pull bar down", "Leg drive", "Tight arch", "Explode"], deadlift: ["Pull slack", "Chest up", "Lats tight", "BELT ON"] };
+      
+      protocol.forEach((s,i) => {
+          let lb = Math.round((target * s.p)/5)*5;
+          let plates = getPlates(lb);
+          html += `<div class="warmup-row"><div class="warmup-header"><span>${lb} lbs</span><span>${s.r} reps</span></div><div class="cue-box">${cues[lift]?.[i] || "Focus speed"}</div><div class="plate-stack">${plates}</div></div>`;
+      });
+      document.getElementById('warmupDisplay').innerHTML = html;
   };
   
+  // PT Logic
+  window.updatePtMovements = () => {
+      const area = document.getElementById('ptArea').value;
+      const move = document.getElementById('ptMovement');
+      move.innerHTML = '<option value="">Select...</option>';
+      if(ptDatabase[area]) {
+          ptDatabase[area].forEach((item,i) => {
+              let opt = document.createElement('option'); opt.value=i; opt.innerText=item.name; move.appendChild(opt);
+          });
+      }
+      document.getElementById('ptDisplay').style.display='none';
+  };
+  window.displayPtLogic = () => {
+      const area = document.getElementById('ptArea').value;
+      const idx = document.getElementById('ptMovement').value;
+      if(area && idx !== "") {
+          const d = ptDatabase[area][idx];
+          document.getElementById('ptDisplay').style.display='block';
+          document.getElementById('ptTitle').innerText = d.name;
+          document.getElementById('ptPrescription').innerText = d.rx;
+          document.getElementById('ptContext').innerText = d.context;
+      }
+  };
+
   // Timer
   window.toggleTimer = () => {
       if(state.timerRunning){ clearInterval(state.timerInterval); state.timerRunning=false; document.getElementById('timerToggle').innerText="Start"; }
@@ -510,6 +511,44 @@ function renderDashboard() {
     }
 }
 
+/* =========================================
+   7. UTILS & HELPERS
+   ========================================= */
+window.switchProgram = (prog) => { state.activeProgram = prog; deferredSave(); render(); }
+window.setWeek = (n) => { state.activeWeek = n; deferredSave(); render(); }
+window.toggleUnit = () => { state.unit = state.unit === 'LBS' ? 'KG' : 'LBS'; deferredSave(); render(); }
+window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; deferredSave(); render(); }
+window.toggleAcc = (day) => { state.accOpen = state.accOpen || {}; state.accOpen[day] = !state.accOpen[day]; render(); }
+window.updateAccWeight = (id, val) => { state.accWeights[id] = val; deferredSave(); }
+window.updateNote = (id, val) => { state.notes[id] = val; deferredSave(); }
+window.updateDashSettings = () => {
+    state.dashMode = document.getElementById('dashMode').value;
+    state.dashReps = document.getElementById('dashReps').value;
+    state.dashMobileWeek = 0; 
+    deferredSave(); render();
+}
+window.changeMobileWeek = (dir) => {
+    let numWeeks = (state.dashMode === 'maintenance' ? 6 : (state.dashMode === 'deload' ? 2 : 4));
+    state.dashMobileWeek = Math.max(0, Math.min(numWeeks - 1, state.dashMobileWeek + dir));
+    render();
+}
+window.toggleFasted = () => { state.dashFasted = !state.dashFasted; deferredSave(); render(); }
+
+window.runRandomizer = () => {
+    const goal = document.getElementById('randGoal').value;
+    const w = parseFloat(document.getElementById('prevWeight').value);
+    const r = parseFloat(document.getElementById('prevReps').value);
+    if(!w || !r) return;
+    let outW, outR, msg;
+    if(goal==='strength') { outW = Math.round((w*1.04)/5)*5; outR = Math.max(1,r-1); msg="Peak Load"; }
+    else if(goal==='recovery') { outW = Math.round((w*0.93)/5)*5; outR = r+2; msg="Volume"; }
+    else { outW = Math.round((w*1.02)/5)*5; outR = r+1; msg="Hypertrophy"; }
+    
+    const div = document.getElementById('randomizerResult');
+    div.style.display = 'block';
+    document.getElementById('randOutputText').innerHTML = `Target: <strong>${outW} ${state.unit} x ${outR}</strong><br><small>${msg}</small>`;
+}
+
 // Math
 function getLoad(pct, max) { let val = max * pct; return state.unit==='KG' ? Math.round(val/2.5)*2.5 : Math.round(val/5)*5; }
 function updateStats() {
@@ -522,6 +561,122 @@ function calculateDots(total, bw, unit) {
     if (unit === 'LBS') { w /= 2.20462; t /= 2.20462; }
     const denominator = -0.000001093 * Math.pow(w, 4) + 0.0007391293 * Math.pow(w, 3) - 0.1918751679 * Math.pow(w, 2) + 24.0900756 * w - 307.75076;
     return (t * (500 / denominator)).toFixed(2);
+}
+
+// Helper for Visual Plates
+function getPlates(weight) {
+    let target = parseFloat(weight);
+    if(isNaN(target)) return "";
+    let bar = state.unit === 'LBS' ? 45 : 20;
+    let side = (target - bar) / 2;
+    if(side <= 0) return "";
+    
+    const platesLbs = [45, 35, 25, 10, 5, 2.5];
+    const platesKg = [25, 20, 15, 10, 5, 2.5, 1.25];
+    let plates = state.unit === 'LBS' ? platesLbs : platesKg;
+    
+    let html = "";
+    plates.forEach(p => {
+        while(side >= p) {
+            side -= p;
+            let c = `p${String(p).replace('.','_')}${state.unit==='LBS' ? '-lbs' : ''}`; // Match CSS class
+            html += `<span class="plate ${c}">${p}</span>`;
+        }
+    });
+    return html;
+}
+
+// Tools
+window.calculateOneRM = () => {
+    const w = parseFloat(document.getElementById('calcWeight').value);
+    const r = parseFloat(document.getElementById('calcReps').value);
+    if(w && r) {
+        document.getElementById('oneRmResults').style.display = 'block';
+        const epley = Math.round(w * (1 + 0.0333 * r));
+        const brzycki = Math.round(w * (36 / (37 - r)));
+        document.getElementById('formulaBody').innerHTML = `<tr><td>Epley</td><td>${epley} ${state.unit}</td></tr><tr><td>Brzycki</td><td>${brzycki} ${state.unit}</td></tr><tr><td><strong>Average</strong></td><td><strong>${Math.round((epley+brzycki)/2)} ${state.unit}</strong></td></tr>`;
+    }
+}
+window.calculateDotsOnly = () => {
+    const t = document.getElementById('dotsTotalInput').value;
+    const b = document.getElementById('bodyWeightInput').value;
+    if(t && b) {
+        document.getElementById('dotsResults').style.display = 'block';
+        document.getElementById('dotsDisplay').innerText = calculateDots(t, b, state.unit);
+        // Save BW to settings for next time
+        state.settings.bw = b; deferredSave();
+    }
+}
+window.updateAccOptions = () => {
+    const cat = document.getElementById('accCategory').value;
+    document.getElementById('accExercise').innerHTML = accessoryData[cat].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
+    window.displayAccDetails();
+}
+window.displayAccDetails = () => {
+    const cat = document.getElementById('accCategory').value;
+    const name = document.getElementById('accExercise').value;
+    const d = accessoryData[cat].find(e => e.name === name);
+    if(d) {
+        document.getElementById('accDetails').style.display = 'block';
+        document.getElementById('accName').innerText = d.name;
+        document.getElementById('accNotes').innerText = d.notes;
+        document.getElementById('accTier').innerText = d.tier + " TIER";
+    }
+}
+
+// Modals
+window.openTools = () => {
+    document.getElementById('toolsModal').style.display = 'flex';
+    // Auto-fill DOTS inputs if data exists
+    const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
+    document.getElementById('dotsTotalInput').value = total;
+    document.getElementById('bodyWeightInput').value = state.settings.bw || '';
+}
+window.openAuthModal = () => document.getElementById('authModal').style.display = 'flex';
+window.openMeetPlanner = () => {
+    const m = document.getElementById('meetModal'); const g = document.getElementById('meetGrid');
+    m.style.display='flex';
+    const l = ['Squat','Bench','Deadlift']; let h='';
+    l.forEach(x => {
+        const mx = state.maxes[x]||0;
+        h+=`<div class="meet-col"><h4 style="border-color:var(--${x.toLowerCase()})">${x}</h4>
+        <div class="attempt-row"><span class="attempt-label">Opener</span><span class="attempt-val">${mx>0?getLoad(0.91,mx)+' '+state.unit:'-'}</span></div>
+        <div class="attempt-row"><span class="attempt-label">2nd</span><span class="attempt-val">${mx>0?getLoad(0.96,mx)+' '+state.unit:'-'}</span></div>
+        <div class="attempt-row"><span class="attempt-label">3rd</span><span class="attempt-val pr">${mx>0?getLoad(1.02,mx)+' '+state.unit:'-'}</span></div></div>`;
+    });
+    g.innerHTML=h;
+};
+window.openPlateCalc = (w) => {
+    if(String(w).includes('%')) return;
+    document.getElementById('plateModal').style.display = 'flex';
+    const wt = parseFloat(w);
+    document.getElementById('plateTarget').innerText = wt + " " + state.unit;
+    document.getElementById('plateVisuals').innerHTML = getPlates(wt);
+    document.getElementById('plateText').innerText = "Load per side (Bar = " + (state.unit==='LBS'?45:20) + ")";
+}
+window.openWarmup = (lift, w) => {
+    document.getElementById('warmupModal').style.display = 'flex';
+    document.getElementById('wuTarget').value = parseFloat(w) || 0;
+    // Map internal types to simple types for dropdown
+    let simpleLift = 'squat';
+    if(lift.toLowerCase().includes('bench')) simpleLift = 'bench';
+    else if(lift.toLowerCase().includes('dead')) simpleLift = 'deadlift';
+    else if(lift.toLowerCase().includes('ohp')) simpleLift = 'ohp';
+    
+    document.getElementById('wuLiftType').value = simpleLift;
+    window.calculateWarmup(); // Trigger calculation immediately
+}
+window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+window.saveSettings = () => {
+    state.settings.bw = document.getElementById('bodyweight').value;
+    if(document.getElementById('bodyWeightInput')) document.getElementById('bodyWeightInput').value = state.settings.bw;
+    state.settings.rackSquat = document.getElementById('rackSquat').value;
+    state.settings.rackBench = document.getElementById('rackBench').value;
+    deferredSave(); render();
+}
+window.copyData = () => {
+    document.getElementById('exportArea').value = JSON.stringify(state);
+    alert("Copied!");
 }
 
 // Saving
