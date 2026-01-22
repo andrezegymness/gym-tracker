@@ -39,6 +39,25 @@ header { margin-bottom: 20px; border-bottom: 2px solid var(--accent); padding-bo
 .unit-toggle, .action-btn { display: flex; align-items: center; gap: 6px; background: var(--bg-card); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border); cursor: pointer; color: #fff; font-size: 0.8rem; font-weight: bold; transition: all 0.2s; }
 .unit-toggle:hover, .action-btn:hover { border-color: var(--accent); background: var(--bg-card-hover); }
 
+/* --- NEW: AUTH BUTTON STYLES --- */
+#login-btn {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(211, 47, 47, 0.1); /* Subtle red tint */
+}
+#login-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+#logout-btn {
+  border-color: var(--text-dim);
+  color: var(--text-dim);
+}
+#logout-btn:hover {
+  border-color: var(--accent);
+  color: #fff;
+}
+
 /* Inputs */
 .control-panel { background: var(--bg-card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
