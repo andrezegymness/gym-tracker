@@ -11,13 +11,14 @@
         .gate-btn { display: block; width: 100%; padding: 25px; margin: 15px 0; background: #1a1a1a; color: #fff; text-decoration: none; border: 2px solid #333; border-radius: 12px; font-size: 1.5rem; font-weight: 900; transition: all 0.3s; text-transform: uppercase; }
         .gate-btn:hover { border-color: var(--accent); background: #222; transform: scale(1.02); }
         .gate-btn.blue:hover { border-color: #2196f3; }
+        .gate-btn.gold { color: var(--gold); border-color: var(--gold); }
+        .gate-btn.gold:hover { background: rgba(255, 215, 0, 0.1); }
         .logo-text { font-size: 2rem; color: #fff; margin-bottom: 40px; font-weight: 900; letter-spacing: 2px; }
     </style>
     <script>
-        // AUTO-REDIRECT LOGIC
+        // Redirect logic: Skip menu if we have a preference, unless user clicked "Back"
         const lastPage = localStorage.getItem('last_program_page');
         if(lastPage && document.referrer.indexOf(window.location.host) === -1) {
-            // Only redirect if coming from outside (fresh load)
             window.location.href = lastPage;
         }
     </script>
@@ -27,6 +28,7 @@
         <div class="logo-text">ANDRE'S CALIBRATIONS</div>
         <a href="andre.html" class="gate-btn" onclick="localStorage.setItem('last_program_page', 'andre.html')">Andre Map Wave</a>
         <a href="base.html" class="gate-btn blue" onclick="localStorage.setItem('last_program_page', 'base.html')">Base Map Linear</a>
+        <a href="leaderboard.html" class="gate-btn gold">Global Leaderboard</a>
     </div>
 </body>
 </html>
