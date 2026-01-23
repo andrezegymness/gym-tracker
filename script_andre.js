@@ -9,7 +9,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // ==========================================
-// 1. THE FULL ANDRE MAP DATA (RESTORED)
+// 1. FULL ANDRE MAP DATA (DO NOT TRUNCATE)
 // ==========================================
 const andreData = {
   1: {
@@ -49,11 +49,8 @@ const andreData = {
     "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
   }
 };
-// Week 6 Deload Generator
-andreData[6] = {}; 
-Object.keys(andreData[1]).forEach(day => { 
-    andreData[6][day] = andreData[1][day].filter(e => !(e.sets === 5 && e.reps === 5)).map(e => ({ ...e, name: `Tempo ${e.type}`, pct: e.pct * 0.85 })); 
-});
+// Deload Logic
+andreData[6] = {}; Object.keys(andreData[1]).forEach(d => { andreData[6][d] = andreData[1][d].filter(e => !(e.sets === 5 && e.reps === 5)).map(e => ({ ...e, name: `Tempo ${e.type}`, pct: e.pct * 0.95 })); });
 
 const andreAccessories = {
   "Tuesday": [ { name: "Close Grip Bench", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.72 }, { name: "Larsen Press", sets: "3x4", weeks: [1,2,3,4,6], base: 'Bench', basePct: 0.68 }, { name: "Tricep Pushdowns", sets: "3x12", weeks: [1,2,3,6] } ],
@@ -92,17 +89,8 @@ function init() {
     window.copyData = () => alert("Data Saved");
     window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
 
-    // TOOL FUNCTIONS
-    window.openMeetPlanner = () => { 
-        const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h='';
-        ['Squat','Bench','Deadlift'].forEach(x=>{ 
-            const mx=state.maxes[x]||0; 
-            h+=`<div class="meet-col"><h4>${x}</h4>
-            <div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div>
-            <div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div>
-            <div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; 
-        }); g.innerHTML=h; 
-    };
+    // TOOL FUNCTIONS (Full features included)
+    window.openMeetPlanner = () => { const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
     window.openPlateCalc = (w) => {
         if(String(w).includes('%')) return; document.getElementById('plateModal').style.display='flex';
         const wt=parseFloat(w); document.getElementById('plateTarget').innerText=wt+" "+state.unit;
@@ -152,9 +140,26 @@ function setupAuthButtons() {
     document.getElementById('emailLoginBtn').addEventListener('click', () => signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passInput').value));
 }
 
+// === SAVE TO USERS & LEADERBOARD ===
 async function saveToCloud() {
     const user = auth.currentUser; if(!user) return;
-    try { await setDoc(doc(db, "users", user.uid), state, { merge: true }); } catch(e) {}
+    try { 
+        // 1. Private Data
+        await setDoc(doc(db, "users", user.uid), state, { merge: true }); 
+        
+        // 2. Leaderboard Data
+        const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
+        if(total > 0) {
+            await setDoc(doc(db, "leaderboard", user.uid), {
+                email: user.email || "Anonymous",
+                total: total,
+                squat: state.maxes.Squat || 0,
+                bench: state.maxes.Bench || 0,
+                deadlift: state.maxes.Deadlift || 0,
+                unit: state.unit
+            });
+        }
+    } catch(e) {}
 }
 
 async function loadFromCloud(uid) {
@@ -162,12 +167,18 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
+            // Data Hydration
             if(d.maxes) { state.maxes.Squat = d.maxes.Squat||d.maxes.squat||0; state.maxes.Bench = d.maxes.Bench||d.maxes.bench||0; state.maxes.Deadlift = d.maxes.Deadlift||d.maxes.deadlift||0; state.maxes.OHP = d.maxes.OHP||d.maxes.ohp||0; }
             if(d.activeWeek) state.activeWeek = d.activeWeek;
             if(d.completed) state.completed = d.completed;
             if(d.settings) state.settings = d.settings;
+            if(d.accWeights) state.accWeights = d.accWeights || {}; // Restore Accessory Weights
+            
+            // Visual Update
             inputs.Squat.value = state.maxes.Squat||''; inputs.Bench.value = state.maxes.Bench||'';
             inputs.Deadlift.value = state.maxes.Deadlift||''; inputs.OHP.value = state.maxes.OHP||'';
+            if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
+            
             render();
         }
     } catch(e) {}
@@ -190,7 +201,7 @@ function render() {
     const cont = document.getElementById('programContent');
     cont.innerHTML = '';
     
-    // SAFETY CHECK
+    // WEEK CHECK
     let weekData = andreData[state.activeWeek];
     if(!weekData) { weekData = andreData[1]; state.activeWeek = 1; }
 
@@ -220,7 +231,9 @@ function render() {
                     let load = Math.round((state.maxes[a.base] * (a.basePct + (w * 0.025)))/5)*5;
                     recHtml = `<span class="acc-rec">Rec: ${load} LBS</span>`;
                 }
-                accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${state.accWeights[accId]||''}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
+                // Use stored weight or empty
+                const val = state.accWeights[accId] || '';
+                accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${val}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
             });
             html += accHtml + `</div></div>`;
         }
