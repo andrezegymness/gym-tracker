@@ -1,1 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Leaderboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .leaderboard-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; margin-top: 20px; }
+        .leaderboard-table th { text-align: left; padding: 15px; color: #888; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .leaderboard-table tr { background: #1a1a1a; transition: transform 0.2s; }
+        .leaderboard-table tr:hover { transform: scale(1.01); background: #222; }
+        .leaderboard-table td { padding: 20px; border: 1px solid #333; border-style: solid none; }
+        .leaderboard-table td:first-child { border-left-style: solid; border-radius: 8px 0 0 8px; font-weight: 900; color: var(--gold); font-size: 1.2rem; width: 50px; text-align: center; }
+        .leaderboard-table td:last-child { border-right-style: solid; border-radius: 0 8px 8px 0; text-align: right; font-weight: 900; font-size: 1.2rem; color: #fff; }
+        .user-email { font-weight: bold; color: #fff; }
+        .user-stats { font-size: 0.75rem; color: #666; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+  <header>
+    <div class="header-content">
+      <div class="header-left">
+        <a href="index.html" class="back-link">← Main Menu</a>
+        <div class="brand" style="color:var(--gold);">GLOBAL LEADERBOARD</div>
+      </div>
+    </div>
+  </header>
+
+  <div style="text-align:center; padding:20px; background:#222; border-radius:8px; margin-bottom:20px;">
+    <h3 style="margin:0; color:#fff;">Top Totals (S+B+D)</h3>
+    <p style="color:#888; font-size:0.8rem; margin-top:5px;">Rankings update automatically when you save data.</p>
+  </div>
+
+  <table class="leaderboard-table">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Lifter</th>
+            <th style="text-align:right;">Total</th>
+        </tr>
+    </thead>
+    <tbody id="leaderboardBody">
+        <tr><td colspan="3" style="text-align:center; color:#666;">Loading...</td></tr>
+    </tbody>
+  </table>
+
+  <footer><p>Andre's Calibrations &copy; 2026</p></footer>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M", authDomain: "powerlifting-programs.firebaseapp.com", projectId: "powerlifting-programs", storageBucket: "powerlifting-programs.firebasestorage.app", messagingSenderId: "961044250962", appId: "1:961044250962:web:c45644c186e9bb6ee67a8b", measurementId: "G-501TXRLMSQ" };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function loadLeaderboard() {
+        try {
+            const q = query(collection(db, "leaderboard"), orderBy("total", "desc"), limit(50));
+            const snap = await getDocs(q);
+            const tbody = document.getElementById('leaderboardBody');
+            
+            if (snap.empty) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">No data yet.<br>Go to a program, enter maxes, and it will appear here.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            let rank = 1;
+            snap.forEach(doc => {
+                const d = doc.data();
+                const name = d.email ? d.email.split('@')[0] : "Anonymous";
+                const stats = `S: ${d.squat} | B: ${d.bench} | D: ${d.deadlift}`;
+                
+                html += `<tr>
+                    <td>${rank}</td>
+                    <td>
+                        <div class="user-email">${name}</div>
+                        <div class="user-stats">${stats}</div>
+                    </td>
+                    <td>${d.total} <span style="font-size:0.6rem; color:#666;">${d.unit||'LBS'}</span></td>
+                </tr>`;
+                rank++;
+            });
+            tbody.innerHTML = html;
+        } catch(e) { console.error(e); }
+    }
+
+    loadLeaderboard();
+</script>
+</body>
+</html>
 
