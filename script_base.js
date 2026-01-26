@@ -25,10 +25,14 @@ const db = getFirestore(app);
 const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
 const standardProg = 0.0425, maintProg = 0.02, tempoStartPct = 0.71, tempoProg = 0.04;
 const ohpStrengthStart = 0.80, ohpStrengthProg = 0.04, ohpVolPct = 0.60;
-const accPeakingReps = [10, 8, 6, 5], accSets = [5, 4, 3, 2], accRPEs = [10, 9, 8, 7];
-const standardSets = [3, 2, 1, 1], maintSets = [2, 2, 2, 2, 1, 1];
 
-// Full Accessory List
+const accPeakingReps = [10, 8, 6, 5];
+const accSets = [5, 4, 3, 2];
+const accRPEs = [10, 9, 8, 7];
+const standardSets = [3, 2, 1, 1];
+const maintSets = [2, 2, 2, 2, 1, 1];
+
+// Full Accessory List (Uncut)
 const accessoryData = {
   squat: [
     { name: "ATG System", tier: "S", notes: "Full range of motion focus." },
@@ -103,13 +107,11 @@ let currentUserEmail = "";
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. LOAD SAVED UI STATE (The "Memory" Fix)
+    // 1. INSTANT MEMORY LOAD
     loadUIState();
-
-    // 2. LOAD SAVED INPUTS (Maxes)
     loadLocalInputs();
 
-    // 3. FIREBASE AUTH LISTENER (Andre Sync)
+    // 2. FIREBASE AUTH LISTENER (Andre Sync)
     onAuthStateChanged(auth, (user) => {
         if (user) {
             console.log("Synced Login:", user.email);
@@ -129,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 4. LISTENERS
+    // 3. LISTENERS
     ['squatInput','benchInput','deadliftInput','ohpInput'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.addEventListener('input', () => { generateProgram(); saveUserData(); saveLocalInputs(); });
@@ -184,7 +186,6 @@ function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    // ** DAY 2: PAUSED BENCH FIRST, THEN LARSEN **
     { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
@@ -231,8 +232,11 @@ function generateProgram() {
         mod = w * maintProg;
     } 
     else if (mode === 'deload') {
-        if (w === 0) mod = (0.50 - startPct);
-        if (w === 1) mod = (0.52 - startPct);
+        // ** RELATIVE DELOAD LOGIC **
+        // Week 1: -8% from Start Pct (e.g. 75% -> 67%)
+        // Week 2: +4% from Week 1 (e.g. 67% -> 71%)
+        if (w === 0) mod = -0.08; 
+        if (w === 1) mod = -0.04;
         tempoMod = -0.10; 
     } 
     else {
@@ -241,6 +245,7 @@ function generateProgram() {
 
     const currentTempoPct = tempoStartPct + tempoMod;
     const curSets = (mode === 'maintenance' ? maintSets[w] : (standardSets[w] || 1));
+    // Calculate final percent (Base + Modifier)
     const curPct = startPct + mod;
     const psPct = 0.70 + mod;
 
@@ -256,6 +261,7 @@ function generateProgram() {
     userProgram[w].days.forEach((day, dIdx) => {
       let activeLifts = [...day.lifts];
       
+      // Standard Acc Injection
       if (mode === 'standard_acc') {
         const aReps = accPeakingReps[w];
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
@@ -279,7 +285,7 @@ function generateProgram() {
             dReps = 3; // Static 3
         }
         else if (lift.n === "Paused Bench") {
-            dReps = reps; // Dynamic
+            dReps = reps; // Dynamic (5/4/3/2/1)
         }
         else if (lift.n.includes("Tempo")) { 
             intens = currentTempoPct; dReps = 5; 
@@ -480,4 +486,5 @@ window.openPlateLoader = (w) => {
     let s=(w-45)/2, p=[45,25,10,5,2.5], r=[];
     p.forEach(x=>{ while(s>=x){ r.push(x); s-=x; } });
     document.getElementById('plateText').innerText = r.length ? r.join(', ') : "Bar";
+};: "Bar";
 };
