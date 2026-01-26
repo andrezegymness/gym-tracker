@@ -32,7 +32,11 @@ const accRPEs = [10, 9, 8, 7];
 const standardSets = [3, 2, 1, 1];
 const maintSets = [2, 2, 2, 2, 1, 1];
 
-// Full Accessory List (Uncut)
+// ==========================================
+// 3. DATABASES
+// ==========================================
+
+// A. OLD GLOSSARY (Kept for compatibility)
 const accessoryData = {
   squat: [
     { name: "ATG System", tier: "S", notes: "Full range of motion focus." },
@@ -94,6 +98,82 @@ const accessoryData = {
   ]
 };
 
+// B. THE NEW SMART LIBRARY (Add Workout Feature)
+// Keys: n=name, t=target/desc, p=percent(0.65=65%), r=reps, s=source_max
+const smartLibrary = {
+    "Squat: Weak Hole": [
+        { n: "Pin Squat (Low)", t: "Explosive Start", p: 0.65, r: "3x3", s: "squat" },
+        { n: "Pause Squat (3s)", t: "No Bounce", p: 0.70, r: "3x4", s: "squat" },
+        { n: "1.5 Rep Squat", t: "TUT", p: 0.60, r: "3x5", s: "squat" }
+    ],
+    "Squat: Mechanics/Core": [
+        { n: "Tempo Squat (5-3-0)", t: "Path Control", p: 0.60, r: "3x5", s: "squat" },
+        { n: "SSB Squat", t: "Upper Back", p: 0.75, r: "3x6", s: "squat" },
+        { n: "Front Squat", t: "Upright/Quad", p: 0.65, r: "3x6", s: "squat" },
+        { n: "Zombie Squat", t: "Bracing", p: 0.50, r: "3x5", s: "squat" }
+    ],
+    "Squat: Overload/CNS": [
+        { n: "Heavy Walkout", t: "CNS Priming", p: 1.10, r: "3x15s", s: "squat" },
+        { n: "Anderson Squat", t: "Tendon Power", p: 0.85, r: "3x3", s: "squat" }
+    ],
+    "Bench: Chest Strength": [
+        { n: "Long Pause Bench", t: "Start Power", p: 0.75, r: "4x3", s: "bench" },
+        { n: "Spoto Press", t: "Reversal", p: 0.70, r: "3x5", s: "bench" },
+        { n: "Larsen Press", t: "Stability", p: 0.70, r: "3x6", s: "bench" },
+        { n: "Weighted Dips", t: "Mass Builder", p: 0.20, r: "3x8", s: "bench" } 
+    ],
+    "Bench: Lockout/Tri": [
+        { n: "Floor Press", t: "Lockout", p: 0.80, r: "3x5", s: "bench" },
+        { n: "Close Grip Bench", t: "Tricep Mass", p: 0.75, r: "3x8", s: "bench" },
+        { n: "Board Press", t: "Overload", p: 1.05, r: "3x3", s: "bench" },
+        { n: "Pin Lockouts", t: "Tendons", p: 1.10, r: "3x5", s: "bench" }
+    ],
+    "Deadlift: Floor/Start": [
+        { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift" },
+        { n: "Snatch Grip DL", t: "Upper Back", p: 0.60, r: "3x6", s: "deadlift" },
+        { n: "Halting DL", t: "Start Mechanics", p: 0.70, r: "3x5", s: "deadlift" }
+    ],
+    "Deadlift: Hips/Lockout": [
+        { n: "Block Pulls", t: "Lockout", p: 0.95, r: "3x3", s: "deadlift" },
+        { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
+        { n: "Rack Pull Hold", t: "Grip/Traps", p: 1.10, r: "3x10s", s: "deadlift" },
+        { n: "Farmer's Walks", t: "Grip/Core", p: 0.40, r: "3x30s", s: "deadlift" }
+    ],
+    "Glutes: Aesthetics": [
+        { n: "Hip Thrust", t: "Thickness", p: 0.50, r: "4x10", s: "deadlift" },
+        { n: "Cable Abduction", t: "Upper Shelf", p: 0.10, r: "3x15", s: "squat" },
+        { n: "Deficit Rev Lunge", t: "Tie-in/Lift", p: 0.25, r: "3x10", s: "squat" },
+        { n: "Glute Kickback", t: "Roundness", p: 0.05, r: "3x20", s: "squat" },
+        { n: "45 Deg Hypers", t: "Upper Glute", p: 0, r: "3x20", s: "squat" }
+    ],
+    "Legs: Quads/Hams": [
+        { n: "Leg Press", t: "Overall Mass", p: 1.50, r: "4x10", s: "squat" },
+        { n: "Hack Squat", t: "Outer Sweep", p: 0.60, r: "3x8", s: "squat" },
+        { n: "Walking Lunges", t: "Unilateral", p: 0.25, r: "3x12", s: "squat" },
+        { n: "RDL (Barbell)", t: "Hamstring Hang", p: 0.50, r: "3x8", s: "deadlift" },
+        { n: "Leg Extensions", t: "Quad Detail", p: 0.25, r: "3x15", s: "squat" },
+        { n: "Seated Ham Curl", t: "Inner Ham", p: 0.20, r: "3x15", s: "squat" }
+    ],
+    "Back & Shoulders": [
+        { n: "Pendlay Row", t: "Explosive Back", p: 0.60, r: "4x6", s: "deadlift" },
+        { n: "Lat Pulldown", t: "Width", p: 0.40, r: "3x12", s: "deadlift" },
+        { n: "OHP (Standing)", t: "Mass", p: 0.80, r: "3x5", s: "ohp" },
+        { n: "Egyptian Lateral", t: "3D Cap", p: 0.10, r: "4x15", s: "ohp" },
+        { n: "Face Pulls", t: "Rear Delt/Health", p: 0.15, r: "3x20", s: "bench" }
+    ],
+    "Arms (Bi/Tri)": [
+        { n: "Rope Pushdown", t: "Horseshoe", p: 0.25, r: "3x15", s: "bench" },
+        { n: "Skullcrushers", t: "Mass", p: 0.30, r: "3x10", s: "bench" },
+        { n: "Incline Curl", t: "Peak", p: 0.10, r: "3x12", s: "deadlift" },
+        { n: "Hammer Curl", t: "Forearm", p: 0.15, r: "3x10", s: "deadlift" }
+    ],
+    "Abs (Strength)": [
+        { n: "Weighted Planks", t: "Core", p: 0, r: "3x45s", s: "squat" },
+        { n: "Ab Wheel", t: "Stiffness", p: 0, r: "3x10", s: "squat" },
+        { n: "Cable Crunch", t: "Flexion", p: 0.30, r: "4x15", s: "squat" }
+    ]
+};
+
 // ==========================================
 // 4. STATE & VARIABLES
 // ==========================================
@@ -101,17 +181,20 @@ let activeMobileWeek = 0;
 let userProgram = [];
 let isFasted = false;
 let currentUserEmail = "";
+let customLifts = []; // User added lifts
 
 // ==========================================
 // 5. INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. INSTANT MEMORY LOAD
+    // 1. MEMORY LOAD
     loadUIState();
     loadLocalInputs();
+    loadCustomLifts(); // Load custom workouts
+    initLibraryMenu(); // Initialize the dropdowns
 
-    // 2. FIREBASE AUTH LISTENER (Andre Sync)
+    // 2. AUTH
     onAuthStateChanged(auth, (user) => {
         if (user) {
             console.log("Synced Login:", user.email);
@@ -124,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     auth.signOut(); 
                     localStorage.removeItem('baseMapLocalData'); 
                     localStorage.removeItem('baseMapUIState'); 
+                    localStorage.removeItem('baseMapCustomLifts');
                     location.reload(); 
                 };
             }
@@ -174,6 +258,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const ptArea = document.getElementById('ptArea');
     if(ptArea) ptArea.addEventListener('change', updatePtMovements);
 
+    // LIBRARY LISTENERS (The New Features)
+    document.getElementById('libCategory').addEventListener('change', updateLibExercises);
+    document.getElementById('libExercise').addEventListener('change', updateLibDetails);
+    document.getElementById('addLiftBtn').addEventListener('click', addCustomLift);
+
     initProgramData();
     generateProgram();
     updateAccOptions();
@@ -186,6 +275,7 @@ function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
+    // Day 2: Paused (Dynamic) -> Larsen (Static)
     { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
@@ -232,9 +322,8 @@ function generateProgram() {
         mod = w * maintProg;
     } 
     else if (mode === 'deload') {
-        // ** RELATIVE DELOAD LOGIC **
-        // Week 1: -8% from Start Pct (e.g. 75% -> 67%)
-        // Week 2: +4% from Week 1 (e.g. 67% -> 71%)
+        // ** RELATIVE DELOAD **
+        // Week 1: -8%, Week 2: -4%
         if (w === 0) mod = -0.08; 
         if (w === 1) mod = -0.04;
         tempoMod = -0.10; 
@@ -245,7 +334,6 @@ function generateProgram() {
 
     const currentTempoPct = tempoStartPct + tempoMod;
     const curSets = (mode === 'maintenance' ? maintSets[w] : (standardSets[w] || 1));
-    // Calculate final percent (Base + Modifier)
     const curPct = startPct + mod;
     const psPct = 0.70 + mod;
 
@@ -272,20 +360,27 @@ function generateProgram() {
         if (dIdx === 5) { activeLifts.push({n: "Stiff Leg DL", s:5, r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Glute Ham Raise", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Good Mornings", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "RDLs (PL Specific)", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}); }
       }
 
+      // ** INJECT CUSTOM LIFTS **
+      customLifts.forEach(cl => {
+          if (cl.dayIndex === dIdx) {
+              activeLifts.push({ n: cl.n, t: cl.s, isCustom: true, p: cl.p, r: cl.r });
+          }
+      });
+
       html += `<div style="margin-top:10px; background:#222; padding:8px; border-radius:5px;">
                 <div style="font-size:0.9em; font-weight:bold; color:#ddd; border-bottom:1px solid #444; margin-bottom:5px;">${day.name}</div>
                 <table style="width:100%; font-size:13px; border-collapse:collapse;">`;
       
       activeLifts.forEach(lift => {
-        let mx = (lift.isOHP) ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
+        let mx = (lift.t === "ohp") ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
         let intens = curPct, dReps = reps, fSets = curSets, weightDisplay = "";
         
         // --- LOGIC RULES ---
         if (lift.n === "Larsen Press") {
-            dReps = 3; // Static 3
+            dReps = 3; 
         }
         else if (lift.n === "Paused Bench") {
-            dReps = reps; // Dynamic (5/4/3/2/1)
+            dReps = reps; 
         }
         else if (lift.n.includes("Tempo")) { 
             intens = currentTempoPct; dReps = 5; 
@@ -297,20 +392,40 @@ function generateProgram() {
             dReps = 3; 
         }
 
-        if (lift.isAcc) { 
+        // Custom Lift Logic
+        if (lift.isCustom) {
+            fSets = "3"; dReps = lift.r;
+            // Progression: +2% per week, Drop 10% on deload
+            let prog = (w * 0.02);
+            if (mode === 'deload') prog = -0.10;
+            
+            let weight = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
+            weightDisplay = `<strong style="color:#00e676;">${weight} lbs</strong>`;
+        } 
+        else if (lift.isAcc) { 
             fSets = accSets[w]; dReps = lift.r; 
             weightDisplay = `<span style="color:#aaa;">RPE ${accRPEs[w]}</span>`; 
-        } else {
+        } 
+        else {
             let finalIntens = lift.isOHP ? lift.p : intens;
             let weight = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
             weightDisplay = `<strong style="color:#fff;">${weight} lbs</strong>`;
         }
         
-        let btn = (!lift.isAcc && !lift.n.includes("Tempo")) ? 
-            `<span onclick="window.openPlateLoader(${Math.round((mx*intens*fastedMult)/5)*5})" style="cursor:pointer; color:#2196f3; margin-left:5px;">💿</span>` : '';
+        let clickVal = 0;
+        if(lift.isCustom) {
+            let prog = (mode === 'deload') ? -0.10 : (w * 0.02);
+            clickVal = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
+        } else if (!lift.isAcc) {
+            let finalIntens = lift.isOHP ? lift.p : intens;
+            clickVal = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
+        }
+
+        let btn = (clickVal > 0) ? 
+            `<span onclick="window.openPlateLoader(${clickVal})" style="cursor:pointer; color:#2196f3; margin-left:5px;">💿</span>` : '';
 
         html += `<tr>
-                    <td style="padding:4px 0; color:#ccc;">${lift.n}</td>
+                    <td style="padding:4px 0; color:#ccc;">${lift.n} ${lift.isCustom ? '⭐' : ''}</td>
                     <td style="padding:4px 0; text-align:center; color:#2196f3;">${fSets}x${dReps}</td>
                     <td style="padding:4px 0; text-align:right;">${weightDisplay} ${btn}</td>
                  </tr>`;
@@ -325,7 +440,63 @@ function generateProgram() {
 }
 
 // ==========================================
-// 7. UTILS & DATA
+// 7. LIBRARY FUNCTIONS
+// ==========================================
+function initLibraryMenu() {
+    const catSel = document.getElementById('libCategory');
+    catSel.innerHTML = "";
+    Object.keys(smartLibrary).forEach(key => {
+        let opt = document.createElement('option');
+        opt.value = key; opt.innerText = key; catSel.appendChild(opt);
+    });
+    updateLibExercises();
+}
+
+function updateLibExercises() {
+    const cat = document.getElementById('libCategory').value;
+    const exSel = document.getElementById('libExercise');
+    exSel.innerHTML = "";
+    smartLibrary[cat].forEach((item, idx) => {
+        let opt = document.createElement('option');
+        opt.value = idx; opt.innerText = item.n; exSel.appendChild(opt);
+    });
+    updateLibDetails();
+}
+
+function updateLibDetails() {
+    const cat = document.getElementById('libCategory').value;
+    const idx = document.getElementById('libExercise').value;
+    const item = smartLibrary[cat][idx];
+    document.getElementById('libDetails').innerText = `Target: ${item.t} | Logic: ${Math.round(item.p*100)}% of ${item.s.toUpperCase()}`;
+}
+
+function addCustomLift() {
+    const cat = document.getElementById('libCategory').value;
+    const idx = document.getElementById('libExercise').value;
+    const day = parseInt(document.getElementById('libDay').value);
+    const item = smartLibrary[cat][idx];
+    customLifts.push({ ...item, dayIndex: day });
+    saveCustomLifts();
+    generateProgram();
+    document.getElementById('libraryModal').style.display = 'none';
+    alert(`Added ${item.n} to Day ${day + 1}`);
+}
+
+window.clearCustomLifts = function() {
+    customLifts = [];
+    saveCustomLifts();
+    generateProgram();
+    document.getElementById('libraryModal').style.display = 'none';
+};
+
+function saveCustomLifts() { localStorage.setItem('baseMapCustomLifts', JSON.stringify(customLifts)); }
+function loadCustomLifts() {
+    const data = localStorage.getItem('baseMapCustomLifts');
+    if(data) customLifts = JSON.parse(data);
+}
+
+// ==========================================
+// 8. UTILS & DATA
 // ==========================================
 function toggleFasted() {
   isFasted = !isFasted;
@@ -350,7 +521,6 @@ function changeMobileWeek(dir) {
 async function handleLogin() {
     const email = document.getElementById('emailInput').value.trim().toLowerCase();
     const pass = document.getElementById('passwordInput').value;
-    
     if(email && pass) {
         try {
             await signInWithEmailAndPassword(auth, email, pass);
@@ -361,7 +531,6 @@ async function handleLogin() {
     }
 }
 
-// --- UI STATE MEMORY ---
 function saveUIState() {
     const state = {
         mode: document.getElementById('dashMode').value,
@@ -389,7 +558,6 @@ function loadUIState() {
     }
 }
 
-// --- LOCAL MAXES MEMORY ---
 function saveLocalInputs() {
     const d = {
         s: document.getElementById('squatInput').value,
