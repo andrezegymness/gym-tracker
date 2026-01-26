@@ -486,5 +486,4 @@ window.openPlateLoader = (w) => {
     let s=(w-45)/2, p=[45,25,10,5,2.5], r=[];
     p.forEach(x=>{ while(s>=x){ r.push(x); s-=x; } });
     document.getElementById('plateText').innerText = r.length ? r.join(', ') : "Bar";
-};: "Bar";
 };
