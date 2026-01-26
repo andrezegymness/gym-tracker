@@ -17,8 +17,7 @@
       </div>
       <div class="header-stats">
          <div class="stat-box"><span class="stat-label">TOTAL</span><span class="stat-val" id="currentTotal">0</span></div>
-         <div class="stat-box"><span class="stat-label">DOTS</span><span class="stat-val" id="currentDots">-</span></div>
-      </div>
+         </div>
       <div class="header-actions">
         <button class="action-btn" id="login-btn" onclick="document.getElementById('authModal').style.display='flex'">Login</button>
         <button class="action-btn" onclick="document.getElementById('toolsModal').style.display='flex'">Tools</button>
@@ -35,10 +34,10 @@
     </div>
   </section>
 
-  <div class="dashboard-controls no-print">
+  <div class="dashboard-controls no-print" style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap; background:#111; padding:10px; border-radius:8px;">
       <div class="dash-group">
-          <label>Mode</label>
-          <select id="dashMode" onchange="updateDashSettings()">
+          <label style="color:#aaa; font-size:12px;">Mode</label>
+          <select id="dashMode" style="background:#333; color:#fff; border:none; padding:5px;">
               <option value="standard">Standard (4 Weeks)</option>
               <option value="standard_acc">Standard + Acc</option>
               <option value="deload">Deload (2 Weeks)</option>
@@ -47,8 +46,8 @@
           </select>
       </div>
       <div class="dash-group">
-          <label>Reps</label>
-          <select id="dashReps" onchange="updateDashSettings()">
+          <label style="color:#aaa; font-size:12px;">Reps</label>
+          <select id="dashReps" style="background:#333; color:#fff; border:none; padding:5px;">
               <option value="5">5 Reps</option>
               <option value="4">4 Reps</option>
               <option value="3">3 Reps</option>
@@ -56,33 +55,35 @@
               <option value="1">1 Rep</option>
           </select>
       </div>
+      
       <div class="dash-group">
-          <label>Diet</label>
-          <button id="fastedBtn" class="dash-btn" onclick="toggleFasted()">Fasted: OFF</button>
+          <label style="color:#aaa; font-size:12px;">Customize</label>
+          <button class="dash-btn" onclick="document.getElementById('libraryModal').style.display='flex'" style="background:#2196f3; color:#fff; border:none; padding:5px 10px; font-weight:bold; cursor:pointer;">+ Add Workout</button>
+      </div>
+
+      <div class="dash-group">
+          <label style="color:#aaa; font-size:12px;">Diet</label>
+          <button id="fastedBtn" class="dash-btn" style="background:#333; color:#fff; border:none; padding:5px 10px;">Fasted: OFF</button>
       </div>
   </div>
 
-  <div class="mobile-nav no-print">
+  <div class="mobile-nav no-print" style="margin-top:15px; text-align:center;">
       <button id="prevWeekBtn" class="nav-btn">←</button>
-      <span id="mobileWeekLabel">Week 1</span>
+      <span id="mobileWeekLabel" style="margin:0 15px; font-weight:bold; color:#2196f3;">Week 1</span>
       <button id="nextWeekBtn" class="nav-btn">→</button>
   </div>
 
-  <div id="dashboardGrid" class="full-program-grid"></div>
+  <div id="dashboardGrid" class="full-program-grid" style="margin-top:20px;"></div>
 
-  <div id="randomizerCard" class="tool-card" style="display:none; margin-top:20px; border: 2px solid #2196f3;">
+  <div id="randomizerCard" class="tool-card" style="display:none; margin:20px; border: 2px solid #2196f3; padding:15px; background:#111;">
     <h3>Randomizer</h3>
     <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
-        <select id="randGoal" style="grid-column: span 2;">
-            <option value="strength">Strength</option>
-            <option value="recovery">Recovery</option>
-            <option value="pump">Pump</option>
-        </select>
+        <select id="randGoal" style="grid-column: span 2; width:100%; padding:8px;"><option value="strength">Strength</option><option value="recovery">Recovery</option><option value="pump">Pump</option></select>
         <input type="number" id="prevWeight" placeholder="Last Weight">
         <input type="number" id="prevReps" placeholder="Last Reps">
     </div>
-    <button class="full-btn" id="runRandBtn">Generate</button>
-    <div id="randomizerResult" class="stat-box" style="display:none; margin-top:15px; background:#111;">
+    <button id="runRandBtn" class="full-btn" style="margin-top:10px;">Generate</button>
+    <div id="randomizerResult" style="display:none; margin-top:15px; background:#222; padding:10px; color:#fff;">
         <div id="randOutputText"></div>
     </div>
   </div>
@@ -90,85 +91,100 @@
   <footer><p>Andre's Calibrations &copy; 2026</p></footer>
 </div>
 
-<div id="toolsModal" class="modal" style="display:none;">
-  <div class="modal-content large-modal">
-    <span class="close-modal" onclick="document.getElementById('toolsModal').style.display='none'">&times;</span>
-    <h2>Lifter's Toolkit</h2>
-    <div class="tools-layout">
-        <div class="tool-card">
-            <h3>Global Settings</h3>
-            <div class="inputs-grid" style="grid-template-columns:1fr 1fr;">
-                <input type="number" id="bodyweight" placeholder="Bodyweight">
-                <button class="full-btn" onclick="document.getElementById('meetModal').style.display='flex'">Comp Mode</button>
-            </div>
-        </div>
+<div id="libraryModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000;">
+    <div class="modal-content large-modal" style="background:#1e1e1e; margin:5% auto; padding:20px; width:90%; max-width:500px; color:#fff; border-radius:8px; border:1px solid #333;">
+        <span class="close-modal" onclick="document.getElementById('libraryModal').style.display='none'" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
+        <h2 style="color:#2196f3;">Smart Library</h2>
+        <p style="color:#aaa; font-size:12px;">Select a goal. Weights are auto-calculated from your maxes.</p>
         
-        <div class="tool-card">
-            <h3>Warm-up Generator</h3>
-            <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
-                <input type="number" id="wuTarget" placeholder="Target Weight">
-                <select id="wuLiftType"><option value="squat">Squat</option><option value="bench">Bench</option><option value="deadlift">Deadlift</option></select>
-            </div>
-            <select id="wuStyle" style="width:100%; margin-top:5px;">
-                <option value="standard">Standard Jumps</option>
-                <option value="big">Aggressive (Big Jumps)</option>
-                <option value="tight">High Prime (Small Jumps)</option>
+        <div style="margin-top:15px;">
+            <label>1. Goal Category</label>
+            <select id="libCategory" style="width:100%; padding:10px; margin-bottom:10px; background:#333; color:#fff; border:1px solid #444;"></select>
+            
+            <label>2. Exercise</label>
+            <select id="libExercise" style="width:100%; padding:10px; margin-bottom:10px; background:#333; color:#fff; border:1px solid #444;"></select>
+            <div id="libDetails" style="font-size:12px; color:#FFD700; margin-bottom:10px;"></div>
+
+            <label>3. Add to Day</label>
+            <select id="libDay" style="width:100%; padding:10px; margin-bottom:15px; background:#333; color:#fff; border:1px solid #444;">
+                <option value="0">Day 1 (Mon)</option>
+                <option value="1">Day 2 (Tue)</option>
+                <option value="2">Day 3 (Wed)</option>
+                <option value="3">Day 4 (Thu)</option>
+                <option value="4">Day 5 (Fri)</option>
+                <option value="5">Day 6 (Sat)</option>
             </select>
-            <button class="full-btn" id="calcWarmupBtn">Generate Warm-up</button>
+
+            <button id="addLiftBtn" class="full-btn" style="width:100%; background:#4caf50; padding:12px; font-weight:bold; cursor:pointer;">Add to Program</button>
+            <button class="full-btn" onclick="window.clearCustomLifts()" style="width:100%; background:#d32f2f; margin-top:10px; padding:10px; cursor:pointer;">Clear Custom Lifts</button>
+        </div>
+    </div>
+</div>
+
+<div id="toolsModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;">
+  <div class="modal-content large-modal" style="background:#1e1e1e; margin:5% auto; padding:20px; width:90%; max-width:600px; color:#fff; border-radius:8px; max-height:90vh; overflow-y:auto;">
+    <span class="close-modal" onclick="document.getElementById('toolsModal').style.display='none'" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
+    <h2>Lifter's Toolkit</h2>
+    <div class="tools-layout" style="display:grid; gap:15px;">
+        <div class="tool-card" style="background:#222; padding:15px;">
+            <h3>Warm-up Generator</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                <input type="number" id="wuTarget" placeholder="Target Weight">
+                <select id="wuStyle"><option value="standard">Standard</option><option value="big">Aggressive</option><option value="tight">Conservative</option></select>
+            </div>
+            <button id="calcWarmupBtn" class="full-btn" style="width:100%; margin-top:5px;">Generate</button>
             <div id="warmupDisplay" style="margin-top:10px;"></div>
         </div>
-
-        <div class="tool-card">
+        <div class="tool-card" style="background:#222; padding:15px;">
             <h3>1RM Estimator</h3>
-            <div class="inputs-grid" style="grid-template-columns:1fr 1fr;"><input type="number" id="calcWeight" placeholder="Weight"><input type="number" id="calcReps" placeholder="Reps"></div>
-            <button class="full-btn" id="calcOneRmBtn">Calculate</button>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;"><input type="number" id="calcWeight" placeholder="Weight"><input type="number" id="calcReps" placeholder="Reps"></div>
+            <button id="calcOneRmBtn" class="full-btn" style="width:100%; margin-top:5px;">Calculate</button>
             <div id="oneRmResult" style="margin-top:10px; color:#FFD700; font-weight:bold;"></div>
         </div>
-
-        <div class="tool-card">
+        <div class="tool-card" style="background:#222; padding:15px;">
+            <h3>Accessory Glossary</h3>
+            <select id="accCategory" style="width:100%; margin-bottom:5px;">
+                <option value="squat">Squat Accessories</option>
+                <option value="bench">Bench Accessories</option><option value="deadlift">Deadlift Accessories</option>
+            </select>
+            <select id="accExercise" style="width:100%;"></select>
+            <div id="accDetails" style="margin-top:5px; color:#aaa;"></div>
+        </div>
+        <div class="tool-card" style="background:#222; padding:15px;">
             <h3>Elite Mobility</h3>
             <select id="ptArea" style="width:100%; margin-bottom:5px;"><option>Select Area...</option><option value="knees">Knees</option><option value="back">Back</option><option value="shoulders">Shoulders</option><option value="hips">Hips</option><option value="elbows">Elbows</option></select>
-            <div id="ptDisplay" class="cue-box" style="display:none;"></div>
-        </div>
-        
-        <div class="tool-card">
-            <h3>Accessory Glossary</h3>
-            <select id="accCategory" style="width:100%; margin-bottom:5px;"><option value="squat">Squat Accessories</option><option value="bench">Bench Accessories</option><option value="deadlift">Deadlift Accessories</option></select>
-            <select id="accExercise" style="width:100%;"></select>
-            <div id="accDetails" class="cue-box" style="display:none;"></div>
+            <div id="ptDisplay" style="margin-top:10px; color:#ccc;"></div>
         </div>
     </div>
   </div>
 </div>
 
-<div id="meetModal" class="modal" style="display:none;">
-    <div class="modal-content large-modal">
-        <span class="close-modal" onclick="document.getElementById('meetModal').style.display='none'">&times;</span>
-        <h2>Competition Attempts</h2>
-        <div class="meet-grid" id="meetGrid" style="display:grid; gap:10px;"></div>
-    </div>
-</div>
-
-<div id="plateModal" class="modal" style="display:none;">
-    <div class="modal-content">
-        <span class="close-modal" onclick="document.getElementById('plateModal').style.display='none'">&times;</span>
+<div id="plateModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;">
+    <div class="modal-content" style="background:#1e1e1e; margin:20% auto; padding:20px; width:80%; max-width:400px; color:#fff; border-radius:8px; text-align:center;">
+        <span class="close-modal" onclick="document.getElementById('plateModal').style.display='none'" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
         <h3>Plate Loader</h3>
-        <div class="plate-display">
-            <div class="target-weight" id="plateTarget">0</div>
-            <div class="plate-visuals" id="plateVisuals"></div>
-            <div class="plate-text" id="plateText"></div>
-        </div>
+        <h1 id="plateTarget" style="color:#2196f3; margin:10px 0;">0 lbs</h1>
+        <div id="plateVisuals" style="margin:20px 0; background:#333; height:60px; display:flex; align-items:center; justify-content:center; border-radius:5px;"></div>
+        <div id="plateText" style="font-size:1.2em; font-weight:bold;"></div>
     </div>
 </div>
 
-<div id="authModal" class="modal" style="display:none;">
-    <div class="modal-content">
-        <span class="close-modal" onclick="document.getElementById('authModal').style.display='none'">&times;</span>
+<div id="meetModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;">
+    <div class="modal-content large-modal" style="background:#1e1e1e; margin:5% auto; padding:20px; width:90%; max-width:600px; color:#fff; border-radius:8px;">
+        <span class="close-modal" onclick="document.getElementById('meetModal').style.display='none'" style="float:right; cursor:pointer;">&times;</span>
+        <h2>Comp Mode</h2>
+        <div class="meet-grid" id="meetGrid"></div>
+    </div>
+</div>
+
+<div id="authModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;">
+    <div class="modal-content" style="background:#222; margin:20% auto; padding:20px; width:80%; max-width:400px; color:#fff; border-radius:8px;">
+        <span class="close-modal" onclick="document.getElementById('authModal').style.display='none'" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
         <h3>Login</h3>
         <div style="display:flex; flex-direction:column; gap:10px;">
-            <input type="email" id="emailInput" placeholder="Email">
-            <input type="password" id="passwordInput" placeholder="Password">
-            <button class="full-btn" id="emailLoginBtn">Log In</button>
+            <input type="email" id="emailInput" placeholder="Email" style="padding:10px; border-radius:4px; border:1px solid #444; background:#333; color:#fff;">
+            <input type="password" id="passwordInput" placeholder="Password" style="padding:10px; border-radius:4px; border:1px solid #444; background:#333; color:#fff;">
+            <button class="full-btn" id="emailLoginBtn" style="padding:10px; background:#d32f2f; color:#fff; border:none; border-radius:4px; font-weight:bold;">Log In</button>
         </div>
     </div>
 </div>
