@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,7 +23,8 @@
          <div class="stat-box"><span class="stat-label">TOTAL</span><span class="stat-val" id="currentTotal">0</span></div>
       </div>
       <div class="header-actions">
-        <button class="action-btn" id="login-btn" onclick="document.getElementById('authModal').style.display='block'">Login</button>
+        <button class="action-btn" id="login-btn" onclick="openAuthModal()">Login</button>
+        <button class="action-btn" onclick="openTools()">Tools</button>
       </div>
     </div>
   </header>
@@ -37,27 +38,81 @@
     </div>
   </section>
 
-  <div class="mobile-nav no-print" style="margin: 15px 0; display:flex; justify-content:center; gap:20px; align-items:center;">
-      <button onclick="changeMobileWeek(-1)" style="padding:10px 20px; background:#333; color:#fff; border:none; border-radius:4px;">←</button>
-      <span id="mobileWeekLabel" style="font-weight:bold; color:#2196f3;">Week 1</span>
-      <button onclick="changeMobileWeek(1)" style="padding:10px 20px; background:#333; color:#fff; border:none; border-radius:4px;">→</button>
+  <div class="mobile-nav no-print" style="text-align:center; padding:10px;">
+      <button onclick="changeMobileWeek(-1)" class="nav-btn">←</button>
+      <span id="mobileWeekLabel" style="font-weight:bold; margin:0 15px; color:#2196f3;">Week 1</span>
+      <button onclick="changeMobileWeek(1)" class="nav-btn">→</button>
   </div>
 
   <div id="dashboardGrid" class="full-program-grid"></div>
 
+  <div id="randomizerCard" class="tool-card" style="display:none; margin:20px; border: 2px solid #2196f3; padding:15px; background:#111;">
+    <h3>Randomizer</h3>
+    <div class="inputs-grid" style="grid-template-columns: 1fr 1fr;">
+        <select id="randGoal" style="grid-column: span 2; width:100%; padding:8px;"><option value="strength">Strength</option><option value="recovery">Recovery</option><option value="pump">Pump</option></select>
+    </div>
+    <button class="full-btn" onclick="runRandomizer()" style="margin-top:10px;">Generate Workout</button>
+    <div id="randomizerResult" class="stat-box" style="display:none; margin-top:15px; background:#222; padding:10px;"><div id="randOutputText"></div></div>
+  </div>
+
   <footer><p>Andre's Calibrations &copy; 2026</p></footer>
 </div>
 
-<div id="authModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;">
-  <div class="modal-content" style="background:#222; margin:15% auto; padding:20px; width:80%; max-width:400px; border-radius:8px; border:1px solid #444;">
-    <span onclick="document.getElementById('authModal').style.display='none'" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
+<div id="toolsModal" class="modal" style="display:none;">
+  <div class="modal-content large-modal" style="background:#1e1e1e; color:#fff;">
+    <span class="close-modal" onclick="closeModal('toolsModal')" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
+    <h2>Lifter's Toolkit</h2>
+    
+    <div class="tools-layout" style="display:grid; gap:15px;">
+        
+        <div class="tool-card" style="background:#222; padding:15px;">
+            <h3>Warm-up Generator</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <input type="number" id="wuTarget" placeholder="Weight">
+                <select id="wuStyle"><option value="standard">Standard</option><option value="big">Aggressive</option><option value="tight">Conservative</option></select>
+            </div>
+            <button class="full-btn" onclick="calculateWarmup()" style="margin-top:10px; width:100%;">Generate</button>
+            <div id="warmupDisplay" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="tool-card" style="background:#222; padding:15px;">
+            <h3>1RM Estimator</h3>
+            <div style="display:flex; gap:5px;"><input type="number" id="calcWeight" placeholder="Weight"><input type="number" id="calcReps" placeholder="Reps"></div>
+            <button class="full-btn" onclick="calculateOneRM()" style="margin-top:10px; width:100%;">Calculate</button>
+            <div id="oneRmResult" style="margin-top:10px; color:#FFD700;"></div>
+        </div>
+
+        <div class="tool-card" style="background:#222; padding:15px;">
+            <h3>Accessory Glossary</h3>
+            <select id="accCategory" onchange="updateAccOptions()" style="width:100%; margin-bottom:5px;">
+                <option value="">Select Bodypart...</option>
+                <option value="legs">Legs / Squat</option>
+                <option value="push">Push / Bench</option>
+                <option value="pull">Pull / Deadlift</option>
+            </select>
+            <select id="accExercise" onchange="displayAccDetails()" style="width:100%;"></select>
+            <div id="accDetails" style="margin-top:10px; color:#ccc; font-size:0.9em;"></div>
+        </div>
+
+        <div class="tool-card" style="background:#222; padding:15px;">
+            <h3>Elite Mobility</h3>
+            <select id="ptArea" onchange="updatePtMovements()" style="width:100%;"><option>Select Area...</option><option value="knees">Knees</option><option value="shoulders">Shoulders</option><option value="hips">Hips</option><option value="back">Low Back</option></select>
+            <div id="ptDisplay" style="margin-top:10px; color:#ccc;"></div>
+        </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="authModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8);">
+  <div class="modal-content" style="background:#222; margin:20% auto; padding:20px; width:80%; max-width:400px; color:white;">
+    <span onclick="closeModal('authModal')" style="float:right; cursor:pointer;">&times;</span>
     <h3>Login</h3>
     <input type="email" id="emailInput" placeholder="Email" style="width:100%; padding:10px; margin-bottom:10px;">
-    <button class="full-btn" id="emailLoginBtn" style="width:100%; padding:10px; background:#2196f3; color:white; border:none;">Load Data</button>
+    <button class="full-btn" id="emailLoginBtn" style="width:100%; padding:10px; background:#2196f3; color:white;">Load Data</button>
   </div>
 </div>
 
 <script src="script_base.js"></script>
-
 </body>
 </html>
