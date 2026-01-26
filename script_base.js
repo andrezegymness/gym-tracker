@@ -1,203 +1,369 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = { apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M", authDomain: "powerlifting-programs.firebaseapp.com", projectId: "powerlifting-programs", storageBucket: "powerlifting-programs.firebasestorage.app", messagingSenderId: "961044250962", appId: "1:961044250962:web:c45644c186e9bb6ee67a8b", measurementId: "G-501TXRLMSQ" };
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
-
-// BASE MAP DATA
-const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
-const dashboardTemplate = [ 
-    { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "Squat"}, {n: "Cluster DL", t: "Deadlift"}]}, 
-    { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "Bench"}, {n: "Larsen Press", t: "Bench"}]}, 
-    { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "Squat"}]}, 
-    { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "Bench"}, {n: "Close Grip", t: "Bench"}]}, 
-    { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "Bench"}]}, 
-    { name: "Day 6 (Sat)", lifts: [{n: "Pause Squats", t: "Squat"}, {n: "Paused DL Cluster", t: "Deadlift"}, {n: "Comp Bench", t: "Bench"}]} 
-];
-
-// FULL DATABASES (Restored)
-const accessoryData = {
-  squat: [ { name: "ATG System", notes: "Full range." }, { name: "Behind-the-Back", notes: "Quads." }, { name: "High Bar Pause", notes: "Position." }, { name: "Belt Squats", notes: "No spine load." }, { name: "Hack Squats", notes: "Isolation." }, { name: "Leg Press", notes: "Mass." } ],
-  bench: [ { name: "Larson press", notes: "No leg drive." }, { name: "Floor press", notes: "Lockout." }, { name: "Push-ups", notes: "Volume." }, { name: "Dips", notes: "Chest/Tri." } ],
-  deadlift: [ { name: "Seal Rows", notes: "Back saver." }, { name: "Pause Deadlift", notes: "Technique." }, { name: "RDL", notes: "Hinge." }, { name: "Block Pulls", notes: "Overload." } ]
-};
-const ptDatabase = {
-  knees: [{name:"Spanish Squats", rx:"3x45s", context:"Heavy band. Max quad tension."},{name:"TKE", rx:"3x20", context:"Focus on VMO."}],
-  back: [{name:"McGill Big 3", rx:"3x10s", context:"Core stiffness."},{name:"Cat-Cow", rx:"10 reps", context:"Restore movement."}],
-  shoulders: [{name:"Dead Hangs", rx:"3x45s", context:"Decompress AC joint."},{name:"Face Pulls", rx:"3x20", context:"Upper back."}],
-  hips: [{name:"90/90 Switches", rx:"20 reps", context:"Internal/External rotation."},{name:"Couch Stretch", rx:"2 mins", context:"Psoas."}],
-  elbows: [{name:"Hammer Curls", rx:"3x15", context:"Elbow health."}]
+// ==========================================
+// 1. FIREBASE SETUP
+// ==========================================
+// Replace with your actual config keys
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
 };
 
-const state = { maxes: { Squat:0, Bench:0, Deadlift:0, OHP:0 }, dashMode: 'standard', dashReps: '3', dashFasted: false, dashMobileWeek: 0, unit: 'LBS', completed: {}, settings: { bw: '' } };
-const inputs = { Squat: document.getElementById('squatInput'), Bench: document.getElementById('benchInput'), Deadlift: document.getElementById('deadliftInput'), OHP: document.getElementById('ohpInput') };
+// Initialize Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.firestore();
 
-function init() {
-    // Inputs
-    Object.keys(inputs).forEach(k => { inputs[k].addEventListener('input', e => { state.maxes[k] = parseFloat(e.target.value) || 0; saveToCloud(); render(); }); });
+// ==========================================
+// 2. DOM ELEMENTS & STATE
+// ==========================================
+let currentUserEmail = "";
 
-    // Auth
-    onAuthStateChanged(auth, user => { if(user) { loadFromCloud(user.uid); document.getElementById('login-btn').style.display='none'; } });
-    setupAuthButtons();
+const landingPage = document.getElementById('landing-page');
+const appContainer = document.getElementById('app-container');
+const emailInput = document.getElementById('email-input');
+const enterBtn = document.getElementById('enter-btn');
+const programSelect = document.getElementById('program-select');
+const leaderboardBtn = document.getElementById('leaderboard-btn');
+const leaderboardView = document.getElementById('leaderboard-view');
+const leaderboardList = document.getElementById('leaderboard-list');
+const closeLeaderboard = document.getElementById('close-leaderboard');
 
-    // Globals
-    window.updateDashSettings = () => { state.dashMode = document.getElementById('dashMode').value; state.dashReps = document.getElementById('dashReps').value; state.dashMobileWeek = 0; saveToCloud(); render(); };
-    window.changeMobileWeek = (dir) => { let max = (state.dashMode==='maintenance'?6:(state.dashMode==='deload'?2:4)); state.dashMobileWeek = Math.max(0, Math.min(max-1, state.dashMobileWeek+dir)); render(); };
-    window.toggleFasted = () => { state.dashFasted = !state.dashFasted; saveToCloud(); render(); };
-    window.toggleComplete = (id) => { state.completed[id] = !state.completed[id]; saveToCloud(); render(); };
-    window.saveSettings = () => { state.settings.bw = document.getElementById('bodyweight').value; saveToCloud(); };
+// Inputs
+const squatInput = document.getElementById('squat-rm');
+const benchInput = document.getElementById('bench-rm');
+const deadliftInput = document.getElementById('deadlift-rm');
+
+// Views
+const andreView = document.getElementById('andre-view');
+const baseView = document.getElementById('base-view');
+const andreContent = document.getElementById('andre-content');
+const baseContent = document.getElementById('base-content');
+
+// Back Buttons
+document.querySelectorAll('.back-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        programSelect.value = "";
+        andreView.style.display = 'none';
+        baseView.style.display = 'none';
+    });
+});
+
+// ==========================================
+// 3. MAIN LOGIC & EVENTS
+// ==========================================
+
+// Login / Enter
+enterBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim().toLowerCase();
+    if (!email) return alert("Please enter an email.");
+    currentUserEmail = email;
+    await handleUserData(email);
+    landingPage.style.display = 'none';
+    appContainer.style.display = 'block';
+});
+
+// Program Switching
+programSelect.addEventListener('change', (e) => {
+    const val = e.target.value;
+    andreView.style.display = 'none';
+    baseView.style.display = 'none';
+
+    if (val === 'andre') {
+        renderAndreProgram();
+        andreView.style.display = 'block';
+    } else if (val === 'base') {
+        renderBaseWave();
+        baseView.style.display = 'block';
+    }
+});
+
+// Leaderboard
+leaderboardBtn.addEventListener('click', () => {
+    fetchLeaderboard();
+    leaderboardView.style.display = 'flex';
+});
+closeLeaderboard.addEventListener('click', () => {
+    leaderboardView.style.display = 'none';
+});
+
+// Auto-Save Inputs
+[squatInput, benchInput, deadliftInput].forEach(input => {
+    input.addEventListener('input', () => {
+        saveUserData();
+        if (programSelect.value === 'andre') renderAndreProgram();
+        if (programSelect.value === 'base') renderBaseWave();
+    });
+});
+
+// ==========================================
+// 4. CALCULATOR & WARMUPS
+// ==========================================
+function round5(val) {
+    return Math.round(val / 5) * 5;
+}
+
+// Warmup Logic: Returns HTML for the calculator
+function getWarmupHTML(weight, uniqueId) {
+    // We attach an inline event handler to the select menu to update the display
+    // uniqueId ensures we update the correct row if multiple exist
+    return `
+        <div class="warmup-container" style="background:#222; padding:10px; margin-top:5px; border-radius:5px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <label style="font-size:12px; color:#aaa;">Warmup Strategy:</label>
+                <select id="select-${uniqueId}" onchange="updateWarmupDisplay('${uniqueId}', ${weight})" style="background:#333; color:#fff; border:none; padding:2px;">
+                    <option value="standard">Standard</option>
+                    <option value="aggressive">Aggressive (Save Energy)</option>
+                    <option value="conservative">Conservative (Extra Warm)</option>
+                </select>
+            </div>
+            <div id="display-${uniqueId}">
+                ${generateWarmupRows(weight, 'standard')}
+            </div>
+        </div>
+    `;
+}
+
+// This function is called by the HTML select menu above
+window.updateWarmupDisplay = function(id, weight) {
+    const strategy = document.getElementById(`select-${id}`).value;
+    const container = document.getElementById(`display-${id}`);
+    container.innerHTML = generateWarmupRows(weight, strategy);
+};
+
+function generateWarmupRows(target, strategy) {
+    let jumps = [];
     
-    // Tools
-    window.openTools = () => { document.getElementById('toolsModal').style.display='flex'; if(state.settings.bw) document.getElementById('bodyweight').value = state.settings.bw; };
-    window.openAuthModal = () => document.getElementById('authModal').style.display='flex';
-    window.closeModal = (id) => document.getElementById(id).style.display='none';
-    window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
-
-    // ADVANCED WARMUP (Now identical to Andre Map)
-    window.calculateWarmup = () => {
-        const target=parseFloat(document.getElementById('wuTarget').value); 
-        const style=document.getElementById('wuStyle').value; 
-        const lift=document.getElementById('wuLiftType').value;
-        if(!target) return;
-        
-        let protocol = [];
-        if (style === 'big') protocol = [{p:0.45,r:'5'}, {p:0.68,r:'3'}, {p:0.84,r:'1'}, {p:0.92,r:'1'}, {p:0.97,r:'OPT'}];
-        else if (style === 'tight') protocol = [{p:0.40,r:'8'}, {p:0.52,r:'5'}, {p:0.64,r:'3'}, {p:0.75,r:'2'}, {p:0.84,r:'1'}, {p:0.90,r:'1'}, {p:0.94,r:'1'}, {p:0.98,r:'OPT'}];
-        else protocol = [{p:0.505,r:'5'}, {p:0.608,r:'3'}, {p:0.72,r:'2'}, {p:0.834,r:'1'}, {p:0.93,r:'1'}, {p:0.97,r:'OPT'}];
-
-        const cues = {
-            squat: ["Move fast, open hips.", "Focus foot pressure.", "Start bracing.", "BELT ON.", "Max pressure.", "Final heavy feel."],
-            bench: ["Active lats.", "Drive heels.", "Tight arch.", "Explode.", "Comp pause.", "Final heavy feel."],
-            deadlift: ["Pull slack.", "Chest up.", "Squeeze lats.", "BELT ON.", "Comp speed.", "Final heavy feel."]
-        };
-
-        let html = '';
-        protocol.forEach((s, i) => {
-            let lb = Math.round((target * s.p) / 5) * 5;
-            let showBelt = (lift === 'squat' && s.p >= 0.70) || (lift === 'deadlift' && s.p >= 0.83);
-            let cue = cues[lift][i] || "Focus on speed";
-            let reps = s.r === 'OPT' ? 'Optional' : s.r + ' Reps';
-            
-            html += `<div class="warmup-row">
-                <div class="warmup-meta"><span class="warmup-weight">${lb} lbs ${showBelt?'<span class="belt-badge">BELT</span>':''}</span><span>${reps}</span></div>
-                <div class="warmup-cue">${cue}</div>
-            </div>`;
-        });
-        document.getElementById('warmupDisplay').innerHTML = html;
-    };
-
-    // Other Calculators
-    window.updatePtMovements = () => { const a=document.getElementById('ptArea').value; const m=document.getElementById('ptMovement'); m.innerHTML='<option>Select...</option>'; if(ptDatabase[a]) ptDatabase[a].forEach((x,i)=>{ let o=document.createElement('option'); o.value=i; o.innerText=x.name; m.appendChild(o); }); };
-    window.displayPtLogic = () => { const a=document.getElementById('ptArea').value, i=document.getElementById('ptMovement').value; if(a&&i) { const d=ptDatabase[a][i]; document.getElementById('ptDisplay').style.display='block'; document.getElementById('ptDisplay').innerHTML=`<b>${d.name}</b><br>${d.context}<br><i>RX: ${d.rx}</i>`; } };
-    window.updateAccOptions = () => { const c=document.getElementById('accCategory').value; const m=document.getElementById('accExercise'); m.innerHTML=''; accessoryData[c].forEach(x=>{ let o=document.createElement('option'); o.value=x.name; o.innerText=x.name; m.appendChild(o); }); };
-    window.displayAccDetails = () => { const c=document.getElementById('accCategory').value, n=document.getElementById('accExercise').value; const d=accessoryData[c].find(x=>x.name===n); if(d) { document.getElementById('accDetails').style.display='block'; document.getElementById('accDetails').innerText = d.notes; } };
-    window.calculateOneRM = () => { const w=parseFloat(document.getElementById('calcWeight').value),r=parseFloat(document.getElementById('calcReps').value); if(w&&r) document.getElementById('oneRmResult').innerText = "Est 1RM: " + Math.round(w*(1+0.0333*r)); };
-    window.runRandomizer = () => { const w=parseFloat(document.getElementById('prevWeight').value); if(w) { document.getElementById('randomizerResult').style.display='block'; document.getElementById('randOutputText').innerText=`Target: ${Math.round((w*1.04)/5)*5}`; } };
-    
-    // Visual Tools (Meet/Plate)
-    window.openMeetPlanner = () => { const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
-    window.openPlateCalc = (w) => {
-        if(String(w).includes('%')) return; document.getElementById('plateModal').style.display='flex';
-        const wt=parseFloat(w); document.getElementById('plateTarget').innerText=wt+" "+state.unit;
-        document.getElementById('plateVisuals').innerHTML=getPlates(wt); document.getElementById('plateText').innerText="Per Side (45lb Bar)";
-    };
-
-    render();
-}
-
-function setupAuthButtons() {
-    document.getElementById('googleLoginBtn').addEventListener('click', () => signInWithPopup(auth, provider));
-    document.getElementById('emailLoginBtn').addEventListener('click', () => signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passInput').value));
-}
-
-async function saveToCloud() {
-    const user = auth.currentUser; if(!user) return;
-    try { await setDoc(doc(db, "users", user.uid), state, { merge: true }); } catch(e) {}
-}
-
-async function loadFromCloud(uid) {
-    try {
-        const snap = await getDoc(doc(db, "users", uid));
-        if(snap.exists()) {
-            const d = snap.data();
-            // Data Hydration (Case Insensitive)
-            if(d.maxes) { state.maxes.Squat = d.maxes.Squat||d.maxes.squat||0; state.maxes.Bench = d.maxes.Bench||d.maxes.bench||0; state.maxes.Deadlift = d.maxes.Deadlift||d.maxes.deadlift||0; state.maxes.OHP = d.maxes.OHP||d.maxes.ohp||0; }
-            if(d.dashMode) { state.dashMode = d.dashMode; document.getElementById('dashMode').value = d.dashMode; }
-            if(d.dashReps) { state.dashReps = d.dashReps; document.getElementById('dashReps').value = d.dashReps; }
-            if(d.dashFasted) state.dashFasted = d.dashFasted;
-            if(d.completed) state.completed = d.completed;
-            if(d.settings) state.settings = d.settings;
-            
-            // Force Visual Update
-            inputs.Squat.value = state.maxes.Squat||''; inputs.Bench.value = state.maxes.Bench||'';
-            inputs.Deadlift.value = state.maxes.Deadlift||''; inputs.OHP.value = state.maxes.OHP||'';
-            if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
-            
-            render();
-        }
-    } catch(e) {}
-}
-
-function getLoad(pct, max) { let v = max * pct; return Math.round(v/5)*5; }
-function calculateDots(total, bw) { if(!bw || !total) return '-'; let w=parseFloat(bw)/2.20462; let t=parseFloat(total)/2.20462; const den = -0.000001093*Math.pow(w,4) + 0.0007391293*Math.pow(w,3) - 0.1918751679*Math.pow(w,2) + 24.0900756*w - 307.75076; return (t*(500/den)).toFixed(2); }
-function getPlates(w) { let t=parseFloat(w); if(isNaN(t)) return ""; let s=(t-45)/2; if(s<=0)return""; const p=[45,35,25,10,5,2.5]; let h=""; p.forEach(x=>{ while(s>=x){ s-=x; h+=`<span class="plate p${String(x).replace('.','_')}-lbs">${x}</span>`; } }); return h; }
-
-function render() {
-    const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
-    document.getElementById('currentTotal').innerText = total;
-    document.getElementById('currentDots').innerText = calculateDots(total, state.settings.bw);
-    document.getElementById('mobileWeekLabel').innerText = "Week " + (state.dashMobileWeek + 1);
-    
-    // Toggle Fasted Color
-    const fBtn = document.getElementById('fastedBtn');
-    fBtn.innerText = state.dashFasted ? "Fasted: ON" : "Fasted: OFF";
-    if(state.dashFasted) fBtn.classList.add('active'); else fBtn.classList.remove('active');
-
-    // Toggle Randomizer
-    if(state.dashMode === 'randomizer') {
-        document.getElementById('randomizerCard').style.display = 'block';
-        document.getElementById('dashboardGrid').style.display = 'none';
-        return; 
+    // Logic for jumps
+    if (strategy === 'aggressive') {
+        // Fewer sets, bigger jumps
+        jumps = [
+            { pct: 0.00, reps: "10", cue: "Empty Bar" },
+            { pct: 0.50, reps: "5", cue: "Fast" },
+            { pct: 0.75, reps: "3", cue: "Strong" },
+            { pct: 0.90, reps: "1", cue: "Primer" }
+        ];
+    } else if (strategy === 'conservative') {
+        // More sets, smaller jumps
+        jumps = [
+            { pct: 0.00, reps: "10", cue: "Empty Bar" },
+            { pct: 0.30, reps: "8", cue: "Loose" },
+            { pct: 0.50, reps: "5", cue: "Tech" },
+            { pct: 0.65, reps: "3", cue: "Speed" },
+            { pct: 0.80, reps: "2", cue: "Heavy" },
+            { pct: 0.90, reps: "1", cue: "Single" }
+        ];
     } else {
-        document.getElementById('randomizerCard').style.display = 'none';
-        document.getElementById('dashboardGrid').style.display = 'flex';
+        // Standard
+        jumps = [
+            { pct: 0.00, reps: "10", cue: "Empty Bar" },
+            { pct: 0.40, reps: "5", cue: "Smooth" },
+            { pct: 0.60, reps: "3", cue: "Solid" },
+            { pct: 0.80, reps: "2", cue: "Heavy" },
+            { pct: 0.90, reps: "1", cue: "Single" }
+        ];
     }
 
-    const cont = document.getElementById('dashboardGrid'); cont.innerHTML = '';
-    const startPct = basePctMap[state.dashReps];
-    const fastedMult = state.dashFasted ? 0.935 : 1.0;
-    let numWeeks = (state.dashMode === 'maintenance' ? 6 : (state.dashMode === 'deload' ? 2 : 4));
-
-    for (let w = 0; w < numWeeks; w++) {
-        // MOBILE SLIDER LOGIC
-        let activeClass = (w === state.dashMobileWeek) ? 'active-week' : '';
-        const weekCol = document.createElement('div'); weekCol.className = `week-column ${activeClass}`;
-        
-        let mod = (state.dashMode === 'maintenance' ? w * 0.02 : (state.dashMode === 'deload' ? -((w + 1) * 0.04) : w * 0.04));
-        const curPct = startPct + mod;
-        
-        weekCol.innerHTML = `<div class="week-label">WEEK ${w+1} (${Math.round(curPct*100)}%)</div>`;
-        
-        dashboardTemplate.forEach((day, dIdx) => {
-            let activeLifts = [...day.lifts];
-            const card = document.createElement('div'); card.className = 'day-container';
-            let html = `<div class="day-header"><span>${day.name}</span></div><table>`;
-            activeLifts.forEach((lift, i) => {
-                const uid = `Dash-${state.dashMode}-${w}-${day.name}-${i}`;
-                let max = state.maxes[lift.t] || 0;
-                let load = (max > 0) ? Math.round((max * curPct * fastedMult)/5)*5 + " LBS" : Math.round(curPct*100) + "%";
-                html += `<tr class="row-${lift.t} ${state.completed[uid]?'completed':''}" onclick="toggleComplete('${uid}')"><td>${lift.n}</td><td>3x${state.dashReps}</td><td class="load-cell" onclick="event.stopPropagation();openPlateCalc('${load}')">${load}</td></tr>`;
-            });
-            html += `</table>`;
-            card.innerHTML = html;
-            weekCol.appendChild(card);
-        });
-        cont.appendChild(weekCol);
-    }
+    let html = '';
+    jumps.forEach(step => {
+        let load = step.pct === 0 ? "45" : round5(target * step.pct);
+        html += `
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding:4px 0; font-size:13px;">
+                <span>${load} lbs</span>
+                <span>x ${step.reps}</span>
+                <span style="color:#FFD700;">${step.cue}</span>
+            </div>
+        `;
+    });
+    return html;
 }
 
-init();
+// ==========================================
+// 5. ANDRE PROGRAM
+// ==========================================
+function renderAndreProgram() {
+    const s = parseFloat(squatInput.value) || 0;
+    const b = parseFloat(benchInput.value) || 0;
+    const d = parseFloat(deadliftInput.value) || 0;
+
+    const weeks = [
+        { name: "Week 1", s: 0.70, b: 0.70, d: 0.70, reps: "5x5" },
+        { name: "Week 2", s: 0.75, b: 0.75, d: 0.75, reps: "5x4" },
+        { name: "Week 3", s: 0.80, b: 0.80, d: 0.80, reps: "4x4" },
+        { name: "Week 4", s: 0.85, b: 0.85, d: 0.85, reps: "4x3" },
+        { name: "Week 5", s: 0.90, b: 0.90, d: 0.90, reps: "3x2" },
+        { name: "Week 6", s: 0.95, b: 0.95, d: 0.95, reps: "3x1" },
+        { name: "Deload", s: 0.60, b: 0.60, d: 0.60, reps: "3x5" }
+    ];
+
+    let html = '';
+    weeks.forEach((week, i) => {
+        const sW = round5(s * week.s);
+        const bW = round5(b * week.b);
+        const dW = round5(d * week.d);
+
+        html += `
+            <div class="week-card">
+                <h3>${week.name}</h3>
+                <div class="lift-row">
+                    <span>Squat</span> <strong>${sW}</strong> <span>${week.reps}</span>
+                </div>
+                ${week.name !== 'Deload' ? getWarmupHTML(sW, `andre-s-${i}`) : ''}
+                
+                <div class="lift-row">
+                    <span>Bench</span> <strong>${bW}</strong> <span>${week.reps}</span>
+                </div>
+                <div class="lift-row">
+                    <span>Deadlift</span> <strong>${dW}</strong> <span>${week.reps}</span>
+                </div>
+                <div class="accessories-section">
+                     <h4>Accessories</h4>
+                     <ul>
+                        <li>Squat Acc: Belt Squat 3x10, Hamstrings 3x12</li>
+                        <li>Bench Acc: DB Press 3x10, Triceps 3x15</li>
+                        <li>Deadlift Acc: RDL 3x8, Back Ext 3x15</li>
+                     </ul>
+                </div>
+            </div>
+        `;
+    });
+    andreContent.innerHTML = html;
+}
+
+// ==========================================
+// 6. BASE WAVE (SCROLLABLE & NEW DELOAD)
+// ==========================================
+function renderBaseWave() {
+    const s = parseFloat(squatInput.value) || 0;
+    const b = parseFloat(benchInput.value) || 0;
+    const d = parseFloat(deadliftInput.value) || 0;
+
+    const trainingWeeks = [
+        { name: "Week 1", p: 0.65, reps: "3x8" },
+        { name: "Week 2", p: 0.70, reps: "3x8" },
+        { name: "Week 3", p: 0.75, reps: "3x6" },
+        { name: "Week 4", p: 0.80, reps: "3x5" },
+        { name: "Week 5", p: 0.85, reps: "3x4" },
+        { name: "Week 6", p: 0.90, reps: "3x3" },
+        { name: "Week 7", p: 0.925, reps: "3x2" },
+        { name: "Week 8", p: 0.95, reps: "2x2" },
+        { name: "Week 9", p: 0.975, reps: "2x1" },
+        { name: "Week 10 (Peak)", p: 1.0, reps: "1x1" },
+    ];
+
+    // Horizontal Scroll Container Style
+    let html = `
+        <div style="
+            display: flex; 
+            overflow-x: auto; 
+            gap: 15px; 
+            padding-bottom: 20px; 
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;">
+    `;
+
+    // 1. Training Weeks
+    trainingWeeks.forEach((week, i) => {
+        const sW = round5(s * week.p);
+        const bW = round5(b * week.p);
+        const dW = round5(d * week.p);
+        html += createBaseCard(week.name, sW, bW, dW, week.reps, false, `base-${i}`);
+    });
+
+    // 2. Deload Weeks (Custom Logic)
+    // Deload 1: 50%
+    const d1_s = round5(s * 0.50);
+    const d1_b = round5(b * 0.50);
+    const d1_d = round5(d * 0.50);
+    html += createBaseCard("Deload Week 1", d1_s, d1_b, d1_d, "3x10 (Flush)", true, "dl-1");
+
+    // Deload 2: Week 1 + 2% load
+    const d2_s = round5(d1_s * 1.02);
+    const d2_b = round5(d1_b * 1.02);
+    const d2_d = round5(d1_d * 1.02);
+    html += createBaseCard("Deload Week 2", d2_s, d2_b, d2_d, "3x10 (Pump)", true, "dl-2");
+
+    html += '</div>'; // End Scroll Container
+    baseContent.innerHTML = html;
+}
+
+function createBaseCard(title, s, b, d, reps, isDeload, uniqueId) {
+    // Note: Added style="min-width: 85vw; scroll-snap-align: center;" for horizontal scrolling
+    return `
+        <div class="week-card" style="min-width: 85vw; scroll-snap-align: center;">
+            <h3>${title}</h3>
+            <div class="lift-row">
+                <span>Squat</span> <strong>${s}</strong> <span>${reps}</span>
+            </div>
+            ${!isDeload ? getWarmupHTML(s, uniqueId) : ''}
+            
+            <div class="lift-row">
+                <span>Bench</span> <strong>${b}</strong> <span>${reps}</span>
+            </div>
+            
+            <div class="lift-row">
+                <span>Deadlift</span> <strong>${d}</strong> <span>${reps}</span>
+            </div>
+            
+            <div class="accessories-section">
+                <h4>Accessories</h4>
+                <ul>
+                    <li>Core: Planks 3x60s</li>
+                    <li>Back: Lat Pulldowns 3x12</li>
+                    <li>Arms: Bicep Curls 3x12</li>
+                </ul>
+            </div>
+        </div>
+    `;
+}
+
+// ==========================================
+// 7. FIREBASE DATA HANDLERS
+// ==========================================
+async function handleUserData(email) {
+    try {
+        const docRef = db.collection('users').doc(email);
+        const doc = await docRef.get();
+        if (doc.exists) {
+            const data = doc.data();
+            squatInput.value = data.squat || 0;
+            benchInput.value = data.bench || 0;
+            deadliftInput.value = data.deadlift || 0;
+        } else {
+            await docRef.set({ email: email, squat: 0, bench: 0, deadlift: 0, total: 0 });
+        }
+    } catch (e) { console.error("Login Error", e); }
+}
+
+async function saveUserData() {
+    if (!currentUserEmail) return;
+    const s = parseFloat(squatInput.value) || 0;
+    const b = parseFloat(benchInput.value) || 0;
+    const d = parseFloat(deadliftInput.value) || 0;
+    const total = s + b + d;
+    
+    db.collection('users').doc(currentUserEmail).set({
+        squat: s, bench: b, deadlift: d, total: total, email: currentUserEmail
+    }, { merge: true });
+}
+
+async function fetchLeaderboard() {
+    leaderboardList.innerHTML = '<p>Loading...</p>';
+    try {
+        const snap = await db.collection('users').orderBy('total', 'desc').limit(20).get();
+        let html = '<table style="width:100%; text-align:left;"><tr><th>Rank</th><th>User</th><th>Total</th></tr>';
+        let rank = 1;
+        snap.forEach(doc => {
+            const d = doc.data();
+            const name = d.email.split('@')[0]; // Simple mask
+            html += `<tr><td>#${rank++}</td><td>${name}</td><td style="color:#FFD700;">${d.total}</td></tr>`;
+        });
+        html += '</table>';
+        leaderboardList.innerHTML = html;
+    } catch (e) {
+        leaderboardList.innerHTML = '<p>Error loading. Check permissions.</p>';
+    }
+}
