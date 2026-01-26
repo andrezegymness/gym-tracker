@@ -1,8 +1,8 @@
 // ==========================================
-// 1. FIREBASE CONFIG & INIT
+// 1. FIREBASE CONFIG
 // ==========================================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY", // Replace if needed, otherwise existing keys usually work if public
+    apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
     projectId: "YOUR_PROJECT_ID",
     storageBucket: "YOUR_PROJECT_ID.appspot.com",
@@ -10,37 +10,32 @@ const firebaseConfig = {
     appId: "YOUR_APP_ID"
 };
 
-// Initialize only if not already running
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ==========================================
-// 2. VARIABLES & ELEMENTS
+// 2. STATE & VARIABLES
 // ==========================================
-let currentMobileWeek = 0; // 0 = Week 1
+let currentMobileWeek = 0;
 let currentUserEmail = "";
-let programData = []; // Stores the calculated weeks
+let programData = [];
 
+// DOM Elements
 const inputs = {
     squat: document.getElementById('squatInput'),
     bench: document.getElementById('benchInput'),
     deadlift: document.getElementById('deadliftInput'),
     ohp: document.getElementById('ohpInput')
 };
-
 const dashboardGrid = document.getElementById('dashboardGrid');
 const totalDisplay = document.getElementById('currentTotal');
 const mobileWeekLabel = document.getElementById('mobileWeekLabel');
-const loginBtn = document.getElementById('emailLoginBtn');
 
 // ==========================================
-// 3. MAIN LOGIC (Run on Load)
+// 3. MAIN INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. Listen for input changes (Auto-Calculate)
+    // 1. Auto-Calc on Input
     Object.values(inputs).forEach(input => {
         if(input) {
             input.addEventListener('input', () => {
@@ -50,37 +45,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 2. Login Button Listener
+    // 2. Login Logic
+    const loginBtn = document.getElementById('emailLoginBtn');
     if(loginBtn) {
         loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('emailInput').value.trim().toLowerCase();
             if(email) {
                 currentUserEmail = email;
                 await loadUserData(email);
-                document.getElementById('authModal').style.display = 'none';
-                alert("Loaded: " + email);
+                closeModal('authModal');
+                alert("Welcome back: " + email);
             }
         });
     }
 
-    // 3. Initial Calculation (To show zeros instead of blank)
+    // 3. Populate Tools (Glossary Defaults)
+    // (Optional: You can trigger default fills here if needed)
+
+    // 4. Initial Render
     calculateProgram();
 });
 
 // ==========================================
-// 4. PROGRAM CALCULATION (Base Wave)
+// 4. BASE WAVE LOGIC (10 WEEKS + 2 DELOADS)
 // ==========================================
 function calculateProgram() {
-    // Get numbers safely (default to 0)
     const s = parseFloat(inputs.squat.value) || 0;
     const b = parseFloat(inputs.bench.value) || 0;
     const d = parseFloat(inputs.deadlift.value) || 0;
     const o = parseFloat(inputs.ohp.value) || 0;
 
-    // Update Header Total
     if(totalDisplay) totalDisplay.innerText = (s + b + d + o);
 
-    // The Schedule (10 Weeks + 2 Deloads)
     const schedule = [
         { name: "Week 1", p: 0.65, reps: "3x8" },
         { name: "Week 2", p: 0.70, reps: "3x8" },
@@ -88,122 +84,196 @@ function calculateProgram() {
         { name: "Week 4", p: 0.80, reps: "3x5" },
         { name: "Week 5", p: 0.85, reps: "3x4" },
         { name: "Week 6", p: 0.90, reps: "3x3" },
-        { name: "Deload 1", p: 0.50, reps: "3x10 (Flush)", isDeload: true }, 
-        { name: "Deload 2", p: 0.51, reps: "3x10 (Pump)", isDeload: true }, // +2% ish load
+        // Fixed Deload Structure
+        { name: "Deload 1", p: 0.50, reps: "3x10 (Flush)", isDeload: true },
+        { name: "Deload 2", p: 0.51, reps: "3x10 (Pump)", isDeload: true },
         { name: "Week 7", p: 0.925, reps: "3x2" },
         { name: "Week 8", p: 0.95, reps: "2x2" },
         { name: "Week 9", p: 0.975, reps: "2x1" },
         { name: "Week 10 (Peak)", p: 1.0, reps: "1x1 (PR)" }
     ];
 
-    // Generate Data
-    programData = schedule.map(week => {
-        return {
-            name: week.name,
-            reps: week.reps,
-            squat: round5(s * week.p),
-            bench: round5(b * week.p),
-            deadlift: round5(d * week.p),
-            ohp: round5(o * week.p),
-            isDeload: week.isDeload || false
-        };
-    });
+    programData = schedule.map(week => ({
+        name: week.name,
+        reps: week.reps,
+        squat: round5(s * week.p),
+        bench: round5(b * week.p),
+        deadlift: round5(d * week.p),
+        ohp: round5(o * week.p),
+        isDeload: week.isDeload || false
+    }));
 
     renderGrid();
 }
 
-// ==========================================
-// 5. RENDERING THE GRID
-// ==========================================
 function renderGrid() {
     if(!dashboardGrid) return;
-    dashboardGrid.innerHTML = ""; // Clear current
+    dashboardGrid.innerHTML = "";
 
     programData.forEach((week, index) => {
-        // Create Card
         const card = document.createElement('div');
         
-        // --- MOBILE VISIBILITY LOGIC ---
-        // If screen is small (<768px), hide all cards except the current week
+        // Mobile View Logic
         const isMobile = window.innerWidth <= 768;
         if (isMobile && index !== currentMobileWeek) {
             card.style.display = 'none';
         } else {
             card.style.display = 'block';
         }
-        
-        // Style the card
+
+        // Card Styling
         card.style.background = "#1e1e1e";
-        card.style.border = "1px solid #333";
+        card.style.border = week.isDeload ? "1px solid #4caf50" : "1px solid #333";
         card.style.borderRadius = "8px";
         card.style.padding = "15px";
         card.style.marginBottom = "15px";
 
-        // Card HTML
         card.innerHTML = `
-            <h3 style="color:${week.isDeload ? '#4caf50' : '#2196f3'}; border-bottom:1px solid #444; padding-bottom:5px; margin-top:0;">
-                ${week.name}
-            </h3>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                <div style="background:#222; padding:8px; border-radius:4px;">
-                    <div style="color:#aaa; font-size:12px;">Squat</div>
-                    <div style="color:#fff; font-weight:bold; font-size:1.1em;">${week.squat}</div>
-                    <div style="color:#2196f3; font-size:0.9em;">${week.reps}</div>
-                </div>
-                <div style="background:#222; padding:8px; border-radius:4px;">
-                    <div style="color:#aaa; font-size:12px;">Bench</div>
-                    <div style="color:#fff; font-weight:bold; font-size:1.1em;">${week.bench}</div>
-                    <div style="color:#2196f3; font-size:0.9em;">${week.reps}</div>
-                </div>
-                <div style="background:#222; padding:8px; border-radius:4px;">
-                    <div style="color:#aaa; font-size:12px;">Deadlift</div>
-                    <div style="color:#fff; font-weight:bold; font-size:1.1em;">${week.deadlift}</div>
-                    <div style="color:#2196f3; font-size:0.9em;">${week.reps}</div>
-                </div>
-                <div style="background:#222; padding:8px; border-radius:4px;">
-                    <div style="color:#aaa; font-size:12px;">OHP</div>
-                    <div style="color:#fff; font-weight:bold; font-size:1.1em;">${week.ohp}</div>
-                    <div style="color:#2196f3; font-size:0.9em;">${week.reps}</div>
-                </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #444; padding-bottom:5px;">
+                <h3 style="margin:0; color:${week.isDeload ? '#4caf50' : '#2196f3'}">${week.name}</h3>
+                ${!week.isDeload ? `<button onclick="loadWarmupIntoModal(${week.squat})" style="font-size:10px; background:#333; color:#fff; border:none; padding:4px;">Warmups</button>` : ''}
             </div>
             
-            ${!week.isDeload ? `<div style="margin-top:10px; font-size:12px; color:#666;">* Warmups available in Tools</div>` : ''}
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                <div class="lift-box">
+                    <div class="lbl">Squat</div><div class="val">${week.squat}</div><div class="reps">${week.reps}</div>
+                </div>
+                <div class="lift-box">
+                    <div class="lbl">Bench</div><div class="val">${week.bench}</div><div class="reps">${week.reps}</div>
+                </div>
+                <div class="lift-box">
+                    <div class="lbl">Deadlift</div><div class="val">${week.deadlift}</div><div class="reps">${week.reps}</div>
+                </div>
+                <div class="lift-box">
+                    <div class="lbl">OHP</div><div class="val">${week.ohp}</div><div class="reps">${week.reps}</div>
+                </div>
+            </div>
+            <style>
+                .lift-box { background:#252525; padding:8px; border-radius:4px; text-align:center; }
+                .lbl { color:#888; font-size:11px; }
+                .val { color:#fff; font-weight:bold; font-size:1.1em; }
+                .reps { color:#2196f3; font-size:0.8em; }
+            </style>
         `;
-
         dashboardGrid.appendChild(card);
     });
 
-    // Update Mobile Label (e.g., "Week 1")
-    if(mobileWeekLabel) {
-        mobileWeekLabel.innerText = programData[currentMobileWeek].name;
+    if(mobileWeekLabel) mobileWeekLabel.innerText = programData[currentMobileWeek].name;
+}
+
+// ==========================================
+// 5. TOOLS LOGIC (RESTORED)
+// ==========================================
+
+// --- WARMUP TOOL ---
+window.calculateWarmup = function() {
+    const target = parseFloat(document.getElementById('wuTarget').value) || 0;
+    const style = document.getElementById('wuStyle').value;
+    const display = document.getElementById('warmupDisplay');
+    
+    let steps = [];
+    if (style === 'big') { // Aggressive
+        steps = [{p:0,r:10,t:"Bar"}, {p:0.5,r:5,t:"Fast"}, {p:0.75,r:3,t:"Strong"}, {p:0.9,r:1,t:"Primer"}];
+    } else if (style === 'tight') { // Conservative
+        steps = [{p:0,r:10,t:"Bar"}, {p:0.3,r:8,t:"Loose"}, {p:0.5,r:5,t:"Tech"}, {p:0.65,r:3,t:"Speed"}, {p:0.8,r:2,t:"Heavy"}, {p:0.9,r:1,t:"Single"}];
+    } else { // Standard
+        steps = [{p:0,r:10,t:"Bar"}, {p:0.4,r:5,t:"Warm"}, {p:0.6,r:3,t:"Build"}, {p:0.8,r:2,t:"Heavy"}, {p:0.9,r:1,t:"Single"}];
     }
-}
 
-// ==========================================
-// 6. HELPER FUNCTIONS (Global)
-// ==========================================
+    let html = '<table style="width:100%; font-size:13px; color:#ddd;">';
+    steps.forEach(s => {
+        let w = s.p === 0 ? 45 : round5(target * s.p);
+        html += `<tr><td>${w} lbs</td><td>x ${s.r}</td><td style="color:#FFD700">${s.t}</td></tr>`;
+    });
+    html += '</table>';
+    display.innerHTML = html;
+};
 
-// Round to nearest 5
-function round5(val) {
-    const res = Math.round(val / 5) * 5;
-    return isNaN(res) ? 0 : res;
-}
+// --- ACCESSORY GLOSSARY ---
+const accessoriesDB = {
+    legs: ["Belt Squat (3x12)", "Bulgarian Split Squat (3x10)", "Leg Ext/Curl (4x15)", "Lunges (3x20)"],
+    push: ["DB Incline Press (3x10)", "Tricep Pushdown (4x15)", "Dips (3xFailure)", "Lateral Raises (4x15)"],
+    pull: ["Lat Pulldown (4x12)", "Chest Supported Row (3x10)", "Face Pulls (4x15)", "Bicep Curls (3x10)"]
+};
 
-// Mobile Nav Buttons (Global scope for HTML onclick)
-window.changeMobileWeek = function(direction) {
-    const maxIndex = programData.length - 1;
-    currentMobileWeek += direction;
+window.updateAccOptions = function() {
+    const cat = document.getElementById('accCategory').value;
+    const select = document.getElementById('accExercise');
+    select.innerHTML = "";
+    if(accessoriesDB[cat]) {
+        accessoriesDB[cat].forEach(ex => {
+            let opt = document.createElement('option');
+            opt.value = ex;
+            opt.innerText = ex;
+            select.appendChild(opt);
+        });
+        displayAccDetails();
+    }
+};
+
+window.displayAccDetails = function() {
+    const ex = document.getElementById('accExercise').value;
+    document.getElementById('accDetails').innerText = "Selected: " + ex;
+};
+
+// --- MOBILITY TOOL ---
+const mobilityDB = {
+    knees: "Foam Roll Quads, Couch Stretch (2 mins), Terminal Knee Extension",
+    shoulders: "Band Pull Aparts (100 reps), Doorway Stretch, Scapular Retraction",
+    hips: "Pigeon Pose, 90/90 Stretch, Hip Circle Walks",
+    back: "Cat/Cow, McGill Big 3, Hang from bar (30s)"
+};
+
+window.updatePtMovements = function() {
+    const area = document.getElementById('ptArea').value;
+    const display = document.getElementById('ptDisplay');
+    if(mobilityDB[area]) {
+        display.innerHTML = `<div style="padding:10px; background:#333; border-radius:5px;">${mobilityDB[area]}</div>`;
+    }
+};
+
+// --- RANDOMIZER ---
+window.runRandomizer = function() {
+    const goal = document.getElementById('randGoal').value;
+    const result = document.getElementById('randomizerResult');
+    const text = document.getElementById('randOutputText');
     
-    // Cycle through (Loop)
-    if (currentMobileWeek < 0) currentMobileWeek = maxIndex;
-    if (currentMobileWeek > maxIndex) currentMobileWeek = 0;
+    let workout = "";
+    if (goal === "strength") workout = "5x5 @ 75% Compound + 3x8 Heavy Accessory";
+    else if (goal === "recovery") workout = "3x10 @ 50% Tempo Work + 20 min Steady State Cardio";
+    else if (goal === "pump") workout = "4x12 Machines + Dropsets on Isolations";
     
-    renderGrid(); // Redraw to show new week
+    result.style.display = 'block';
+    text.innerText = workout;
+};
+
+// --- UTILITIES ---
+window.openTools = function() { document.getElementById('toolsModal').style.display = 'block'; };
+window.openAuthModal = function() { document.getElementById('authModal').style.display = 'block'; };
+window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; };
+window.loadWarmupIntoModal = function(w) { 
+    document.getElementById('wuTarget').value = w;
+    window.openTools();
+    window.calculateWarmup();
+};
+window.calculateOneRM = function() {
+    const w = parseFloat(document.getElementById('calcWeight').value) || 0;
+    const r = parseFloat(document.getElementById('calcReps').value) || 0;
+    document.getElementById('oneRmResult').innerText = "Est Max: " + Math.round(w * (1 + r/30)) + " lbs";
+};
+
+// Helper
+function round5(val) { return Math.round(val / 5) * 5 || 0; }
+window.changeMobileWeek = function(d) {
+    const max = programData.length - 1;
+    currentMobileWeek += d;
+    if(currentMobileWeek < 0) currentMobileWeek = max;
+    if(currentMobileWeek > max) currentMobileWeek = 0;
+    renderGrid();
 };
 
 // ==========================================
-// 7. DATA HANDLING
+// 6. FIREBASE DATA HANDLERS
 // ==========================================
 async function loadUserData(email) {
     try {
@@ -214,9 +284,9 @@ async function loadUserData(email) {
             inputs.bench.value = d.bench || 0;
             inputs.deadlift.value = d.deadlift || 0;
             inputs.ohp.value = d.ohp || 0;
-            calculateProgram(); // Refresh Grid
+            calculateProgram();
         }
-    } catch (e) { console.error("Load Error:", e); }
+    } catch(e) { console.error(e); }
 }
 
 async function saveUserData() {
@@ -229,5 +299,5 @@ async function saveUserData() {
             ohp: parseFloat(inputs.ohp.value) || 0,
             email: currentUserEmail
         }, { merge: true });
-    } catch (e) { console.error("Save Error:", e); }
+    } catch(e) { console.error(e); }
 }
