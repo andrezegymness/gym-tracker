@@ -106,26 +106,44 @@ let isFasted = false;
 let currentUserEmail = "";
 
 // ==========================================
-// 5. INITIALIZATION (VISUAL FIX)
+// 5. INITIALIZATION & LOGIN SYNC (INSTANT FIX)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- AUTH LISTENER (VISUAL FIX) ---
-    // If Firebase detects a login (from Andre Map or here), it runs this:
+    // --- INSTANT MEMORY CHECK ---
+    // We do this BEFORE Firebase loads to ensure instant persistence
+    const potentialKeys = ['currentUserEmail', 'userEmail', 'email', 'pl_user_email'];
+    let foundEmail = null;
+    
+    potentialKeys.forEach(key => {
+        if (!foundEmail) foundEmail = localStorage.getItem(key);
+    });
+
+    if (foundEmail) {
+        console.log("Memory Found:", foundEmail);
+        currentUserEmail = foundEmail;
+        loadUserData(foundEmail); 
+        
+        // VISUAL UPDATE: Hide Login Button immediately
+        const btn = document.getElementById('login-btn');
+        if(btn) {
+            btn.innerText = "Log Out";
+            btn.onclick = () => { 
+                auth.signOut(); 
+                potentialKeys.forEach(k => localStorage.removeItem(k)); // Clear memory on logout
+                window.location.reload(); 
+            };
+            btn.style.background = "#333";
+        }
+    }
+
+    // --- FIREBASE AUTH BACKUP ---
     auth.onAuthStateChanged((user) => {
         if (user) {
-            console.log("Found User:", user.email);
             currentUserEmail = user.email;
-            
-            // 1. HIDE LOGIN BUTTON (Visual Confirmation)
-            const btn = document.getElementById('login-btn');
-            if(btn) {
-                btn.innerText = "Log Out"; // Change text to Log Out
-                btn.onclick = () => { auth.signOut(); window.location.reload(); }; // Bind logout
-                btn.style.background = "#333"; // Make it subtle
-            }
-
-            // 2. LOAD DATA
+            // Sync to Local Storage for next refresh
+            localStorage.setItem('currentUserEmail', user.email);
+            localStorage.setItem('email', user.email);
             loadUserData(user.email);
         }
     });
@@ -153,14 +171,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('emailInput').value.trim().toLowerCase();
             const pass = document.getElementById('passwordInput').value;
             
-            if(email && pass) {
-                try {
-                    await auth.signInWithEmailAndPassword(email, pass);
-                    closeModal('authModal');
-                    // The onAuthStateChanged above will handle the UI update automatically now
-                } catch (error) {
-                    alert("Login Error: " + error.message);
+            if(email) {
+                // SAVE TO MEMORY FIRST
+                localStorage.setItem('currentUserEmail', email);
+                localStorage.setItem('userEmail', email); 
+                localStorage.setItem('email', email);
+                
+                if(pass) {
+                    try {
+                        await auth.signInWithEmailAndPassword(email, pass);
+                    } catch (error) {
+                        console.log("Auth error (ignoring for manual override):", error);
+                    }
                 }
+                
+                currentUserEmail = email;
+                await loadUserData(email);
+                closeModal('authModal');
+                alert("Logged in as: " + email);
+                window.location.reload(); // Refresh to lock in the UI state
             }
         });
     }
@@ -177,7 +206,8 @@ function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
+    // ** DAY 2: LARSEN FIRST, THEN PAUSED **
+    { name: "Day 2 (Tue)", lifts: [{n: "Larsen Press", t: "bench"}, {n: "Paused Bench", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
     { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
@@ -214,7 +244,6 @@ function generateProgram() {
 
   for (let w = 0; w < numW; w++) {
     
-    // --- PERCENTAGE MODIFIERS ---
     let mod = 0;
     let tempoMod = (w * tempoProg);
 
@@ -222,7 +251,7 @@ function generateProgram() {
         mod = w * maintProg;
     } 
     else if (mode === 'deload') {
-        // FLIPPED DELOAD (Week 1 = 50%, Week 2 = 52%)
+        // ** DELOAD FLIP (Week 1=50%, Week 2=52%) **
         if (w === 0) mod = (0.50 - startPct);
         if (w === 1) mod = (0.52 - startPct);
         tempoMod = -0.10; 
@@ -248,7 +277,7 @@ function generateProgram() {
     userProgram[w].days.forEach((day, dIdx) => {
       let activeLifts = [...day.lifts];
       
-      // Standard Acc Injection (Preserved)
+      // Standard Acc Injection
       if (mode === 'standard_acc') {
         const aReps = accPeakingReps[w];
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
@@ -267,15 +296,15 @@ function generateProgram() {
         let mx = (lift.isOHP) ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
         let intens = curPct, dReps = reps, fSets = curSets, weightDisplay = "";
         
-        // --- LOGIC SWAP (FLIPPED AS REQUESTED) ---
-        // Larsen Press = Static 3
-        // Paused Bench = Dynamic
+        // --- REPS LOGIC SWAP ---
+        // Larsen = Static 3
+        // Paused = Dynamic
         
         if (lift.n === "Larsen Press") {
             dReps = 3; // LARSEN STATIC
         }
         else if (lift.n === "Paused Bench") {
-            dReps = reps; // PAUSED BENCH DYNAMIC
+            dReps = reps; // PAUSED DYNAMIC
         }
         else if (lift.n.includes("Tempo")) { 
             intens = currentTempoPct; dReps = 5; 
@@ -439,7 +468,7 @@ window.updatePtMovements = function() {
 };
 
 // ==========================================
-// 6. FIREBASE DATA HANDLERS (VISUAL FIX)
+// 6. FIREBASE DATA (SHORT-KEY SUPPORT)
 // ==========================================
 async function loadUserData(email) {
     try {
