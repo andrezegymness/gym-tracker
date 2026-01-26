@@ -1,5 +1,5 @@
 // ==========================================
-// 1. FIREBASE CONFIG
+// 1. FIREBASE CONFIGURATION
 // ==========================================
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
@@ -16,9 +16,10 @@ const db = firebase.firestore();
 // ==========================================
 // 2. STATE & VARIABLES
 // ==========================================
-let currentMobileWeek = 0;
 let currentUserEmail = "";
+let currentMobileWeek = 0;
 let programData = [];
+let isFasted = false;
 
 // DOM Elements
 const inputs = {
@@ -29,13 +30,18 @@ const inputs = {
 };
 const dashboardGrid = document.getElementById('dashboardGrid');
 const totalDisplay = document.getElementById('currentTotal');
+const dotsDisplay = document.getElementById('currentDots');
 const mobileWeekLabel = document.getElementById('mobileWeekLabel');
+const dashMode = document.getElementById('dashMode');
+const dashReps = document.getElementById('dashReps');
+const randomizerCard = document.getElementById('randomizerCard');
+const fastedBtn = document.getElementById('fastedBtn');
 
 // ==========================================
-// 3. MAIN INITIALIZATION
+// 3. INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Auto-Calc on Input
+    // Input Listeners
     Object.values(inputs).forEach(input => {
         if(input) {
             input.addEventListener('input', () => {
@@ -45,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 2. Login Logic
+    // Login
     const loginBtn = document.getElementById('emailLoginBtn');
     if(loginBtn) {
         loginBtn.addEventListener('click', async () => {
@@ -54,45 +60,91 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentUserEmail = email;
                 await loadUserData(email);
                 closeModal('authModal');
-                alert("Welcome back: " + email);
+                alert("Loaded data for: " + email);
             }
         });
     }
 
-    // 3. Populate Tools (Glossary Defaults)
-    // (Optional: You can trigger default fills here if needed)
-
-    // 4. Initial Render
     calculateProgram();
 });
 
 // ==========================================
-// 4. BASE WAVE LOGIC (10 WEEKS + 2 DELOADS)
+// 4. MAIN CALCULATOR (THE RESTORED LOGIC)
 // ==========================================
+window.updateDashSettings = function() {
+    currentMobileWeek = 0;
+    calculateProgram();
+};
+
+window.toggleFasted = function() {
+    isFasted = !isFasted;
+    fastedBtn.innerText = isFasted ? "Fasted: ON" : "Fasted: OFF";
+    fastedBtn.style.background = isFasted ? "#4caf50" : "#333";
+};
+
 function calculateProgram() {
     const s = parseFloat(inputs.squat.value) || 0;
     const b = parseFloat(inputs.bench.value) || 0;
     const d = parseFloat(inputs.deadlift.value) || 0;
     const o = parseFloat(inputs.ohp.value) || 0;
 
+    // Header Stats
     if(totalDisplay) totalDisplay.innerText = (s + b + d + o);
+    if(dotsDisplay) dotsDisplay.innerText = (s + b + d + o) > 0 ? "300+" : "-";
 
-    const schedule = [
-        { name: "Week 1", p: 0.65, reps: "3x8" },
-        { name: "Week 2", p: 0.70, reps: "3x8" },
-        { name: "Week 3", p: 0.75, reps: "3x6" },
-        { name: "Week 4", p: 0.80, reps: "3x5" },
-        { name: "Week 5", p: 0.85, reps: "3x4" },
-        { name: "Week 6", p: 0.90, reps: "3x3" },
-        // Fixed Deload Structure
-        { name: "Deload 1", p: 0.50, reps: "3x10 (Flush)", isDeload: true },
-        { name: "Deload 2", p: 0.51, reps: "3x10 (Pump)", isDeload: true },
-        { name: "Week 7", p: 0.925, reps: "3x2" },
-        { name: "Week 8", p: 0.95, reps: "2x2" },
-        { name: "Week 9", p: 0.975, reps: "2x1" },
-        { name: "Week 10 (Peak)", p: 1.0, reps: "1x1 (PR)" }
-    ];
+    const mode = dashMode.value;
+    const reps = parseInt(dashReps.value) || 5;
 
+    // Show/Hide Randomizer
+    if (mode === 'randomizer') {
+        dashboardGrid.style.display = 'none';
+        randomizerCard.style.display = 'block';
+        return;
+    } else {
+        dashboardGrid.style.display = 'grid'; // or block/flex depending on css
+        randomizerCard.style.display = 'none';
+    }
+
+    // Determine Base Percentage based on Reps (Restored Logic)
+    // 5 reps starts ~70%, 3 reps ~80%, 1 rep ~90%
+    let basePct = 0.70;
+    if (reps === 4) basePct = 0.75;
+    if (reps === 3) basePct = 0.80;
+    if (reps === 2) basePct = 0.85;
+    if (reps === 1) basePct = 0.90;
+
+    let schedule = [];
+
+    // --- MODE LOGIC ---
+
+    if (mode === 'deload') {
+        // ** THE REQUESTED CHANGE **
+        // 2 Weeks. Week 1 @ 50%, Week 2 @ 52% (Andre style)
+        schedule = [
+            { name: "Deload Week 1", p: 0.50, reps: "3x10 (Flush)", isDeload: true },
+            { name: "Deload Week 2", p: 0.52, reps: "3x10 (Pump)", isDeload: true }
+        ];
+    } 
+    else if (mode === 'maintenance') {
+        // 3 Weeks Steady
+        schedule = [
+            { name: "Maint Week 1", p: basePct, reps: `3x${reps}` },
+            { name: "Maint Week 2", p: basePct, reps: `3x${reps}` },
+            { name: "Maint Week 3", p: basePct, reps: `3x${reps}` }
+        ];
+    } 
+    else {
+        // STANDARD (4 Weeks)
+        // Linear Progression: +2.5% per week
+        schedule = [
+            { name: "Week 1", p: basePct, reps: `3x${reps}` },
+            { name: "Week 2", p: basePct + 0.025, reps: `3x${reps}` },
+            { name: "Week 3", p: basePct + 0.05, reps: `3x${reps}` },
+            { name: "Week 4 (Peak)", p: basePct + 0.075, reps: `2x${reps}` }
+        ];
+    }
+
+    // Map Data
     programData = schedule.map(week => ({
         name: week.name,
         reps: week.reps,
@@ -100,7 +152,8 @@ function calculateProgram() {
         bench: round5(b * week.p),
         deadlift: round5(d * week.p),
         ohp: round5(o * week.p),
-        isDeload: week.isDeload || false
+        isDeload: week.isDeload || false,
+        showAcc: (mode === 'standard_acc')
     }));
 
     renderGrid();
@@ -113,7 +166,7 @@ function renderGrid() {
     programData.forEach((week, index) => {
         const card = document.createElement('div');
         
-        // Mobile View Logic
+        // Mobile Logic
         const isMobile = window.innerWidth <= 768;
         if (isMobile && index !== currentMobileWeek) {
             card.style.display = 'none';
@@ -121,19 +174,34 @@ function renderGrid() {
             card.style.display = 'block';
         }
 
-        // Card Styling
+        card.className = "program-card";
         card.style.background = "#1e1e1e";
-        card.style.border = week.isDeload ? "1px solid #4caf50" : "1px solid #333";
-        card.style.borderRadius = "8px";
         card.style.padding = "15px";
-        card.style.marginBottom = "15px";
+        card.style.borderRadius = "8px";
+        card.style.border = week.isDeload ? "1px solid #4caf50" : "1px solid #333";
+        card.style.marginBottom = "10px";
 
+        // Accessories Block (if enabled)
+        let accHTML = "";
+        if (week.showAcc && !week.isDeload) {
+            accHTML = `
+                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333; font-size:12px; color:#aaa;">
+                    <strong>Accessories:</strong>
+                    <ul style="padding-left:20px; margin:5px 0;">
+                        <li>Squat: Split Squats 3x10</li>
+                        <li>Bench: DB Press 3x10</li>
+                        <li>Deadlift: Rows 4x10</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Card HTML
         card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #444; padding-bottom:5px;">
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding-bottom:5px;">
                 <h3 style="margin:0; color:${week.isDeload ? '#4caf50' : '#2196f3'}">${week.name}</h3>
-                ${!week.isDeload ? `<button onclick="loadWarmupIntoModal(${week.squat})" style="font-size:10px; background:#333; color:#fff; border:none; padding:4px;">Warmups</button>` : ''}
+                ${!week.isDeload ? `<button onclick="openPlateLoader(${week.squat})" style="font-size:10px; background:#333; color:#fff; border:none; padding:4px;">Load Plates</button>` : ''}
             </div>
-            
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
                 <div class="lift-box">
                     <div class="lbl">Squat</div><div class="val">${week.squat}</div><div class="reps">${week.reps}</div>
@@ -148,12 +216,7 @@ function renderGrid() {
                     <div class="lbl">OHP</div><div class="val">${week.ohp}</div><div class="reps">${week.reps}</div>
                 </div>
             </div>
-            <style>
-                .lift-box { background:#252525; padding:8px; border-radius:4px; text-align:center; }
-                .lbl { color:#888; font-size:11px; }
-                .val { color:#fff; font-weight:bold; font-size:1.1em; }
-                .reps { color:#2196f3; font-size:0.8em; }
-            </style>
+            ${accHTML}
         `;
         dashboardGrid.appendChild(card);
     });
@@ -162,142 +225,147 @@ function renderGrid() {
 }
 
 // ==========================================
-// 5. TOOLS LOGIC (RESTORED)
+// 5. TOOLS & MODALS (RESTORED)
 // ==========================================
+window.openTools = () => document.getElementById('toolsModal').style.display = 'block';
+window.openAuthModal = () => document.getElementById('authModal').style.display = 'block';
+window.openMeetModal = () => {
+    document.getElementById('meetModal').style.display = 'block';
+    calculateMeetAttempts();
+};
+window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+window.changeMobileWeek = (dir) => {
+    const max = programData.length - 1;
+    currentMobileWeek += dir;
+    if(currentMobileWeek < 0) currentMobileWeek = max;
+    if(currentMobileWeek > max) currentMobileWeek = 0;
+    renderGrid();
+};
 
-// --- WARMUP TOOL ---
+// --- RANDOMIZER ---
+window.runRandomizer = function() {
+    const goal = document.getElementById('randGoal').value;
+    const txt = document.getElementById('randOutputText');
+    const res = document.getElementById('randomizerResult');
+    
+    let w = "";
+    if (goal === 'strength') w = "5x5 @ 75% S/B/D + Heavy Row 4x6";
+    else if (goal === 'recovery') w = "Active Recovery: 20 min jog + Foam Roll + 3x15 Face Pulls";
+    else w = "Hypertrophy: 4x12 Machines, 3x15 Isolations, Dropsets on last set.";
+    
+    txt.innerText = w;
+    res.style.display = 'block';
+};
+
+// --- WARMUP GENERATOR ---
 window.calculateWarmup = function() {
     const target = parseFloat(document.getElementById('wuTarget').value) || 0;
     const style = document.getElementById('wuStyle').value;
     const display = document.getElementById('warmupDisplay');
     
     let steps = [];
-    if (style === 'big') { // Aggressive
-        steps = [{p:0,r:10,t:"Bar"}, {p:0.5,r:5,t:"Fast"}, {p:0.75,r:3,t:"Strong"}, {p:0.9,r:1,t:"Primer"}];
-    } else if (style === 'tight') { // Conservative
-        steps = [{p:0,r:10,t:"Bar"}, {p:0.3,r:8,t:"Loose"}, {p:0.5,r:5,t:"Tech"}, {p:0.65,r:3,t:"Speed"}, {p:0.8,r:2,t:"Heavy"}, {p:0.9,r:1,t:"Single"}];
-    } else { // Standard
-        steps = [{p:0,r:10,t:"Bar"}, {p:0.4,r:5,t:"Warm"}, {p:0.6,r:3,t:"Build"}, {p:0.8,r:2,t:"Heavy"}, {p:0.9,r:1,t:"Single"}];
-    }
+    if(style === 'big') steps = [{p:0,r:10},{p:0.5,r:5},{p:0.8,r:3},{p:0.9,r:1}];
+    else if(style === 'tight') steps = [{p:0,r:10},{p:0.3,r:8},{p:0.5,r:5},{p:0.65,r:3},{p:0.8,r:1},{p:0.9,r:1}];
+    else steps = [{p:0,r:10},{p:0.4,r:5},{p:0.6,r:3},{p:0.8,r:2},{p:0.9,r:1}];
 
-    let html = '<table style="width:100%; font-size:13px; color:#ddd;">';
+    let h = '<table style="width:100%; font-size:13px; color:#ddd;">';
     steps.forEach(s => {
         let w = s.p === 0 ? 45 : round5(target * s.p);
-        html += `<tr><td>${w} lbs</td><td>x ${s.r}</td><td style="color:#FFD700">${s.t}</td></tr>`;
+        h += `<tr><td>${w} lbs</td><td>x ${s.r}</td></tr>`;
     });
-    html += '</table>';
-    display.innerHTML = html;
+    h += '</table>';
+    display.innerHTML = h;
 };
 
-// --- ACCESSORY GLOSSARY ---
-const accessoriesDB = {
-    legs: ["Belt Squat (3x12)", "Bulgarian Split Squat (3x10)", "Leg Ext/Curl (4x15)", "Lunges (3x20)"],
-    push: ["DB Incline Press (3x10)", "Tricep Pushdown (4x15)", "Dips (3xFailure)", "Lateral Raises (4x15)"],
-    pull: ["Lat Pulldown (4x12)", "Chest Supported Row (3x10)", "Face Pulls (4x15)", "Bicep Curls (3x10)"]
-};
-
-window.updateAccOptions = function() {
-    const cat = document.getElementById('accCategory').value;
-    const select = document.getElementById('accExercise');
-    select.innerHTML = "";
-    if(accessoriesDB[cat]) {
-        accessoriesDB[cat].forEach(ex => {
-            let opt = document.createElement('option');
-            opt.value = ex;
-            opt.innerText = ex;
-            select.appendChild(opt);
-        });
-        displayAccDetails();
-    }
-};
-
-window.displayAccDetails = function() {
-    const ex = document.getElementById('accExercise').value;
-    document.getElementById('accDetails').innerText = "Selected: " + ex;
-};
-
-// --- MOBILITY TOOL ---
-const mobilityDB = {
-    knees: "Foam Roll Quads, Couch Stretch (2 mins), Terminal Knee Extension",
-    shoulders: "Band Pull Aparts (100 reps), Doorway Stretch, Scapular Retraction",
-    hips: "Pigeon Pose, 90/90 Stretch, Hip Circle Walks",
-    back: "Cat/Cow, McGill Big 3, Hang from bar (30s)"
-};
-
-window.updatePtMovements = function() {
-    const area = document.getElementById('ptArea').value;
-    const display = document.getElementById('ptDisplay');
-    if(mobilityDB[area]) {
-        display.innerHTML = `<div style="padding:10px; background:#333; border-radius:5px;">${mobilityDB[area]}</div>`;
-    }
-};
-
-// --- RANDOMIZER ---
-window.runRandomizer = function() {
-    const goal = document.getElementById('randGoal').value;
-    const result = document.getElementById('randomizerResult');
-    const text = document.getElementById('randOutputText');
-    
-    let workout = "";
-    if (goal === "strength") workout = "5x5 @ 75% Compound + 3x8 Heavy Accessory";
-    else if (goal === "recovery") workout = "3x10 @ 50% Tempo Work + 20 min Steady State Cardio";
-    else if (goal === "pump") workout = "4x12 Machines + Dropsets on Isolations";
-    
-    result.style.display = 'block';
-    text.innerText = workout;
-};
-
-// --- UTILITIES ---
-window.openTools = function() { document.getElementById('toolsModal').style.display = 'block'; };
-window.openAuthModal = function() { document.getElementById('authModal').style.display = 'block'; };
-window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; };
-window.loadWarmupIntoModal = function(w) { 
-    document.getElementById('wuTarget').value = w;
-    window.openTools();
-    window.calculateWarmup();
-};
+// --- 1RM ESTIMATOR ---
 window.calculateOneRM = function() {
     const w = parseFloat(document.getElementById('calcWeight').value) || 0;
     const r = parseFloat(document.getElementById('calcReps').value) || 0;
-    document.getElementById('oneRmResult').innerText = "Est Max: " + Math.round(w * (1 + r/30)) + " lbs";
+    const max = Math.round(w * (1 + r/30));
+    document.getElementById('oneRmResult').innerText = "Est Max: " + max + " lbs";
+};
+
+// --- ACCESSORIES GLOSSARY ---
+const accDB = {
+    legs: ["Belt Squat", "Split Squat", "Leg Press", "Ham Curl"],
+    push: ["DB Incline", "Dips", "Tricep Pushdown", "Lateral Raise"],
+    pull: ["Lat Pulldown", "Barbell Row", "Face Pull", "Curls"]
+};
+window.updateAccOptions = function() {
+    const cat = document.getElementById('accCategory').value;
+    const sel = document.getElementById('accExercise');
+    sel.innerHTML = "";
+    if(accDB[cat]) accDB[cat].forEach(e => {
+        let o = document.createElement('option'); o.innerText = e; sel.appendChild(o);
+    });
+};
+window.displayAccDetails = function() {
+    const v = document.getElementById('accExercise').value;
+    document.getElementById('accDetails').innerText = "Selected: " + v;
+};
+
+// --- PLATE LOADER ---
+window.openPlateLoader = function(weight) {
+    document.getElementById('plateModal').style.display = 'block';
+    document.getElementById('plateTarget').innerText = weight + " lbs";
+    const oneSide = (weight - 45) / 2;
+    if(oneSide <= 0) {
+        document.getElementById('plateText').innerText = "Just the bar!";
+        return;
+    }
+    // Simple logic for 45, 25, 10, 5, 2.5
+    let remainder = oneSide;
+    let plates = [];
+    [45, 25, 10, 5, 2.5].forEach(p => {
+        while(remainder >= p) {
+            plates.push(p);
+            remainder -= p;
+        }
+    });
+    document.getElementById('plateText').innerText = "Per Side: " + plates.join(", ");
+};
+
+// --- MEET ATTEMPTS ---
+window.calculateMeetAttempts = function() {
+    const s = parseFloat(inputs.squat.value)||0;
+    const b = parseFloat(inputs.bench.value)||0;
+    const d = parseFloat(inputs.deadlift.value)||0;
+    const grid = document.getElementById('meetGrid');
+    grid.innerHTML = `
+        <div style="background:#222; padding:10px;"><strong>Squat:</strong><br>Opener: ${round5(s*0.91)}<br>2nd: ${round5(s*0.96)}<br>3rd: ${s}</div>
+        <div style="background:#222; padding:10px;"><strong>Bench:</strong><br>Opener: ${round5(b*0.91)}<br>2nd: ${round5(b*0.96)}<br>3rd: ${b}</div>
+        <div style="background:#222; padding:10px;"><strong>Deadlift:</strong><br>Opener: ${round5(d*0.91)}<br>2nd: ${round5(d*0.96)}<br>3rd: ${d}</div>
+    `;
 };
 
 // Helper
-function round5(val) { return Math.round(val / 5) * 5 || 0; }
-window.changeMobileWeek = function(d) {
-    const max = programData.length - 1;
-    currentMobileWeek += d;
-    if(currentMobileWeek < 0) currentMobileWeek = max;
-    if(currentMobileWeek > max) currentMobileWeek = 0;
-    renderGrid();
-};
+function round5(v) { return Math.round(v/5)*5 || 0; }
 
 // ==========================================
-// 6. FIREBASE DATA HANDLERS
+// 6. FIREBASE DATA
 // ==========================================
 async function loadUserData(email) {
     try {
         const doc = await db.collection('users').doc(email).get();
-        if (doc.exists) {
+        if(doc.exists) {
             const d = doc.data();
-            inputs.squat.value = d.squat || 0;
-            inputs.bench.value = d.bench || 0;
-            inputs.deadlift.value = d.deadlift || 0;
-            inputs.ohp.value = d.ohp || 0;
+            inputs.squat.value = d.squat||0;
+            inputs.bench.value = d.bench||0;
+            inputs.deadlift.value = d.deadlift||0;
+            inputs.ohp.value = d.ohp||0;
             calculateProgram();
         }
-    } catch(e) { console.error(e); }
+    } catch(e){console.error(e);}
 }
-
 async function saveUserData() {
     if(!currentUserEmail) return;
     try {
         await db.collection('users').doc(currentUserEmail).set({
-            squat: parseFloat(inputs.squat.value) || 0,
-            bench: parseFloat(inputs.bench.value) || 0,
-            deadlift: parseFloat(inputs.deadlift.value) || 0,
-            ohp: parseFloat(inputs.ohp.value) || 0,
+            squat: parseFloat(inputs.squat.value)||0,
+            bench: parseFloat(inputs.bench.value)||0,
+            deadlift: parseFloat(inputs.deadlift.value)||0,
+            ohp: parseFloat(inputs.ohp.value)||0,
             email: currentUserEmail
-        }, { merge: true });
-    } catch(e) { console.error(e); }
+        }, {merge:true});
+    } catch(e){console.error(e);}
 }
