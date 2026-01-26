@@ -14,14 +14,93 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ==========================================
-// 2. STATE & VARIABLES
+// 2. CONFIGURATION & CONSTANTS (FROM YOUR SNIPPET)
 // ==========================================
-let currentUserEmail = "";
-let currentMobileWeek = 0;
-let programData = [];
-let isFasted = false;
+const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
+const standardProg = 0.0425;
+const maintProg = 0.02;
+const tempoStartPct = 0.71;
+const tempoProg = 0.04;
+const ohpStrengthStart = 0.80;
+const ohpStrengthProg = 0.04;
+const ohpVolPct = 0.60;
 
-// DOM Elements
+// Acc Config
+const accPeakingReps = [10, 8, 6, 5];
+const accSets = [5, 4, 3, 2];
+const accRPEs = [10, 9, 8, 7];
+const standardSets = [3, 2, 1, 1];
+const maintSets = [2, 2, 2, 2, 1, 1];
+
+// Full Accessory Tier List
+const accessoryData = {
+  squat: [
+    { name: "ATG System", tier: "S", notes: "Full range of motion focus." },
+    { name: "Behind-the-Back Squat", tier: "S", notes: "Hack squat variation for quads." },
+    { name: "High Bar Pause Squat", tier: "S", notes: "Builds positional strength." },
+    { name: "Belt Squats", tier: "S", notes: "Quad volume without spine loading." },
+    { name: "One and One-Quarter Squat", tier: "S", notes: "Increases time under tension." },
+    { name: "Pause Squats", tier: "S", notes: "Fixes 'stuck in the hole' issues." },
+    { name: "Cable Hip Raise", tier: "A", notes: "Direct hip flexor work." },
+    { name: "Heels Elevated Squat", tier: "A", notes: "Greater quad emphasis." },
+    { name: "Hack Squats", tier: "A", notes: "Excellent quad isolation." },
+    { name: "Hanging Leg Raise", tier: "A/S", notes: "Core stability specific to heavy lifting." },
+    { name: "SSB Squats", tier: "A", notes: "Targets upper back and quads." },
+    { name: "Leg Press", tier: "A", notes: "General leg mass builder." },
+    { name: "Good Mornings", tier: "B", notes: "Stronger posterior chain carryover." },
+    { name: "Ab Rollouts", tier: "B", notes: "Anti-extension core strength." },
+    { name: "Heavy Squat Walkouts", tier: "C", notes: "Desensitizes CNS to heavy loads." },
+    { name: "Leg Extensions", tier: "C", notes: "Isolated quad volume." },
+    { name: "V-Squat", tier: "C", notes: "Machine variation for leg volume." },
+    { name: "Box Squats", tier: "D", notes: "Breaks eccentric-concentric chain." },
+    { name: "Split Squats", tier: "D", notes: "Unilateral work, lower carryover." }
+  ],
+  bench: [
+    { name: "Larson press", tier: "S", notes: "No leg drive; reduces fatigue." },
+    { name: "Upright rows", tier: "S", notes: "Warms up elbows; aids failure." },
+    { name: "Floor press", tier: "S", notes: "Improves lockout/chest contraction." },
+    { name: "Push-ups", tier: "A", notes: "High carryover; essential volume." },
+    { name: "Decline dumbbell", tier: "A", notes: "Larger ROM than flat bench." },
+    { name: "Cambered bar bench", tier: "A", notes: "Increases range of motion." },
+    { name: "Dumbbell overhead", tier: "A", notes: "Develops upper back strength." },
+    { name: "Flat dumbbell bench", tier: "B", notes: "Valuable for chest development." },
+    { name: "Weighted dips", tier: "B", notes: "Good chest/triceps training." },
+    { name: "Pec deck", tier: "B", notes: "Works shoulders for mobility." },
+    { name: "Seated overhead", tier: "B", notes: "Shoulder training." },
+    { name: "Smith machine bench", tier: "B", notes: "Builds upper back/scapular pos." },
+    { name: "Hammer curls", tier: "C", notes: "Elbow warming." },
+    { name: "Iliac pulldowns", tier: "C", notes: "Good in combination with lats." },
+    { name: "Dumbbell row", tier: "C", notes: "Back training." },
+    { name: "Rear delt fly", tier: "C", notes: "Benefits with rest-pause style." }
+  ],
+  deadlift: [
+    { name: "Seal Rows", tier: "S", notes: "Horizontal pull, no low back fatigue." },
+    { name: "Pause Deadlift", tier: "S", notes: "Enhances technique off floor." },
+    { name: "Stiff Leg Deadlift", tier: "A", notes: "Builds posterior chain." },
+    { name: "Block Pulls", tier: "A", notes: "Overload; beneficial for leverages." },
+    { name: "Andy Bolton Style", tier: "A", notes: "Technique practice." },
+    { name: "Glute Ham Raise", tier: "B", notes: "Targets lower back and glutes." },
+    { name: "Rack Pulls", tier: "B", notes: "Suits lifters with poor leverages." },
+    { name: "Farmer's Walks", tier: "B", notes: "Grip strength." },
+    { name: "Walking Lunges", tier: "C", notes: "Strengthen leg/glute." },
+    { name: "RDLs (Romanian)", tier: "C", notes: "Emphasis on hinging." },
+    { name: "Zercher Deadlift", tier: "D", notes: "Not effective for muscle-building." },
+    { name: "Power Cleans", tier: "D", notes: "Different mechanics." },
+    { name: "Shrug", tier: "E", notes: "Traps less important if form efficient." },
+    { name: "Calf Work", tier: "F", notes: "It is what it is." },
+    { name: "Back Extension", tier: "F", notes: "Posterior chain stimulus." }
+  ]
+};
+
+// ==========================================
+// 3. STATE & VARIABLES
+// ==========================================
+let activeMobileWeek = 0;
+let userProgram = [];
+let isFasted = false;
+let currentUserEmail = "";
+
+// DOM Elements Mapped to your HTML
 const inputs = {
     squat: document.getElementById('squatInput'),
     bench: document.getElementById('benchInput'),
@@ -30,7 +109,6 @@ const inputs = {
 };
 const dashboardGrid = document.getElementById('dashboardGrid');
 const totalDisplay = document.getElementById('currentTotal');
-const dotsDisplay = document.getElementById('currentDots');
 const mobileWeekLabel = document.getElementById('mobileWeekLabel');
 const dashMode = document.getElementById('dashMode');
 const dashReps = document.getElementById('dashReps');
@@ -38,17 +116,12 @@ const randomizerCard = document.getElementById('randomizerCard');
 const fastedBtn = document.getElementById('fastedBtn');
 
 // ==========================================
-// 3. INITIALIZATION
+// 4. INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     // Input Listeners
     Object.values(inputs).forEach(input => {
-        if(input) {
-            input.addEventListener('input', () => {
-                calculateProgram();
-                saveUserData();
-            });
-        }
+        if(input) input.addEventListener('input', () => { generateProgram(); saveUserData(); });
     });
 
     // Login
@@ -60,209 +133,221 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentUserEmail = email;
                 await loadUserData(email);
                 closeModal('authModal');
-                alert("Loaded data for: " + email);
+                alert("Loaded: " + email);
             }
         });
     }
 
-    calculateProgram();
+    initProgramData();
+    generateProgram();
 });
 
 // ==========================================
-// 4. MAIN CALCULATOR (THE RESTORED LOGIC)
+// 5. CORE PROGRAM GENERATOR (YOUR LOGIC)
 // ==========================================
+function initProgramData() {
+  userProgram = [];
+  const daysTemplate = [
+    { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
+    { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
+    { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
+    { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
+    { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
+    { name: "Day 6 (Sat)", lifts: [{n: "Pause Squats", t: "squat"}, {n: "Paused DL Cluster", t: "deadlift"}, {n: "Comp Bench", t: "bench"}]}
+  ];
+  // Create 6 potential weeks (enough for all modes)
+  for (let w = 0; w < 6; w++) userProgram.push({ week: w + 1, days: JSON.parse(JSON.stringify(daysTemplate)) });
+}
+
 window.updateDashSettings = function() {
-    currentMobileWeek = 0;
-    calculateProgram();
+    activeMobileWeek = 0;
+    generateProgram();
 };
 
 window.toggleFasted = function() {
-    isFasted = !isFasted;
-    fastedBtn.innerText = isFasted ? "Fasted: ON" : "Fasted: OFF";
-    fastedBtn.style.background = isFasted ? "#4caf50" : "#333";
+  isFasted = !isFasted;
+  if(fastedBtn) {
+      fastedBtn.innerText = isFasted ? "Fasted: ON (-6.5%)" : "Fasted: OFF";
+      fastedBtn.style.background = isFasted ? "#4caf50" : "#333";
+  }
+  generateProgram();
 };
 
-function calculateProgram() {
-    const s = parseFloat(inputs.squat.value) || 0;
-    const b = parseFloat(inputs.bench.value) || 0;
-    const d = parseFloat(inputs.deadlift.value) || 0;
-    const o = parseFloat(inputs.ohp.value) || 0;
+function generateProgram() {
+  if (userProgram.length === 0) initProgramData();
+  
+  const sMax = parseFloat(inputs.squat.value) || 0;
+  const bMax = parseFloat(inputs.bench.value) || 0;
+  const dMax = parseFloat(inputs.deadlift.value) || 0;
+  const oMax = parseFloat(inputs.ohp.value) || 0;
 
-    // Header Stats
-    if(totalDisplay) totalDisplay.innerText = (s + b + d + o);
-    if(dotsDisplay) dotsDisplay.innerText = (s + b + d + o) > 0 ? "300+" : "-";
+  // Header Stats
+  if(totalDisplay) totalDisplay.innerText = (sMax + bMax + dMax + oMax);
 
-    const mode = dashMode.value;
-    const reps = parseInt(dashReps.value) || 5;
+  const reps = dashReps.value; // "5", "4", "3"...
+  const mode = dashMode.value; // "standard", "deload", etc.
+  
+  // Base Percent from Config
+  const startPct = basePctMap[reps] || 0.75; 
 
-    // Show/Hide Randomizer
-    if (mode === 'randomizer') {
-        dashboardGrid.style.display = 'none';
-        randomizerCard.style.display = 'block';
-        return;
-    } else {
-        dashboardGrid.style.display = 'grid'; // or block/flex depending on css
-        randomizerCard.style.display = 'none';
-    }
+  // Handle Randomizer View
+  if(dashboardGrid) {
+      dashboardGrid.style.display = (mode === 'randomizer') ? 'none' : 'grid'; // or block based on CSS
+  }
+  if(randomizerCard) {
+      randomizerCard.style.display = (mode === 'randomizer') ? 'block' : 'none';
+  }
+  if(mode === 'randomizer') return;
 
-    // Determine Base Percentage based on Reps (Restored Logic)
-    // 5 reps starts ~70%, 3 reps ~80%, 1 rep ~90%
-    let basePct = 0.70;
-    if (reps === 4) basePct = 0.75;
-    if (reps === 3) basePct = 0.80;
-    if (reps === 2) basePct = 0.85;
-    if (reps === 1) basePct = 0.90;
+  // Determine Duration
+  let numW = (mode === 'maintenance' ? 6 : (mode === 'deload' ? 2 : 4));
+  
+  if(mobileWeekLabel) mobileWeekLabel.innerText = `Week ${activeMobileWeek + 1}`;
+  
+  let html = '';
+  const fastedMult = isFasted ? 0.935 : 1.0;
 
-    let schedule = [];
+  // LOOP WEEKS
+  for (let w = 0; w < numW; w++) {
+    
+    // --- MODIFIER LOGIC (INCLUDES DELOAD FLIP) ---
+    let mod = 0;
+    let tempoMod = (w * tempoProg);
 
-    // --- MODE LOGIC ---
-
-    if (mode === 'deload') {
-        // ** THE REQUESTED CHANGE **
-        // 2 Weeks. Week 1 @ 50%, Week 2 @ 52% (Andre style)
-        schedule = [
-            { name: "Deload Week 1", p: 0.50, reps: "3x10 (Flush)", isDeload: true },
-            { name: "Deload Week 2", p: 0.52, reps: "3x10 (Pump)", isDeload: true }
-        ];
+    if (mode === 'maintenance') {
+        mod = w * maintProg;
     } 
-    else if (mode === 'maintenance') {
-        // 3 Weeks Steady
-        schedule = [
-            { name: "Maint Week 1", p: basePct, reps: `3x${reps}` },
-            { name: "Maint Week 2", p: basePct, reps: `3x${reps}` },
-            { name: "Maint Week 3", p: basePct, reps: `3x${reps}` }
-        ];
+    else if (mode === 'deload') {
+        // FLIPPED LOGIC: 
+        // Week 1 (w=0): Needs to be lighter (-2 * prog)
+        // Week 2 (w=1): Needs to be heavier (-1 * prog)
+        // Formula: -((2 - w) * standardProg)
+        mod = -((2 - w) * standardProg);
+        tempoMod = -((2 - w) * tempoProg);
     } 
     else {
-        // STANDARD (4 Weeks)
-        // Linear Progression: +2.5% per week
-        schedule = [
-            { name: "Week 1", p: basePct, reps: `3x${reps}` },
-            { name: "Week 2", p: basePct + 0.025, reps: `3x${reps}` },
-            { name: "Week 3", p: basePct + 0.05, reps: `3x${reps}` },
-            { name: "Week 4 (Peak)", p: basePct + 0.075, reps: `2x${reps}` }
-        ];
+        // Standard
+        mod = w * standardProg;
     }
 
-    // Map Data
-    programData = schedule.map(week => ({
-        name: week.name,
-        reps: week.reps,
-        squat: round5(s * week.p),
-        bench: round5(b * week.p),
-        deadlift: round5(d * week.p),
-        ohp: round5(o * week.p),
-        isDeload: week.isDeload || false,
-        showAcc: (mode === 'standard_acc')
-    }));
+    const currentTempoPct = tempoStartPct + tempoMod;
+    const curSets = (mode === 'maintenance' ? maintSets[w] : (standardSets[w] || 1));
+    const curPct = startPct + mod;
+    const psPct = 0.70 + mod;
 
-    renderGrid();
-}
+    // Mobile Visibility Class
+    let activeClass = (w === activeMobileWeek) ? 'mobile-active' : 'mobile-hidden';
+    
+    // Inline CSS for mobile hiding (in case class css is missing)
+    let styleDef = (window.innerWidth <= 768 && w !== activeMobileWeek) ? 'display:none;' : '';
 
-function renderGrid() {
-    if(!dashboardGrid) return;
-    dashboardGrid.innerHTML = "";
+    html += `<div class="program-card ${activeClass}" style="background:#1e1e1e; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #333; ${styleDef}">
+                <h3 style="color:#2196f3; border-bottom:1px solid #444; padding-bottom:5px;">
+                    Week ${w + 1} <span style="font-size:0.8em; color:#aaa;">(${Math.round(curPct * 100 * fastedMult)}%)</span>
+                </h3>`;
 
-    programData.forEach((week, index) => {
-        const card = document.createElement('div');
+    // LOOP DAYS
+    userProgram[w].days.forEach((day, dIdx) => {
+      let activeLifts = [...day.lifts];
+
+      // --- STANDARD ACCESORY INJECTION (FROM SNIPPET) ---
+      if (mode === 'standard_acc') {
+        const aReps = accPeakingReps[w];
+        if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
+        if (dIdx === 1) { activeLifts.push({n: "Close Grip Bench", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Weighted Dips", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Floor Press", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Dumbbell Flyes", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}); }
+        if (dIdx === 2) { activeLifts.push({n: "Hack Squat", s:accSets[w], r:aReps, p:0, t:"squat", isAcc: true}, {n: "Leg Press", s:accSets[w], r:aReps, p:0, t:"squat", isAcc: true}, {n: "Belt Squat", s:accSets[w], r:aReps, p:0, t:"squat", isAcc: true}, {n: "Leg Extensions", s:accSets[w], r:aReps, p:0, t:"squat", isAcc: true}); }
+        if (dIdx === 3) { activeLifts.push({n: "Seal Rows (S-Tier)", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Weighted Pull-ups", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "T-Bar Rows", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Dumbbell Row", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Face Pulls", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}); }
+        if (dIdx === 4) { activeLifts = [{n: "OHP (Strength)", s:curSets, r:3, p:ohpStrengthStart + (w*ohpStrengthProg), t:"bench", isOHP: true}, {n: "Seated DB Press", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Lateral Raises", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Rear Delt Flyes", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Upright Rows", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}]; }
+        if (dIdx === 5) { activeLifts.push({n: "Stiff Leg DL", s:5, r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Glute Ham Raise", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Good Mornings", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "RDLs (PL Specific)", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}); }
+      }
+
+      html += `<div style="margin-top:10px; background:#222; padding:8px; border-radius:5px;">
+                <div style="font-size:0.9em; font-weight:bold; color:#ddd; border-bottom:1px solid #444; margin-bottom:5px;">${day.name}</div>
+                <table style="width:100%; font-size:13px; border-collapse:collapse;">`;
+      
+      activeLifts.forEach(lift => {
+        let mx = (lift.isOHP) ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
+        let intens = curPct, dReps = reps, fSets = curSets, weightDisplay = "";
         
-        // Mobile Logic
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile && index !== currentMobileWeek) {
-            card.style.display = 'none';
+        // Specific Lift Logic
+        if (lift.n.includes("Tempo")) { intens = currentTempoPct; dReps = 5; }
+        else if (lift.n === "Pause Squats") { intens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); }
+        else if (lift.n.includes("Paused")) { dReps = 3; }
+
+        if (lift.isAcc) { 
+            fSets = accSets[w]; dReps = lift.r; 
+            weightDisplay = `<span style="color:#aaa;">RPE ${accRPEs[w]}</span>`; 
         } else {
-            card.style.display = 'block';
+            let finalIntens = lift.isOHP ? lift.p : intens;
+            let weight = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
+            weightDisplay = `<strong style="color:#fff;">${weight} lbs</strong>`;
         }
+        
+        // Buttons (Plate Loader)
+        let btn = (!lift.isAcc && !lift.n.includes("Tempo")) ? 
+            `<span onclick="openPlateLoader(${Math.round((mx*intens*fastedMult)/5)*5})" style="cursor:pointer; color:#2196f3; margin-left:5px;">🏋️</span>` : '';
 
-        card.className = "program-card";
-        card.style.background = "#1e1e1e";
-        card.style.padding = "15px";
-        card.style.borderRadius = "8px";
-        card.style.border = week.isDeload ? "1px solid #4caf50" : "1px solid #333";
-        card.style.marginBottom = "10px";
-
-        // Accessories Block (if enabled)
-        let accHTML = "";
-        if (week.showAcc && !week.isDeload) {
-            accHTML = `
-                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333; font-size:12px; color:#aaa;">
-                    <strong>Accessories:</strong>
-                    <ul style="padding-left:20px; margin:5px 0;">
-                        <li>Squat: Split Squats 3x10</li>
-                        <li>Bench: DB Press 3x10</li>
-                        <li>Deadlift: Rows 4x10</li>
-                    </ul>
-                </div>
-            `;
-        }
-
-        // Card HTML
-        card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding-bottom:5px;">
-                <h3 style="margin:0; color:${week.isDeload ? '#4caf50' : '#2196f3'}">${week.name}</h3>
-                ${!week.isDeload ? `<button onclick="openPlateLoader(${week.squat})" style="font-size:10px; background:#333; color:#fff; border:none; padding:4px;">Load Plates</button>` : ''}
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                <div class="lift-box">
-                    <div class="lbl">Squat</div><div class="val">${week.squat}</div><div class="reps">${week.reps}</div>
-                </div>
-                <div class="lift-box">
-                    <div class="lbl">Bench</div><div class="val">${week.bench}</div><div class="reps">${week.reps}</div>
-                </div>
-                <div class="lift-box">
-                    <div class="lbl">Deadlift</div><div class="val">${week.deadlift}</div><div class="reps">${week.reps}</div>
-                </div>
-                <div class="lift-box">
-                    <div class="lbl">OHP</div><div class="val">${week.ohp}</div><div class="reps">${week.reps}</div>
-                </div>
-            </div>
-            ${accHTML}
-        `;
-        dashboardGrid.appendChild(card);
+        html += `<tr>
+                    <td style="padding:4px 0; color:#ccc;">${lift.n}</td>
+                    <td style="padding:4px 0; text-align:center; color:#2196f3;">${fSets}x${dReps}</td>
+                    <td style="padding:4px 0; text-align:right;">${weightDisplay} ${btn}</td>
+                 </tr>`;
+      });
+      html += `</table></div>`;
     });
-
-    if(mobileWeekLabel) mobileWeekLabel.innerText = programData[currentMobileWeek].name;
+    html += `</div>`;
+  }
+  
+  if(dashboardGrid) dashboardGrid.innerHTML = html;
 }
 
 // ==========================================
-// 5. TOOLS & MODALS (RESTORED)
+// 6. TOOLS & UTILITIES
 // ==========================================
+window.changeMobileWeek = function(dir) {
+  const mode = dashMode.value;
+  let maxW = (mode === 'maintenance' ? 6 : (mode === 'deload' ? 2 : 4));
+  activeMobileWeek += dir;
+  if(activeMobileWeek < 0) activeMobileWeek = maxW - 1;
+  if(activeMobileWeek >= maxW) activeMobileWeek = 0;
+  generateProgram();
+};
+
 window.openTools = () => document.getElementById('toolsModal').style.display = 'block';
 window.openAuthModal = () => document.getElementById('authModal').style.display = 'block';
-window.openMeetModal = () => {
-    document.getElementById('meetModal').style.display = 'block';
-    calculateMeetAttempts();
-};
 window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-window.changeMobileWeek = (dir) => {
-    const max = programData.length - 1;
-    currentMobileWeek += dir;
-    if(currentMobileWeek < 0) currentMobileWeek = max;
-    if(currentMobileWeek > max) currentMobileWeek = 0;
-    renderGrid();
+
+window.openPlateLoader = function(weight) {
+    document.getElementById('plateModal').style.display = 'block';
+    document.getElementById('plateTarget').innerText = weight + " lbs";
+    const oneSide = (weight - 45) / 2;
+    if(oneSide <= 0) {
+        document.getElementById('plateText').innerText = "Just the bar!";
+        document.getElementById('plateVisuals').innerHTML = "";
+        return;
+    }
+    let remainder = oneSide;
+    let plates = [];
+    let visuals = "";
+    [45, 25, 10, 5, 2.5].forEach(p => {
+        while(remainder >= p) {
+            plates.push(p);
+            // Visual Block
+            let h = (p===45?40 : p===25?30 : p===10?25 : 20);
+            let c = (p===45?'#0d47a1' : p===25?'#1b5e20' : '#444');
+            visuals += `<div style="width:10px; height:${h}px; background:${c}; margin:1px; border-radius:2px;"></div>`;
+            remainder -= p;
+        }
+    });
+    document.getElementById('plateText').innerText = "Per Side: " + plates.join(", ");
+    document.getElementById('plateVisuals').innerHTML = `<div style="display:flex; align-items:center; height:50px; justify-content:center;">${visuals}</div>`;
 };
 
-// --- RANDOMIZER ---
-window.runRandomizer = function() {
-    const goal = document.getElementById('randGoal').value;
-    const txt = document.getElementById('randOutputText');
-    const res = document.getElementById('randomizerResult');
-    
-    let w = "";
-    if (goal === 'strength') w = "5x5 @ 75% S/B/D + Heavy Row 4x6";
-    else if (goal === 'recovery') w = "Active Recovery: 20 min jog + Foam Roll + 3x15 Face Pulls";
-    else w = "Hypertrophy: 4x12 Machines, 3x15 Isolations, Dropsets on last set.";
-    
-    txt.innerText = w;
-    res.style.display = 'block';
-};
-
-// --- WARMUP GENERATOR ---
+// Warmup
 window.calculateWarmup = function() {
     const target = parseFloat(document.getElementById('wuTarget').value) || 0;
     const style = document.getElementById('wuStyle').value;
     const display = document.getElementById('warmupDisplay');
-    
     let steps = [];
     if(style === 'big') steps = [{p:0,r:10},{p:0.5,r:5},{p:0.8,r:3},{p:0.9,r:1}];
     else if(style === 'tight') steps = [{p:0,r:10},{p:0.3,r:8},{p:0.5,r:5},{p:0.65,r:3},{p:0.8,r:1},{p:0.9,r:1}];
@@ -270,79 +355,74 @@ window.calculateWarmup = function() {
 
     let h = '<table style="width:100%; font-size:13px; color:#ddd;">';
     steps.forEach(s => {
-        let w = s.p === 0 ? 45 : round5(target * s.p);
+        let w = s.p === 0 ? 45 : Math.round((target * s.p)/5)*5;
         h += `<tr><td>${w} lbs</td><td>x ${s.r}</td></tr>`;
     });
     h += '</table>';
     display.innerHTML = h;
 };
 
-// --- 1RM ESTIMATOR ---
+// Randomizer
+window.runRandomizer = function() {
+  const goal = document.getElementById('randGoal').value;
+  let msg = "";
+  if (goal === 'strength') msg = "Focus: Peak Load. 5x3 @ 85%.";
+  else if (goal === 'recovery') msg = "Focus: Recovery. 3x10 @ 50% + Cardio.";
+  else msg = "Focus: Pump. 4x12 Machines to failure.";
+  document.getElementById('randOutputText').innerHTML = msg;
+  document.getElementById('randomizerResult').style.display = 'block';
+};
+
+// 1RM
 window.calculateOneRM = function() {
-    const w = parseFloat(document.getElementById('calcWeight').value) || 0;
-    const r = parseFloat(document.getElementById('calcReps').value) || 0;
-    const max = Math.round(w * (1 + r/30));
-    document.getElementById('oneRmResult').innerText = "Est Max: " + max + " lbs";
+  const w = parseFloat(document.getElementById('calcWeight').value) || 0;
+  const r = parseFloat(document.getElementById('calcReps').value) || 0;
+  const max = Math.round(w * (1 + r/30));
+  document.getElementById('oneRmResult').innerText = "Est Max: " + max + " lbs";
 };
 
-// --- ACCESSORIES GLOSSARY ---
-const accDB = {
-    legs: ["Belt Squat", "Split Squat", "Leg Press", "Ham Curl"],
-    push: ["DB Incline", "Dips", "Tricep Pushdown", "Lateral Raise"],
-    pull: ["Lat Pulldown", "Barbell Row", "Face Pull", "Curls"]
-};
+// Accessory Options
 window.updateAccOptions = function() {
-    const cat = document.getElementById('accCategory').value;
-    const sel = document.getElementById('accExercise');
-    sel.innerHTML = "";
-    if(accDB[cat]) accDB[cat].forEach(e => {
-        let o = document.createElement('option'); o.innerText = e; sel.appendChild(o);
-    });
+  const cat = document.getElementById('accCategory').value;
+  const el = document.getElementById('accExercise');
+  el.innerHTML = "";
+  if(accessoryData[cat]) {
+      accessoryData[cat].forEach(ex => {
+          let opt = document.createElement('option');
+          opt.value = ex.name;
+          opt.innerText = ex.name;
+          el.appendChild(opt);
+      });
+  }
+  displayAccDetails();
 };
+
 window.displayAccDetails = function() {
-    const v = document.getElementById('accExercise').value;
-    document.getElementById('accDetails').innerText = "Selected: " + v;
+  const cat = document.getElementById('accCategory').value;
+  const val = document.getElementById('accExercise').value;
+  const item = accessoryData[cat].find(i => i.name === val);
+  const d = document.getElementById('accDetails');
+  d.style.display = 'block';
+  if(item) d.innerHTML = `<strong>${item.name}</strong> (${item.tier}-Tier)<br><small>${item.notes}</small>`;
 };
 
-// --- PLATE LOADER ---
-window.openPlateLoader = function(weight) {
-    document.getElementById('plateModal').style.display = 'block';
-    document.getElementById('plateTarget').innerText = weight + " lbs";
-    const oneSide = (weight - 45) / 2;
-    if(oneSide <= 0) {
-        document.getElementById('plateText').innerText = "Just the bar!";
-        return;
-    }
-    // Simple logic for 45, 25, 10, 5, 2.5
-    let remainder = oneSide;
-    let plates = [];
-    [45, 25, 10, 5, 2.5].forEach(p => {
-        while(remainder >= p) {
-            plates.push(p);
-            remainder -= p;
-        }
-    });
-    document.getElementById('plateText').innerText = "Per Side: " + plates.join(", ");
+// Mobility
+const mobilityDB = {
+    knees: "Foam Roll Quads, Couch Stretch (2 mins), Terminal Knee Extension",
+    shoulders: "Band Pull Aparts (100 reps), Doorway Stretch, Scapular Retraction",
+    hips: "Pigeon Pose, 90/90 Stretch, Hip Circle Walks",
+    back: "Cat/Cow, McGill Big 3, Hang from bar (30s)",
+    elbows: "Hammer Curls (Light), Forearm Massage, Band Extensions"
 };
-
-// --- MEET ATTEMPTS ---
-window.calculateMeetAttempts = function() {
-    const s = parseFloat(inputs.squat.value)||0;
-    const b = parseFloat(inputs.bench.value)||0;
-    const d = parseFloat(inputs.deadlift.value)||0;
-    const grid = document.getElementById('meetGrid');
-    grid.innerHTML = `
-        <div style="background:#222; padding:10px;"><strong>Squat:</strong><br>Opener: ${round5(s*0.91)}<br>2nd: ${round5(s*0.96)}<br>3rd: ${s}</div>
-        <div style="background:#222; padding:10px;"><strong>Bench:</strong><br>Opener: ${round5(b*0.91)}<br>2nd: ${round5(b*0.96)}<br>3rd: ${b}</div>
-        <div style="background:#222; padding:10px;"><strong>Deadlift:</strong><br>Opener: ${round5(d*0.91)}<br>2nd: ${round5(d*0.96)}<br>3rd: ${d}</div>
-    `;
+window.updatePtMovements = function() {
+    const area = document.getElementById('ptArea').value;
+    const d = document.getElementById('ptDisplay');
+    d.style.display = 'block';
+    d.innerText = mobilityDB[area] || "";
 };
-
-// Helper
-function round5(v) { return Math.round(v/5)*5 || 0; }
 
 // ==========================================
-// 6. FIREBASE DATA
+// 7. FIREBASE DATA
 // ==========================================
 async function loadUserData(email) {
     try {
@@ -353,7 +433,7 @@ async function loadUserData(email) {
             inputs.bench.value = d.bench||0;
             inputs.deadlift.value = d.deadlift||0;
             inputs.ohp.value = d.ohp||0;
-            calculateProgram();
+            generateProgram();
         }
     } catch(e){console.error(e);}
 }
