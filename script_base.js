@@ -1,20 +1,18 @@
 // ==========================================
-// 1. FIREBASE CONFIGURATION (YOUR REAL KEYS)
+// 1. FIREBASE CONFIGURATION (REAL KEYS)
 // ==========================================
-// I pulled these from the Andre code you shared. 
-// Now both apps talk to the exact same database.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = { 
-    apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M", 
-    authDomain: "powerlifting-programs.firebaseapp.com", 
-    projectId: "powerlifting-programs", 
-    storageBucket: "powerlifting-programs.firebasestorage.app", 
-    messagingSenderId: "961044250962", 
-    appId: "1:961044250962:web:c45644c186e9bb6ee67a8b", 
-    measurementId: "G-501TXRLMSQ" 
+const firebaseConfig = {
+    apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M",
+    authDomain: "powerlifting-programs.firebaseapp.com",
+    projectId: "powerlifting-programs",
+    storageBucket: "powerlifting-programs.firebasestorage.app",
+    messagingSenderId: "961044250962",
+    appId: "1:961044250962:web:c45644c186e9bb6ee67a8b",
+    measurementId: "G-501TXRLMSQ"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -22,26 +20,15 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ==========================================
-// 2. CONFIGURATION & CONSTANTS
+// 2. CONSTANTS
 // ==========================================
 const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
-const standardProg = 0.0425;
-const maintProg = 0.02;
-const tempoStartPct = 0.71;
-const tempoProg = 0.04;
-const ohpStrengthStart = 0.80;
-const ohpStrengthProg = 0.04;
-const ohpVolPct = 0.60;
+const standardProg = 0.0425, maintProg = 0.02, tempoStartPct = 0.71, tempoProg = 0.04;
+const ohpStrengthStart = 0.80, ohpStrengthProg = 0.04, ohpVolPct = 0.60;
+const accPeakingReps = [10, 8, 6, 5], accSets = [5, 4, 3, 2], accRPEs = [10, 9, 8, 7];
+const standardSets = [3, 2, 1, 1], maintSets = [2, 2, 2, 2, 1, 1];
 
-const accPeakingReps = [10, 8, 6, 5];
-const accSets = [5, 4, 3, 2];
-const accRPEs = [10, 9, 8, 7];
-const standardSets = [3, 2, 1, 1];
-const maintSets = [2, 2, 2, 2, 1, 1];
-
-// ==========================================
-// 3. FULL ACCESSORY DATA (UNCUT)
-// ==========================================
+// Full Accessory List
 const accessoryData = {
   squat: [
     { name: "ATG System", tier: "S", notes: "Full range of motion focus." },
@@ -112,16 +99,14 @@ let isFasted = false;
 let currentUserEmail = "";
 
 // ==========================================
-// 5. INITIALIZATION & LOGIN SYNC (FIXED)
+// 5. INITIALIZATION & LOGIN SYNC
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
     // 1. INSTANT LOCAL MEMORY CHECK (Before Firebase loads)
-    // This solves "Base Map has ZERO MEMORY" if you aren't logged in yet
     loadLocalInputs();
 
-    // 2. FIREBASE AUTH LISTENER (Cross-App Sync)
-    // This solves "Andre wave doesn't keep me logged in"
+    // 2. FIREBASE AUTH LISTENER (Andre Sync)
     onAuthStateChanged(auth, (user) => {
         if (user) {
             console.log("Synced Login:", user.email);
@@ -131,53 +116,52 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('login-btn');
             if(btn) {
                 btn.innerText = "Log Out";
-                btn.onclick = () => { auth.signOut(); location.reload(); };
+                btn.onclick = () => { auth.signOut(); localStorage.removeItem('baseMapLocalData'); location.reload(); };
             }
             
             loadUserData(user.email);
         }
     });
 
-    // 3. Input Listeners (Save to Local & Cloud instantly)
-    const inputs = ['squatInput', 'benchInput', 'deadliftInput', 'ohpInput'];
-    inputs.forEach(id => {
+    // 3. LISTENERS
+    ['squatInput','benchInput','deadliftInput','ohpInput'].forEach(id => {
         const el = document.getElementById(id);
-        if(el) {
-            el.addEventListener('input', () => { 
-                generateProgram(); 
-                saveUserData(); 
-                saveLocalInputs(); // Fallback save
-            });
-        }
+        if(el) el.addEventListener('input', () => { generateProgram(); saveUserData(); saveLocalInputs(); });
     });
 
-    // 4. Login Button Listener
-    const loginBtn = document.getElementById('emailLoginBtn');
-    if(loginBtn) {
-        loginBtn.addEventListener('click', async () => {
-            const email = document.getElementById('emailInput').value.trim().toLowerCase();
-            const pass = document.getElementById('passwordInput') ? document.getElementById('passwordInput').value : ""; // Check if pass exists
-            
-            if(email) {
-                try {
-                    // Try real login first
-                    if(pass) await signInWithEmailAndPassword(auth, email, pass);
-                    
-                    // Fallback / Success
-                    currentUserEmail = email;
-                    await loadUserData(email);
-                    document.getElementById('authModal').style.display = 'none';
-                    alert("Logged in!");
-                } catch (e) {
-                    alert("Login Error: " + e.message);
-                }
-            }
-        });
-    }
+    // Mode/Reps changes reset the view
+    document.getElementById('dashMode').addEventListener('change', () => { activeMobileWeek=0; generateProgram(); });
+    document.getElementById('dashReps').addEventListener('change', () => { activeMobileWeek=0; generateProgram(); });
+    
+    // Fasted Toggle
+    const fBtn = document.getElementById('fastedBtn');
+    if(fBtn) fBtn.addEventListener('click', toggleFasted);
+
+    // Mobile Nav
+    document.getElementById('prevWeekBtn').addEventListener('click', () => changeMobileWeek(-1));
+    document.getElementById('nextWeekBtn').addEventListener('click', () => changeMobileWeek(1));
+
+    // Login Button
+    const emailBtn = document.getElementById('emailLoginBtn');
+    if(emailBtn) emailBtn.addEventListener('click', handleLogin);
+
+    // Tool Listeners (Attached to IDs from the HTML)
+    document.getElementById('calcWarmupBtn').addEventListener('click', calculateWarmup);
+    document.getElementById('runRandBtn').addEventListener('click', runRandomizer);
+    document.getElementById('calcOneRmBtn').addEventListener('click', calculateOneRM);
+    
+    const accCat = document.getElementById('accCategory');
+    if(accCat) accCat.addEventListener('change', updateAccOptions);
+    
+    const accEx = document.getElementById('accExercise');
+    if(accEx) accEx.addEventListener('change', displayAccDetails);
+    
+    const ptArea = document.getElementById('ptArea');
+    if(ptArea) ptArea.addEventListener('change', updatePtMovements);
 
     initProgramData();
     generateProgram();
-    if(window.updateAccOptions) window.updateAccOptions();
+    updateAccOptions();
 });
 
 // ==========================================
@@ -187,7 +171,7 @@ function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    // ** DAY 2: LARSEN FIRST, THEN PAUSED **
+    // ** SWAPPED: Larsen first, Paused second **
     { name: "Day 2 (Tue)", lifts: [{n: "Larsen Press", t: "bench"}, {n: "Paused Bench", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
@@ -208,11 +192,11 @@ function generateProgram() {
   const totalEl = document.getElementById('currentTotal');
   if(totalEl) totalEl.innerText = (sMax + bMax + dMax + oMax);
 
-  const reps = document.getElementById('dashReps').value;
+  const repsVal = document.getElementById('dashReps').value;
+  const reps = parseInt(repsVal); 
   const mode = document.getElementById('dashMode').value;
   const startPct = basePctMap[reps] || 0.75;
 
-  // VISIBILITY TOGGLES
   const randCard = document.getElementById('randomizerCard');
   const dashGrid = document.getElementById('dashboardGrid');
   if(randCard) randCard.style.display = (mode === 'randomizer' ? 'block' : 'none');
@@ -227,7 +211,6 @@ function generateProgram() {
 
   for (let w = 0; w < numW; w++) {
     
-    // --- PERCENTAGE MODIFIERS ---
     let mod = 0;
     let tempoMod = (w * tempoProg);
 
@@ -235,13 +218,12 @@ function generateProgram() {
         mod = w * maintProg;
     } 
     else if (mode === 'deload') {
-        // ** FLIPPED DELOAD (Week 1 = 50%, Week 2 = 52%) **
+        // FLIPPED DELOAD (Week 1=50%, Week 2=52%)
         if (w === 0) mod = (0.50 - startPct);
         if (w === 1) mod = (0.52 - startPct);
         tempoMod = -0.10; 
     } 
     else {
-        // Standard Linear
         mod = w * standardProg;
     }
 
@@ -251,6 +233,7 @@ function generateProgram() {
     const psPct = 0.70 + mod;
 
     let activeClass = (w === activeMobileWeek) ? 'active-week' : '';
+    // Fix: Ensure Mobile class works by checking window width in CSS or JS
     let styleDef = (window.innerWidth <= 768 && w !== activeMobileWeek) ? 'display:none;' : '';
     let headerColor = (mode === 'deload') ? '#4caf50' : '#2196f3';
 
@@ -262,7 +245,6 @@ function generateProgram() {
     userProgram[w].days.forEach((day, dIdx) => {
       let activeLifts = [...day.lifts];
       
-      // Standard Acc Injection (Preserved)
       if (mode === 'standard_acc') {
         const aReps = accPeakingReps[w];
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
@@ -281,15 +263,12 @@ function generateProgram() {
         let mx = (lift.isOHP) ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
         let intens = curPct, dReps = reps, fSets = curSets, weightDisplay = "";
         
-        // --- LOGIC REVERSAL FIX ---
-        // Larsen Press = Static 3 Reps
-        // Paused Bench = Dynamic (follows Program)
-        
+        // --- LOGIC SWAP (Larsen Static, Paused Dynamic) ---
         if (lift.n === "Larsen Press") {
-            dReps = 3; 
+            dReps = 3; // Static
         }
         else if (lift.n === "Paused Bench") {
-            dReps = reps; 
+            dReps = reps; // Dynamic (5/4/3/2/1)
         }
         else if (lift.n.includes("Tempo")) { 
             intens = currentTempoPct; dReps = 5; 
@@ -310,6 +289,7 @@ function generateProgram() {
             weightDisplay = `<strong style="color:#fff;">${weight} lbs</strong>`;
         }
         
+        // Use Global Click Handler attached to window
         let btn = (!lift.isAcc && !lift.n.includes("Tempo")) ? 
             `<span onclick="window.openPlateLoader(${Math.round((mx*intens*fastedMult)/5)*5})" style="cursor:pointer; color:#2196f3; margin-left:5px;">💿</span>` : '';
 
@@ -329,11 +309,9 @@ function generateProgram() {
 }
 
 // ==========================================
-// 5. TOOLS & UTILITIES
+// 7. HELPER FUNCTIONS
 // ==========================================
-
-// ... (Tools kept exact, attaching directly to window for safety)
-window.toggleFasted = function() {
+function toggleFasted() {
   isFasted = !isFasted;
   const btn = document.getElementById('fastedBtn');
   if(btn) {
@@ -341,152 +319,132 @@ window.toggleFasted = function() {
       btn.style.background = isFasted ? "#4caf50" : "#333";
   }
   generateProgram();
-};
+}
 
-window.updateDashSettings = function() {
+function updateDashSettings() {
     activeMobileWeek = 0;
     generateProgram();
-};
+}
 
-window.changeMobileWeek = function(dir) {
+function changeMobileWeek(dir) {
   const mode = document.getElementById('dashMode').value;
   let maxW = (mode === 'maintenance' ? 6 : (mode === 'deload' ? 2 : 4));
   activeMobileWeek += dir;
   if(activeMobileWeek < 0) activeMobileWeek = maxW - 1;
   if(activeMobileWeek >= maxW) activeMobileWeek = 0;
   generateProgram();
-};
+}
 
-window.openTools = () => document.getElementById('toolsModal').style.display = 'block';
-window.openAuthModal = () => document.getElementById('authModal').style.display = 'block';
-window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+async function handleLogin() {
+    const email = document.getElementById('emailInput').value.trim().toLowerCase();
+    const pass = document.getElementById('passwordInput').value;
+    
+    if(email && pass) {
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+            document.getElementById('authModal').style.display='none';
+        } catch (e) {
+            alert("Login Failed: " + e.message);
+        }
+    }
+}
 
-// ... (Keeping all calculation functions exactly as they were in previous turns)
-window.calculateOneRM = function() {
-  const w = parseFloat(document.getElementById('calcWeight').value), r = parseFloat(document.getElementById('calcReps').value);
-  if (!w || !r) return;
-  document.getElementById('oneRmResult').innerHTML = `<strong>Est: ${Math.round(w*(1+0.0333*r))} lbs</strong>`;
-};
-
-window.calculateWarmup = function() {
-    const t = parseFloat(document.getElementById('wuTarget').value);
-    if(!t) return;
-    const style = document.getElementById('wuStyle').value;
-    let steps = (style==='big') ? [{p:0,r:10},{p:0.5,r:5},{p:0.8,r:3},{p:0.9,r:1}] : [{p:0,r:10},{p:0.4,r:5},{p:0.6,r:3},{p:0.8,r:2},{p:0.9,r:1}];
-    let h = '';
-    steps.forEach(s => { h += `<div>${Math.round((t*s.p)/5)*5} x ${s.r}</div>`; });
-    document.getElementById('warmupDisplay').innerHTML = h;
-};
-
-window.runRandomizer = function() {
-    const goal = document.getElementById('randGoal').value;
-    document.getElementById('randOutputText').innerText = "Generated: " + goal.toUpperCase() + " SESSION";
-    document.getElementById('randomizerResult').style.display = 'block';
-};
-
-window.updateAccOptions = function() {
-  const cat = document.getElementById('accCategory').value;
-  const el = document.getElementById('accExercise');
-  el.innerHTML = "";
-  if(accessoryData[cat]) {
-      accessoryData[cat].forEach(ex => {
-          let opt = document.createElement('option');
-          opt.value = ex.name;
-          opt.innerText = ex.name;
-          el.appendChild(opt);
-      });
-  }
-};
-
-window.displayAccDetails = function() {
-  const cat = document.getElementById('accCategory').value;
-  const val = document.getElementById('accExercise').value;
-  const item = accessoryData[cat].find(i => i.name === val);
-  const d = document.getElementById('accDetails');
-  d.style.display = 'block';
-  if(item) d.innerHTML = `<strong>${item.name}</strong> (${item.tier}-Tier)<br><small>${item.notes}</small>`;
-};
-
-window.openPlateLoader = function(weight) {
-    document.getElementById('plateModal').style.display = 'block';
-    document.getElementById('plateTarget').innerText = weight + " lbs";
-    const oneSide = (weight - 45) / 2;
-    let remainder = oneSide;
-    let plates = [];
-    [45, 25, 10, 5, 2.5].forEach(p => {
-        while(remainder >= p) { plates.push(p); remainder -= p; }
-    });
-    document.getElementById('plateText').innerText = "Per Side: " + (plates.length ? plates.join(", ") : "Just Bar");
-};
-
-window.updatePtMovements = function() {
-    // Basic placeholder for mobility switch
-    const d = document.getElementById('ptDisplay');
-    d.style.display = 'block';
-    d.innerText = "Suggested drill loaded.";
-};
-
-// ==========================================
-// 6. DATA HANDLERS (HYBRID STORAGE)
-// ==========================================
+// LOCAL MEMORY HANDLERS (The "Instant" Fix)
 function saveLocalInputs() {
-    const data = {
+    const d = {
         s: document.getElementById('squatInput').value,
         b: document.getElementById('benchInput').value,
-        d: document.getElementById('deadliftInput').value,
+        dl: document.getElementById('deadliftInput').value,
         o: document.getElementById('ohpInput').value
     };
-    localStorage.setItem('baseMapLocalData', JSON.stringify(data));
+    localStorage.setItem('baseMapLocalData', JSON.stringify(d));
 }
 
 function loadLocalInputs() {
-    const data = JSON.parse(localStorage.getItem('baseMapLocalData'));
-    if(data) {
-        document.getElementById('squatInput').value = data.s || 0;
-        document.getElementById('benchInput').value = data.b || 0;
-        document.getElementById('deadliftInput').value = data.d || 0;
-        document.getElementById('ohpInput').value = data.o || 0;
+    const d = JSON.parse(localStorage.getItem('baseMapLocalData'));
+    if(d) {
+        if(d.s) document.getElementById('squatInput').value = d.s;
+        if(d.b) document.getElementById('benchInput').value = d.b;
+        if(d.dl) document.getElementById('deadliftInput').value = d.dl;
+        if(d.o) document.getElementById('ohpInput').value = d.o;
     }
 }
 
 async function loadUserData(email) {
     try {
-        const docSnap = await getDoc(doc(db, "users", email));
-        if(docSnap.exists()) {
-            const d = docSnap.data();
-            // Andre App might use "maxes.Squat" or root "squat"
-            // We check deeply to be sure
-            let s = d.s || d.squat || (d.maxes ? d.maxes.Squat : 0);
-            let b = d.b || d.bench || (d.maxes ? d.maxes.Bench : 0);
-            let dl = d.d || d.deadlift || (d.maxes ? d.maxes.Deadlift : 0);
-            let o = d.o || d.ohp || (d.maxes ? d.maxes.OHP : 0);
-
-            document.getElementById('squatInput').value = s || 0;
-            document.getElementById('benchInput').value = b || 0;
-            document.getElementById('deadliftInput').value = dl || 0;
-            document.getElementById('ohpInput').value = o || 0;
+        const snap = await getDoc(doc(db, "users", email));
+        if(snap.exists()) {
+            const d = snap.data();
+            let s = d.s || d.squat || (d.maxes?d.maxes.Squat:0);
+            let b = d.b || d.bench || (d.maxes?d.maxes.Bench:0);
+            let dl = d.d || d.deadlift || (d.maxes?d.maxes.Deadlift:0);
+            let o = d.o || d.ohp || (d.maxes?d.maxes.OHP:0);
+            
+            document.getElementById('squatInput').value = s;
+            document.getElementById('benchInput').value = b;
+            document.getElementById('deadliftInput').value = dl;
+            document.getElementById('ohpInput').value = o;
+            
             generateProgram();
-            saveLocalInputs(); // Sync cloud data to local immediately
+            saveLocalInputs(); // Backup to local
         }
-    } catch(e) { console.error("Load Error:", e); }
+    } catch(e) { console.error(e); }
 }
 
 async function saveUserData() {
     if(!currentUserEmail) return;
-    const s = parseFloat(document.getElementById('squatInput').value) || 0;
-    const b = parseFloat(document.getElementById('benchInput').value) || 0;
-    const d = parseFloat(document.getElementById('deadliftInput').value) || 0;
-    const o = parseFloat(document.getElementById('ohpInput').value) || 0;
+    const s = parseFloat(document.getElementById('squatInput').value)||0;
+    const b = parseFloat(document.getElementById('benchInput').value)||0;
+    const dl = parseFloat(document.getElementById('deadliftInput').value)||0;
+    const o = parseFloat(document.getElementById('ohpInput').value)||0;
     
-    // Save in structure compatible with Andre App
-    const data = {
-        s: s, b: b, d: d, o: o,
-        squat: s, bench: b, deadlift: d, ohp: o,
-        maxes: { Squat: s, Bench: b, Deadlift: d, OHP: o }, // Legacy support
-        email: currentUserEmail
-    };
-
     try {
-        await setDoc(doc(db, "users", currentUserEmail), data, {merge:true});
-    } catch(e) { console.error("Save Error:", e); }
+        await setDoc(doc(db, "users", currentUserEmail), {
+            s: s, b: b, d: dl, o: o,
+            squat: s, bench: b, deadlift: dl, ohp: o,
+            maxes: { Squat:s, Bench:b, Deadlift:dl, OHP:o },
+            email: currentUserEmail
+        }, {merge:true});
+    } catch(e) { console.error(e); }
 }
+
+// Tool Helpers
+function calculateWarmup(){
+    const t=parseFloat(document.getElementById('wuTarget').value);
+    if(!t)return;
+    const s=document.getElementById('wuStyle').value;
+    let p=(s==='big')?[{p:0,r:10},{p:0.5,r:5},{p:0.8,r:3},{p:0.9,r:1}]:[{p:0,r:10},{p:0.4,r:5},{p:0.6,r:3},{p:0.8,r:2},{p:0.9,r:1}];
+    let h=''; p.forEach(x=>{ h+=`<div>${Math.round((t*x.p)/5)*5} x ${x.r}</div>`; });
+    document.getElementById('warmupDisplay').innerHTML=h;
+}
+function calculateOneRM(){
+    const w=parseFloat(document.getElementById('calcWeight').value);
+    const r=parseFloat(document.getElementById('calcReps').value);
+    if(w&&r) document.getElementById('oneRmResult').innerText = "Est Max: "+Math.round(w*(1+0.0333*r));
+}
+function runRandomizer(){
+    document.getElementById('randomizerResult').style.display='block';
+    document.getElementById('randOutputText').innerText="Generated Workout.";
+}
+function updateAccOptions(){
+    const c=document.getElementById('accCategory').value;
+    const m=document.getElementById('accExercise'); m.innerHTML='';
+    if(accessoryData[c]) accessoryData[c].forEach(x=>{ let o=document.createElement('option'); o.text=x.name; m.add(o); });
+}
+function displayAccDetails(){
+    const c=document.getElementById('accCategory').value;
+    const n=document.getElementById('accExercise').value;
+    const d=accessoryData[c].find(x=>x.name===n);
+    if(d) document.getElementById('accDetails').innerText=d.notes;
+}
+function updatePtMovements(){
+    const d=document.getElementById('ptDisplay'); d.style.display='block'; d.innerText="Drill loaded.";
+}
+// Attach to window for onClick access
+window.openPlateLoader = (w) => {
+    document.getElementById('plateModal').style.display='flex';
+    document.getElementById('plateTarget').innerText = w+" lbs";
+    let s=(w-45)/2, p=[45,25,10,5,2.5], r=[];
+    p.forEach(x=>{ while(s>=x){ r.push(x); s-=x; } });
+    document.getElementById('plateText').innerText = r.length ? r.join(', ') : "Bar";
+};
