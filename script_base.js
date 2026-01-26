@@ -14,7 +14,7 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ==========================================
-// 2. CONFIGURATION & CONSTANTS (ORIGINAL)
+// 2. CONFIGURATION & CONSTANTS
 // ==========================================
 const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
 const standardProg = 0.0425;
@@ -34,11 +34,9 @@ const maintSets = [2, 2, 2, 2, 1, 1];
 let activeMobileWeek = 0;
 let userProgram = [];
 let isFasted = false;
-let currentUserEmail = ""; // Added for Firebase
+let currentUserEmail = ""; 
 
-// ==========================================
-// 3. FULL ACCESSORY DATA (PRESERVED)
-// ==========================================
+// FULL ACCESSORY DATA (PRESERVED)
 const accessoryData = {
   squat: [
     { name: "ATG System", tier: "S", notes: "Full range of motion focus." },
@@ -101,17 +99,24 @@ const accessoryData = {
 };
 
 // ==========================================
-// 4. MAIN LOGIC & EVENTS
+// 3. MAIN LOGIC & EVENTS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- 1. SHARED LOGIN FIX (Local Storage) ---
-    // We check for 'currentUserEmail' which is standard. 
-    // If Andre Map uses this key, it will auto-load.
-    const savedEmail = localStorage.getItem('currentUserEmail');
-    if (savedEmail) {
-        currentUserEmail = savedEmail;
-        loadUserData(savedEmail); // Firebase Load
+    // --- LOGIN SYNC FIX ---
+    // Look for ANY email key stored by Andre Map
+    const potentialKeys = ['currentUserEmail', 'userEmail', 'email', 'pl_user_email'];
+    let foundEmail = null;
+    
+    potentialKeys.forEach(key => {
+        if (!foundEmail) foundEmail = localStorage.getItem(key);
+    });
+
+    if (foundEmail) {
+        currentUserEmail = foundEmail;
+        loadUserData(foundEmail); 
+        // Sync it to our key
+        localStorage.setItem('currentUserEmail', foundEmail);
     }
 
     // Input Listeners
@@ -136,10 +141,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('emailInput').value.trim().toLowerCase();
             if(email) {
-                // Save to Local Storage (Persist across refreshes & apps)
+                // Save to ALL keys to ensure sync with other app
                 localStorage.setItem('currentUserEmail', email);
-                currentUserEmail = email;
+                localStorage.setItem('userEmail', email); 
                 
+                currentUserEmail = email;
                 await loadUserData(email);
                 closeModal('authModal');
                 alert("Logged in as: " + email);
@@ -147,43 +153,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initial Load
     initProgramData();
     generateProgram();
     updateAccOptions();
 });
 
 // ==========================================
-// 5. HELPER FUNCTIONS
+// 4. GENERATE PROGRAM
 // ==========================================
-
-function toggleFasted() {
-  isFasted = !isFasted;
-  const btn = document.getElementById('fastedBtn');
-  if(btn) {
-      btn.innerText = isFasted ? "Fasted: ON (-6.5%)" : "Fasted: OFF";
-      btn.style.background = isFasted ? "#4caf50" : "#333";
-  }
-  generateProgram();
-}
-
-function updateDashSettings() {
-    activeMobileWeek = 0;
-    generateProgram();
-}
-
-function resetMobileWeek() { activeMobileWeek = 0; }
-
-function safeStyle(id, displayType) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = displayType;
-}
-
 function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
+    // ** SWAP FIX: Larsen First, Then Paused **
+    { name: "Day 2 (Tue)", lifts: [{n: "Larsen Press", t: "bench"}, {n: "Paused Bench", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
     { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
@@ -192,9 +175,6 @@ function initProgramData() {
   for (let w = 0; w < 6; w++) userProgram.push({ week: w + 1, days: JSON.parse(JSON.stringify(daysTemplate)) });
 }
 
-// ==========================================
-// 6. GENERATE PROGRAM (WITH DELOAD FIX)
-// ==========================================
 function generateProgram() {
   if (userProgram.length === 0) initProgramData();
   
@@ -203,7 +183,7 @@ function generateProgram() {
   const dMax = parseFloat(document.getElementById('deadliftInput').value) || 0;
   const oMax = parseFloat(document.getElementById('ohpInput').value) || 0;
 
-  // Update Header Totals
+  // Header Total
   const totalEl = document.getElementById('currentTotal');
   if(totalEl) totalEl.innerText = (sMax + bMax + dMax + oMax);
 
@@ -232,13 +212,11 @@ function generateProgram() {
     } 
     else if (mode === 'deload') {
         // ** DELOAD FLIP FIX (Week 1 = 50%, Week 2 = 52%) **
-        // We calculate the exact mod needed to reach 0.50 and 0.52 from the startPct
         if (w === 0) mod = (0.50 - startPct);
         if (w === 1) mod = (0.52 - startPct);
-        tempoMod = -0.10; // Drop tempo weight significantly
+        tempoMod = -0.10; 
     } 
     else {
-        // Standard Linear
         mod = w * standardProg;
     }
 
@@ -247,7 +225,6 @@ function generateProgram() {
     const curPct = startPct + mod;
     const psPct = 0.70 + mod;
 
-    // Mobile Active Class
     let activeClass = (w === activeMobileWeek) ? 'active-week' : '';
     let styleDef = (window.innerWidth <= 768 && w !== activeMobileWeek) ? 'display:none;' : '';
     let headerColor = (mode === 'deload') ? '#4caf50' : '#2196f3';
@@ -260,7 +237,6 @@ function generateProgram() {
     userProgram[w].days.forEach((day, dIdx) => {
       let activeLifts = [...day.lifts];
       
-      // Standard Acc Injection (Preserved)
       if (mode === 'standard_acc') {
         const aReps = accPeakingReps[w];
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
@@ -292,7 +268,7 @@ function generateProgram() {
             weightDisplay = `<strong style="color:#fff;">${weight} lbs</strong>`;
         }
         
-        // Button Logic
+        // Buttons
         let btn = (!lift.isAcc && !lift.n.includes("Tempo")) ? 
             `<span onclick="openPlateLoader(${Math.round((mx*intens*fastedMult)/5)*5})" style="cursor:pointer; color:#2196f3; margin-left:5px;">💿</span>` : '';
 
@@ -312,8 +288,31 @@ function generateProgram() {
 }
 
 // ==========================================
-// 7. TOOLS & UTILITIES (PRESERVED)
+// 5. TOOLS & UTILITIES
 // ==========================================
+
+function toggleFasted() {
+  isFasted = !isFasted;
+  const btn = document.getElementById('fastedBtn');
+  if(btn) {
+      btn.innerText = isFasted ? "Fasted: ON (-6.5%)" : "Fasted: OFF";
+      btn.style.background = isFasted ? "#4caf50" : "#333";
+  }
+  generateProgram();
+}
+
+function updateDashSettings() {
+    activeMobileWeek = 0;
+    generateProgram();
+}
+
+function resetMobileWeek() { activeMobileWeek = 0; }
+
+function safeStyle(id, displayType) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = displayType;
+}
+
 function runRandomizer() {
   const goal = document.getElementById('randGoal').value;
   const w = parseFloat(document.getElementById('prevWeight').value), r = parseInt(document.getElementById('prevReps').value);
@@ -393,7 +392,6 @@ function openPlateLoader(weight) {
     document.getElementById('plateVisuals').innerHTML = `<div style="display:flex; align-items:center; height:50px; justify-content:center;">${visuals}</div>`;
 }
 
-// Global Modals
 window.openTools = () => document.getElementById('toolsModal').style.display = 'block';
 window.openAuthModal = () => document.getElementById('authModal').style.display = 'block';
 window.closeModal = (id) => document.getElementById(id).style.display = 'none';
@@ -414,14 +412,13 @@ window.updatePtMovements = function() {
 };
 
 // ==========================================
-// 8. FIREBASE DATA (WITH SHORT-KEY SUPPORT)
+// 6. FIREBASE DATA (WITH SHORT-KEY SUPPORT)
 // ==========================================
 async function loadUserData(email) {
     try {
         const doc = await db.collection('users').doc(email).get();
         if(doc.exists) {
             const d = doc.data();
-            // Maps short keys (s,b,d,o) to inputs to ensure cross-app support
             document.getElementById('squatInput').value = d.s || d.squat || 0;
             document.getElementById('benchInput').value = d.b || d.bench || 0;
             document.getElementById('deadliftInput').value = d.d || d.deadlift || 0;
@@ -440,7 +437,6 @@ async function saveUserData() {
     
     try {
         await db.collection('users').doc(currentUserEmail).set({
-            // Saves both Long and Short keys
             s: s, b: b, d: d, o: o,
             squat: s, bench: b, deadlift: d, ohp: o,
             total: (s + b + d + o),
