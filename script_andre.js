@@ -64,10 +64,132 @@ const andreAccessories = {
 const accessoryData = { squat: [{name:"ATG Squats",notes:"Full depth"}, {name:"Pause Squat",notes:"Position"}], bench: [{name:"Larsen Press",notes:"No legs"}, {name:"Spoto Press",notes:"Pause off chest"}], deadlift: [{name:"Seal Rows",notes:"Back saver"}, {name:"RDL",notes:"Hinge"}] };
 const ptDatabase = { knees: [{name:"Spanish Squats", rx:"3x45s", context:"Max quad tension."}, {name:"TKE", rx:"3x20", context:"VMO Firing"}], back: [{name:"McGill Big 3", rx:"3x10s", context:"Core stiffness."}], shoulders: [{name:"Dead Hangs", rx:"3x30s", context:"Decompress"}] };
 
-const state = { maxes: { Squat:0, Bench:0, Deadlift:0, OHP:0 }, activeWeek: 1, unit: 'LBS', completed: {}, accWeights: {}, notes: {}, settings: { bw: '' } };
+// ==========================================
+// NEW: SMART LIBRARY (THE 70+ EXERCISE DB)
+// ==========================================
+// Keys: n=name, t=target, p=percent(0.65=65%), r=reps, s=source_max
+const smartLibrary = {
+    // --- SQUAT ---
+    "Squat: Weak Hole": [
+        { n: "Pin Squat (Low)", t: "Explosive Start", p: 0.65, r: "3x3", s: "squat" },
+        { n: "Pause Squat (3s)", t: "No Bounce", p: 0.70, r: "3x4", s: "squat" },
+        { n: "1.5 Rep Squat", t: "TUT", p: 0.60, r: "3x5", s: "squat" },
+        { n: "Box Squat", t: "Hip Power", p: 0.75, r: "4x3", s: "squat" }
+    ],
+    "Squat: Mechanics/Core": [
+        { n: "Tempo Squat (5-3-0)", t: "Path Control", p: 0.60, r: "3x5", s: "squat" },
+        { n: "SSB Squat", t: "Upper Back", p: 0.75, r: "3x6", s: "squat" },
+        { n: "Front Squat", t: "Upright/Quad", p: 0.65, r: "3x6", s: "squat" },
+        { n: "Zombie Squat", t: "Bracing", p: 0.50, r: "3x5", s: "squat" }
+    ],
+    "Squat: Overload/CNS": [
+        { n: "Heavy Walkout", t: "CNS Priming", p: 1.10, r: "3x15s", s: "squat" },
+        { n: "Anderson Squat", t: "Tendon Power", p: 0.85, r: "3x3", s: "squat" },
+        { n: "Supramax Eccentric", t: "Decentric/Neg", p: 1.05, r: "3x1", s: "squat" }
+    ],
+
+    // --- BENCH ---
+    "Bench: Chest Strength": [
+        { n: "Long Pause Bench", t: "Start Power", p: 0.75, r: "4x3", s: "bench" },
+        { n: "Spoto Press", t: "Reversal", p: 0.70, r: "3x5", s: "bench" },
+        { n: "Dead Press", t: "Concentric Only", p: 0.80, r: "5x1", s: "bench" },
+        { n: "Larsen Press", t: "Stability", p: 0.70, r: "3x6", s: "bench" },
+        { n: "Weighted Dips", t: "Mass Builder", p: 0.20, r: "3x8", s: "bench" } 
+    ],
+    "Bench: Lockout/Tri": [
+        { n: "Floor Press", t: "Lockout", p: 0.80, r: "3x5", s: "bench" },
+        { n: "Close Grip Bench", t: "Tricep Mass", p: 0.75, r: "3x8", s: "bench" },
+        { n: "Board Press", t: "Overload", p: 1.05, r: "3x3", s: "bench" },
+        { n: "Pin Lockouts", t: "Tendons", p: 1.10, r: "3x5", s: "bench" }
+    ],
+    "Bench: CNS/Overload": [
+        { n: "Heavy Hold", t: "CNS Lockout", p: 1.15, r: "3x15s", s: "bench" }, 
+        { n: "Bench Negative", t: "Decentric/Neg", p: 1.05, r: "3x1", s: "bench" },
+        { n: "Bamboo Bar", t: "Stabilizer Chaos", p: 0.50, r: "3x15", s: "bench" }
+    ],
+    "Chest: Isolation (BB)": [
+        { n: "DB Flyes", t: "Stretch", p: 0.20, r: "3x12", s: "bench" },
+        { n: "Pec Deck", t: "Squeeze", p: 0.25, r: "3x15", s: "bench" },
+        { n: "Cable Crossover", t: "Inner Chest", p: 0.15, r: "3x15", s: "bench" }
+    ],
+
+    // --- DEADLIFT ---
+    "Deadlift: Floor/Start": [
+        { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift" },
+        { n: "Snatch Grip DL", t: "Upper Back", p: 0.60, r: "3x6", s: "deadlift" },
+        { n: "Halting DL", t: "Start Mechanics", p: 0.70, r: "3x5", s: "deadlift" },
+        { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" }
+    ],
+    "Deadlift: Hips/Lockout": [
+        { n: "Block Pulls", t: "Lockout", p: 0.95, r: "3x3", s: "deadlift" },
+        { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
+        { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" },
+        { n: "Rack Pull Hold", t: "Grip/Traps", p: 1.10, r: "3x10s", s: "deadlift" },
+        { n: "Farmer's Walks", t: "Grip/Core", p: 0.40, r: "3x30s", s: "deadlift" },
+        { n: "Tempo Deadlift", t: "Eccentric", p: 0.60, r: "3x3", s: "deadlift" }
+    ],
+
+    // --- BODYBUILDING / AESTHETICS ---
+    "Glutes: Aesthetics": [
+        { n: "Hip Thrust", t: "Thickness (Max)", p: 0.50, r: "4x10", s: "deadlift" },
+        { n: "Cable Abduction", t: "Upper Shelf (Med)", p: 0.10, r: "3x15", s: "squat" },
+        { n: "Deficit Rev Lunge", t: "Tie-in/Lift", p: 0.25, r: "3x10", s: "squat" },
+        { n: "Glute Kickback", t: "Roundness", p: 0.05, r: "3x20", s: "squat" },
+        { n: "45 Deg Hypers", t: "Upper Glute", p: 0, r: "3x20", s: "squat" }
+    ],
+    "Legs: Quads/Hams": [
+        { n: "Leg Press", t: "Overall Mass", p: 1.50, r: "4x10", s: "squat" },
+        { n: "Hack Squat", t: "Outer Sweep", p: 0.60, r: "3x8", s: "squat" },
+        { n: "Walking Lunges", t: "Unilateral", p: 0.25, r: "3x12", s: "squat" },
+        { n: "Split Squat", t: "Separation", p: 0.20, r: "3x10", s: "squat" },
+        { n: "RDL (Barbell)", t: "Hamstring Hang", p: 0.50, r: "3x8", s: "deadlift" },
+        { n: "Stiff Leg DL", t: "Pure Stretch", p: 0.45, r: "3x10", s: "deadlift" },
+        { n: "Good Mornings", t: "Post. Chain", p: 0.40, r: "3x8", s: "squat" },
+        { n: "Glute Ham Raise", t: "Knee Flexion", p: 0, r: "3xMax", s: "squat" },
+        { n: "Leg Extensions", t: "Quad Detail", p: 0.25, r: "3x15", s: "squat" },
+        { n: "Seated Ham Curl", t: "Inner Ham", p: 0.20, r: "3x15", s: "squat" },
+        { n: "Lying Ham Curl", t: "Outer Ham", p: 0.20, r: "3x12", s: "squat" }
+    ],
+    "Back Thickness/Width": [
+        { n: "Pendlay Row", t: "Explosive Back", p: 0.60, r: "4x6", s: "deadlift" },
+        { n: "Bent Over Row", t: "Gen Mass", p: 0.55, r: "3x10", s: "deadlift" },
+        { n: "Vertical Row", t: "Rhomboid", p: 0.30, r: "3x12", s: "deadlift" },
+        { n: "Lat Pulldown", t: "Width", p: 0.40, r: "3x12", s: "deadlift" },
+        { n: "Chest Supp Row", t: "Mid-Back", p: 0.30, r: "3x12", s: "deadlift" },
+        { n: "Seal Row", t: "Lats Iso", p: 0.40, r: "4x10", s: "deadlift" }
+    ],
+    "Shoulders (3 Heads)": [
+        { n: "OHP (Standing)", t: "Mass", p: 0.80, r: "3x5", s: "ohp" },
+        { n: "Seated DB Press", t: "Front/Side", p: 0.35, r: "3x10", s: "ohp" },
+        { n: "Egyptian Lateral", t: "Side Delt (Cap)", p: 0.10, r: "4x15", s: "ohp" },
+        { n: "Plate Raise", t: "Front Delt", p: 0, r: "3x12", s: "ohp" },
+        { n: "Face Pulls", t: "Rear Delt/Health", p: 0.15, r: "3x20", s: "bench" },
+        { n: "Rear Delt Fly", t: "Rear Iso", p: 0.10, r: "3x15", s: "bench" }
+    ],
+    "Arms (Bi/Tri)": [
+        { n: "Rope Pushdown", t: "Tricep Horseshoe", p: 0.25, r: "3x15", s: "bench" },
+        { n: "Skullcrushers", t: "Tricep Mass", p: 0.30, r: "3x10", s: "bench" },
+        { n: "Overhead Ext", t: "Tricep Long Head", p: 0.20, r: "3x12", s: "bench" },
+        { n: "Incline Curl", t: "Bicep Peak", p: 0.10, r: "3x12", s: "deadlift" },
+        { n: "Hammer Curl", t: "Forearm/Width", p: 0.15, r: "3x10", s: "deadlift" }
+    ],
+    "Abs (Strength)": [
+        { n: "Weighted Planks", t: "Core", p: 0, r: "3x45s", s: "squat" },
+        { n: "Ab Wheel", t: "Stiffness", p: 0, r: "3x10", s: "squat" },
+        { n: "Hanging Leg Raise", t: "Hip Flexor", p: 0, r: "3x12", s: "squat" },
+        { n: "Cable Crunch", t: "Flexion", p: 0.30, r: "4x15", s: "squat" },
+        { n: "Pallof Press", t: "Anti-Rotation", p: 0.10, r: "3x12", s: "deadlift" }
+    ]
+};
+
+const state = { maxes: { Squat:0, Bench:0, Deadlift:0, OHP:0 }, activeWeek: 1, unit: 'LBS', completed: {}, accWeights: {}, notes: {}, settings: { bw: '' }, customLifts: [] };
 const inputs = { Squat: document.getElementById('squatInput'), Bench: document.getElementById('benchInput'), Deadlift: document.getElementById('deadliftInput'), OHP: document.getElementById('ohpInput') };
 
 function init() {
+    // 1. Initial Load
+    loadCustomLifts();
+    initLibraryMenu();
+
     // Input Listeners
     Object.keys(inputs).forEach(k => { inputs[k].addEventListener('input', e => { state.maxes[k] = parseFloat(e.target.value) || 0; saveToCloud(); render(); }); });
 
@@ -89,7 +211,7 @@ function init() {
     window.copyData = () => alert("Data Saved");
     window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
 
-    // TOOL FUNCTIONS (Full features included)
+    // TOOL FUNCTIONS
     window.openMeetPlanner = () => { const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
     window.openPlateCalc = (w) => {
         if(String(w).includes('%')) return; document.getElementById('plateModal').style.display='flex';
@@ -132,6 +254,11 @@ function init() {
     window.updateAccOptions = () => { const c=document.getElementById('accCategory').value; const m=document.getElementById('accExercise'); m.innerHTML=''; accessoryData[c].forEach(x=>{ let o=document.createElement('option'); o.value=x.name; o.innerText=x.name; m.appendChild(o); }); };
     window.displayAccDetails = () => { const c=document.getElementById('accCategory').value, n=document.getElementById('accExercise').value; const d=accessoryData[c].find(x=>x.name===n); if(d) { document.getElementById('accDetails').style.display='block'; document.getElementById('accDetails').innerText = d.notes; } };
 
+    // LIBRARY LISTENERS
+    document.getElementById('libCategory').addEventListener('change', updateLibExercises);
+    document.getElementById('libExercise').addEventListener('change', updateLibDetails);
+    document.getElementById('addLiftBtn').addEventListener('click', addCustomLift);
+
     render();
 }
 
@@ -144,10 +271,8 @@ function setupAuthButtons() {
 async function saveToCloud() {
     const user = auth.currentUser; if(!user) return;
     try { 
-        // 1. Private Data
         await setDoc(doc(db, "users", user.uid), state, { merge: true }); 
         
-        // 2. Leaderboard Data
         const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
         if(total > 0) {
             await setDoc(doc(db, "leaderboard", user.uid), {
@@ -167,14 +292,13 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
-            // Data Hydration
             if(d.maxes) { state.maxes.Squat = d.maxes.Squat||d.maxes.squat||0; state.maxes.Bench = d.maxes.Bench||d.maxes.bench||0; state.maxes.Deadlift = d.maxes.Deadlift||d.maxes.deadlift||0; state.maxes.OHP = d.maxes.OHP||d.maxes.ohp||0; }
             if(d.activeWeek) state.activeWeek = d.activeWeek;
             if(d.completed) state.completed = d.completed;
             if(d.settings) state.settings = d.settings;
-            if(d.accWeights) state.accWeights = d.accWeights || {}; // Restore Accessory Weights
+            if(d.accWeights) state.accWeights = d.accWeights || {};
+            if(d.customLifts) state.customLifts = d.customLifts || []; // Load Customs
             
-            // Visual Update
             inputs.Squat.value = state.maxes.Squat||''; inputs.Bench.value = state.maxes.Bench||'';
             inputs.Deadlift.value = state.maxes.Deadlift||''; inputs.OHP.value = state.maxes.OHP||'';
             if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
@@ -188,6 +312,68 @@ function getLoad(pct, max) { let v = max * pct; return Math.round(v/5)*5; }
 function calculateDots(total, bw) { if(!bw || !total) return '-'; let w=parseFloat(bw)/2.20462; let t=parseFloat(total)/2.20462; const den = -0.000001093*Math.pow(w,4) + 0.0007391293*Math.pow(w,3) - 0.1918751679*Math.pow(w,2) + 24.0900756*w - 307.75076; return (t*(500/den)).toFixed(2); }
 function getPlates(w) { let t=parseFloat(w); if(isNaN(t)) return ""; let s=(t-45)/2; if(s<=0)return""; const p=[45,35,25,10,5,2.5]; let h=""; p.forEach(x=>{ while(s>=x){ s-=x; h+=`<span class="plate p${String(x).replace('.','_')}-lbs">${x}</span>`; } }); return h; }
 
+// ==========================================
+// LIBRARY UI FUNCTIONS
+// ==========================================
+function initLibraryMenu() {
+    const catSel = document.getElementById('libCategory');
+    if(!catSel) return;
+    catSel.innerHTML = "";
+    Object.keys(smartLibrary).forEach(key => {
+        let opt = document.createElement('option');
+        opt.value = key; opt.innerText = key; catSel.appendChild(opt);
+    });
+    updateLibExercises();
+}
+
+function updateLibExercises() {
+    const cat = document.getElementById('libCategory').value;
+    const exSel = document.getElementById('libExercise');
+    exSel.innerHTML = "";
+    smartLibrary[cat].forEach((item, idx) => {
+        let opt = document.createElement('option');
+        opt.value = idx; opt.innerText = item.n; exSel.appendChild(opt);
+    });
+    updateLibDetails();
+}
+
+function updateLibDetails() {
+    const cat = document.getElementById('libCategory').value;
+    const idx = document.getElementById('libExercise').value;
+    const item = smartLibrary[cat][idx];
+    document.getElementById('libDetails').innerText = `Target: ${item.t} | Logic: ${Math.round(item.p*100)}% of ${item.s.toUpperCase()}`;
+}
+
+function addCustomLift() {
+    const cat = document.getElementById('libCategory').value;
+    const idx = document.getElementById('libExercise').value;
+    const day = parseInt(document.getElementById('libDay').value); // 0=Monday, 1=Tuesday...
+    const item = smartLibrary[cat][idx];
+    
+    state.customLifts.push({ ...item, dayIndex: day });
+    
+    saveToCloud(); // Save to Firebase for Andre User
+    render();
+    document.getElementById('libraryModal').style.display = 'none';
+    alert(`Added ${item.n} to Week Plan`);
+}
+
+window.clearCustomLifts = function() {
+    state.customLifts = [];
+    saveToCloud();
+    render();
+    document.getElementById('libraryModal').style.display = 'none';
+};
+
+function saveCustomLifts() { localStorage.setItem('andreMapCustomLifts', JSON.stringify(state.customLifts)); }
+function loadCustomLifts() {
+    const data = localStorage.getItem('andreMapCustomLifts');
+    if(data) state.customLifts = JSON.parse(data);
+}
+
+// ==========================================
+// RENDER (WITH CUSTOM LIFTS)
+// ==========================================
 function render() {
     const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
     document.getElementById('currentTotal').innerText = total;
@@ -201,23 +387,50 @@ function render() {
     const cont = document.getElementById('programContent');
     cont.innerHTML = '';
     
-    // WEEK CHECK
     let weekData = andreData[state.activeWeek];
     if(!weekData) { weekData = andreData[1]; state.activeWeek = 1; }
 
+    const dayMap = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
     Object.keys(weekData).forEach(day => {
-        const exs = weekData[day];
+        const exs = [...weekData[day]]; // Copy existing workouts
+        
+        // ** INJECT CUSTOM WORKOUTS **
+        const dayIdx = dayMap.indexOf(day);
+        state.customLifts.forEach(c => {
+            if (c.dayIndex === dayIdx) {
+                // Map library format to Andre format
+                // Custom: {n, p, r, s} -> Andre: {name, sets, reps, pct, type}
+                let typeMap = { 'squat': 'Squat', 'bench': 'Bench', 'deadlift': 'Deadlift', 'ohp': 'OHP' };
+                let pct = c.p;
+                if (state.activeWeek === 6) pct = pct * 0.90; // Deload Logic for Custom
+                
+                exs.push({
+                    name: c.n + " ⭐", // Star to show it's custom
+                    sets: "3", 
+                    reps: c.r, 
+                    pct: pct, 
+                    type: typeMap[c.s] 
+                });
+            }
+        });
+
         const accList = andreAccessories[day];
         const showAcc = accList && (state.activeWeek < 5 || state.activeWeek === 6);
         
         const card = document.createElement('div'); card.className = 'day-container';
         let head = `<div class="day-header"><span>${day}</span></div>`;
         let html = `<table>`;
+        
         exs.forEach((m, i) => {
             const uid = `Andre-${state.activeWeek}-${day}-${i}`;
             const max = state.maxes[m.type] || 0;
+            // Handle Custom Rep Strings like "3x15s" vs Andre numbers "3"
+            let setRepStr = (typeof m.sets === 'string') ? `${m.sets} Sets` : `${m.sets} x ${m.reps}`;
+            if (m.name.includes("⭐")) setRepStr = `${m.reps}`; // Custom format
+
             let load = (max > 0) ? Math.round((max * m.pct)/5)*5 + " LBS" : Math.round(m.pct*100) + "%";
-            html += `<tr class="row-${m.type} ${state.completed[uid]?'completed':''}" onclick="toggleComplete('${uid}')"><td>${m.name}</td><td>${m.sets} x ${m.reps}</td><td class="load-cell" onclick="event.stopPropagation();openPlateCalc('${load}')">${load}</td></tr>`;
+            html += `<tr class="row-${m.type} ${state.completed[uid]?'completed':''}" onclick="toggleComplete('${uid}')"><td>${m.name}</td><td>${setRepStr}</td><td class="load-cell" onclick="event.stopPropagation();openPlateCalc('${load}')">${load}</td></tr>`;
         });
         html += `</table>`;
 
@@ -231,7 +444,6 @@ function render() {
                     let load = Math.round((state.maxes[a.base] * (a.basePct + (w * 0.025)))/5)*5;
                     recHtml = `<span class="acc-rec">Rec: ${load} LBS</span>`;
                 }
-                // Use stored weight or empty
                 const val = state.accWeights[accId] || '';
                 accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${val}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
             });
