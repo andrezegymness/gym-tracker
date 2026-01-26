@@ -1,5 +1,5 @@
 // ==========================================
-// 1. FIREBASE CONFIGURATION (REAL KEYS FROM ANDRE APP)
+// 1. FIREBASE CONFIGURATION
 // ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M",
@@ -11,7 +11,6 @@ const firebaseConfig = {
     measurementId: "G-501TXRLMSQ"
 };
 
-// Initialize Firebase (Compat Mode for CDN)
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -107,25 +106,27 @@ let isFasted = false;
 let currentUserEmail = "";
 
 // ==========================================
-// 5. INITIALIZATION & LOGIN SYNC
+// 5. INITIALIZATION (VISUAL FIX)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- 1. FIREBASE AUTH LISTENER ---
-    // This is the key to syncing with Andre Map. 
-    // Since we use the same API Key, the session cookie is shared.
+    // --- AUTH LISTENER (VISUAL FIX) ---
+    // If Firebase detects a login (from Andre Map or here), it runs this:
     auth.onAuthStateChanged((user) => {
         if (user) {
-            console.log("Auto-Logged in via Firebase:", user.email);
+            console.log("Found User:", user.email);
             currentUserEmail = user.email;
-            loadUserData(user.email);
-        } else {
-            // Manual check for local storage if Auth cookie is missing
-            const savedEmail = localStorage.getItem('currentUserEmail');
-            if (savedEmail) {
-                currentUserEmail = savedEmail;
-                loadUserData(savedEmail);
+            
+            // 1. HIDE LOGIN BUTTON (Visual Confirmation)
+            const btn = document.getElementById('login-btn');
+            if(btn) {
+                btn.innerText = "Log Out"; // Change text to Log Out
+                btn.onclick = () => { auth.signOut(); window.location.reload(); }; // Bind logout
+                btn.style.background = "#333"; // Make it subtle
             }
+
+            // 2. LOAD DATA
+            loadUserData(user.email);
         }
     });
 
@@ -150,16 +151,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if(loginBtn) {
         loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('emailInput').value.trim().toLowerCase();
-            // If you added a password field, grab it here:
-            // const pass = document.getElementById('passwordInput').value;
+            const pass = document.getElementById('passwordInput').value;
             
-            if(email) {
-                // For now, we use the simple load (Andre Map style)
-                currentUserEmail = email;
-                localStorage.setItem('currentUserEmail', email);
-                await loadUserData(email);
-                closeModal('authModal');
-                alert("Loaded: " + email);
+            if(email && pass) {
+                try {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                    closeModal('authModal');
+                    // The onAuthStateChanged above will handle the UI update automatically now
+                } catch (error) {
+                    alert("Login Error: " + error.message);
+                }
             }
         });
     }
@@ -174,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 function initProgramData() {
   userProgram = [];
-  // ORIGINAL DAY ORDER PRESERVED (NO SWAPPING LOCATIONS)
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
     { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
@@ -222,13 +222,12 @@ function generateProgram() {
         mod = w * maintProg;
     } 
     else if (mode === 'deload') {
-        // ** DELOAD FLIP FIX (Week 1 = 50%, Week 2 = 52%) **
+        // FLIPPED DELOAD (Week 1 = 50%, Week 2 = 52%)
         if (w === 0) mod = (0.50 - startPct);
         if (w === 1) mod = (0.52 - startPct);
         tempoMod = -0.10; 
     } 
     else {
-        // Standard Linear
         mod = w * standardProg;
     }
 
@@ -249,6 +248,7 @@ function generateProgram() {
     userProgram[w].days.forEach((day, dIdx) => {
       let activeLifts = [...day.lifts];
       
+      // Standard Acc Injection (Preserved)
       if (mode === 'standard_acc') {
         const aReps = accPeakingReps[w];
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
@@ -267,16 +267,15 @@ function generateProgram() {
         let mx = (lift.isOHP) ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
         let intens = curPct, dReps = reps, fSets = curSets, weightDisplay = "";
         
-        // --- LOGIC REVERSAL FIX (CRITICAL) ---
-        // 1. Paused Bench = Dynamic (follows 'reps')
-        // 2. Larsen Press = Static (Fixed 3 reps)
-        // 3. NO LOCATION CHANGE (Day 2 is still Paused, Larsen)
+        // --- LOGIC SWAP (FLIPPED AS REQUESTED) ---
+        // Larsen Press = Static 3
+        // Paused Bench = Dynamic
         
         if (lift.n === "Larsen Press") {
-            dReps = 3; // LARSEN IS NOW STATIC
+            dReps = 3; // LARSEN STATIC
         }
         else if (lift.n === "Paused Bench") {
-            dReps = reps; // PAUSED BENCH IS NOW DYNAMIC
+            dReps = reps; // PAUSED BENCH DYNAMIC
         }
         else if (lift.n.includes("Tempo")) { 
             intens = currentTempoPct; dReps = 5; 
@@ -285,7 +284,6 @@ function generateProgram() {
             intens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); 
         }
         else if (lift.n.includes("Paused") && lift.n !== "Paused Bench") { 
-            // Other paused lifts (like DL) stay static 3
             dReps = 3; 
         }
 
@@ -441,7 +439,7 @@ window.updatePtMovements = function() {
 };
 
 // ==========================================
-// 6. FIREBASE DATA (WITH SHORT-KEY SUPPORT)
+// 6. FIREBASE DATA HANDLERS (VISUAL FIX)
 // ==========================================
 async function loadUserData(email) {
     try {
