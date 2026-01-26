@@ -99,45 +99,66 @@ let isFasted = false;
 let currentUserEmail = "";
 
 // ==========================================
-// 5. INITIALIZATION & LOGIN SYNC
+// 5. INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. INSTANT LOCAL MEMORY CHECK (Before Firebase loads)
+    // 1. LOAD SAVED UI STATE (The "Memory" Fix)
+    // This restores Week, Mode, Reps, and Fasted status instantly
+    loadUIState();
+
+    // 2. LOAD SAVED INPUTS (Maxes)
     loadLocalInputs();
 
-    // 2. FIREBASE AUTH LISTENER (Andre Sync)
+    // 3. FIREBASE AUTH LISTENER (Andre Sync)
     onAuthStateChanged(auth, (user) => {
         if (user) {
             console.log("Synced Login:", user.email);
             currentUserEmail = user.email;
             
-            // Hide Login Button & Show Logout
+            // Hide Login / Show Logout
             const btn = document.getElementById('login-btn');
             if(btn) {
                 btn.innerText = "Log Out";
-                btn.onclick = () => { auth.signOut(); localStorage.removeItem('baseMapLocalData'); location.reload(); };
+                btn.onclick = () => { 
+                    auth.signOut(); 
+                    localStorage.removeItem('baseMapLocalData'); 
+                    localStorage.removeItem('baseMapUIState'); 
+                    location.reload(); 
+                };
             }
             
             loadUserData(user.email);
         }
     });
 
-    // 3. LISTENERS
+    // 4. LISTENERS
+    // Maxes inputs
     ['squatInput','benchInput','deadliftInput','ohpInput'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.addEventListener('input', () => { generateProgram(); saveUserData(); saveLocalInputs(); });
     });
 
-    // Mode/Reps changes reset the view
-    document.getElementById('dashMode').addEventListener('change', () => { activeMobileWeek=0; generateProgram(); });
-    document.getElementById('dashReps').addEventListener('change', () => { activeMobileWeek=0; generateProgram(); });
+    // Mode/Reps changes - Save State immediately
+    document.getElementById('dashMode').addEventListener('change', () => { 
+        activeMobileWeek = 0; 
+        generateProgram(); 
+        saveUIState(); 
+    });
+    document.getElementById('dashReps').addEventListener('change', () => { 
+        activeMobileWeek = 0; 
+        generateProgram(); 
+        saveUIState(); 
+    });
     
-    // Fasted Toggle
+    // Fasted Toggle - Save State
     const fBtn = document.getElementById('fastedBtn');
-    if(fBtn) fBtn.addEventListener('click', toggleFasted);
+    if(fBtn) fBtn.addEventListener('click', () => { 
+        toggleFasted(); 
+        saveUIState(); 
+    });
 
-    // Mobile Nav
+    // Mobile Nav - Save State
     document.getElementById('prevWeekBtn').addEventListener('click', () => changeMobileWeek(-1));
     document.getElementById('nextWeekBtn').addEventListener('click', () => changeMobileWeek(1));
 
@@ -145,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailBtn = document.getElementById('emailLoginBtn');
     if(emailBtn) emailBtn.addEventListener('click', handleLogin);
 
-    // Tool Listeners (Attached to IDs from the HTML)
+    // Tool Listeners
     document.getElementById('calcWarmupBtn').addEventListener('click', calculateWarmup);
     document.getElementById('runRandBtn').addEventListener('click', runRandomizer);
     document.getElementById('calcOneRmBtn').addEventListener('click', calculateOneRM);
@@ -165,13 +186,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 6. PROGRAM GENERATION (LOGIC CORRECTED)
+// 6. PROGRAM GENERATION
 // ==========================================
 function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    // ** SWAPPED: Larsen first, Paused second **
+    // ** DAY 2: LARSEN FIRST, THEN PAUSED **
     { name: "Day 2 (Tue)", lifts: [{n: "Larsen Press", t: "bench"}, {n: "Paused Bench", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
@@ -233,7 +254,6 @@ function generateProgram() {
     const psPct = 0.70 + mod;
 
     let activeClass = (w === activeMobileWeek) ? 'active-week' : '';
-    // Fix: Ensure Mobile class works by checking window width in CSS or JS
     let styleDef = (window.innerWidth <= 768 && w !== activeMobileWeek) ? 'display:none;' : '';
     let headerColor = (mode === 'deload') ? '#4caf50' : '#2196f3';
 
@@ -245,6 +265,7 @@ function generateProgram() {
     userProgram[w].days.forEach((day, dIdx) => {
       let activeLifts = [...day.lifts];
       
+      // Standard Acc Injection
       if (mode === 'standard_acc') {
         const aReps = accPeakingReps[w];
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
@@ -263,12 +284,12 @@ function generateProgram() {
         let mx = (lift.isOHP) ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
         let intens = curPct, dReps = reps, fSets = curSets, weightDisplay = "";
         
-        // --- LOGIC SWAP (Larsen Static, Paused Dynamic) ---
+        // --- LOGIC RULES ---
         if (lift.n === "Larsen Press") {
-            dReps = 3; // Static
+            dReps = 3; // LARSEN = STATIC 3
         }
         else if (lift.n === "Paused Bench") {
-            dReps = reps; // Dynamic (5/4/3/2/1)
+            dReps = reps; // PAUSED = DYNAMIC (follows program)
         }
         else if (lift.n.includes("Tempo")) { 
             intens = currentTempoPct; dReps = 5; 
@@ -289,7 +310,6 @@ function generateProgram() {
             weightDisplay = `<strong style="color:#fff;">${weight} lbs</strong>`;
         }
         
-        // Use Global Click Handler attached to window
         let btn = (!lift.isAcc && !lift.n.includes("Tempo")) ? 
             `<span onclick="window.openPlateLoader(${Math.round((mx*intens*fastedMult)/5)*5})" style="cursor:pointer; color:#2196f3; margin-left:5px;">💿</span>` : '';
 
@@ -309,7 +329,7 @@ function generateProgram() {
 }
 
 // ==========================================
-// 7. HELPER FUNCTIONS
+// 7. UTILS & DATA
 // ==========================================
 function toggleFasted() {
   isFasted = !isFasted;
@@ -321,11 +341,6 @@ function toggleFasted() {
   generateProgram();
 }
 
-function updateDashSettings() {
-    activeMobileWeek = 0;
-    generateProgram();
-}
-
 function changeMobileWeek(dir) {
   const mode = document.getElementById('dashMode').value;
   let maxW = (mode === 'maintenance' ? 6 : (mode === 'deload' ? 2 : 4));
@@ -333,6 +348,7 @@ function changeMobileWeek(dir) {
   if(activeMobileWeek < 0) activeMobileWeek = maxW - 1;
   if(activeMobileWeek >= maxW) activeMobileWeek = 0;
   generateProgram();
+  saveUIState(); // Remember week change
 }
 
 async function handleLogin() {
@@ -349,7 +365,35 @@ async function handleLogin() {
     }
 }
 
-// LOCAL MEMORY HANDLERS (The "Instant" Fix)
+// --- NEW UI STATE MEMORY ---
+function saveUIState() {
+    const state = {
+        mode: document.getElementById('dashMode').value,
+        reps: document.getElementById('dashReps').value,
+        week: activeMobileWeek,
+        fasted: isFasted
+    };
+    localStorage.setItem('baseMapUIState', JSON.stringify(state));
+}
+
+function loadUIState() {
+    const state = JSON.parse(localStorage.getItem('baseMapUIState'));
+    if(state) {
+        if(state.mode) document.getElementById('dashMode').value = state.mode;
+        if(state.reps) document.getElementById('dashReps').value = state.reps;
+        if(state.week !== undefined) activeMobileWeek = state.week;
+        if(state.fasted !== undefined) {
+            isFasted = state.fasted;
+            const btn = document.getElementById('fastedBtn');
+            if(btn) {
+                btn.innerText = isFasted ? "Fasted: ON (-6.5%)" : "Fasted: OFF";
+                btn.style.background = isFasted ? "#4caf50" : "#333";
+            }
+        }
+    }
+}
+
+// --- LOCAL MAXES MEMORY ---
 function saveLocalInputs() {
     const d = {
         s: document.getElementById('squatInput').value,
@@ -386,7 +430,7 @@ async function loadUserData(email) {
             document.getElementById('ohpInput').value = o;
             
             generateProgram();
-            saveLocalInputs(); // Backup to local
+            saveLocalInputs(); // Sync cloud to local
         }
     } catch(e) { console.error(e); }
 }
@@ -440,7 +484,6 @@ function displayAccDetails(){
 function updatePtMovements(){
     const d=document.getElementById('ptDisplay'); d.style.display='block'; d.innerText="Drill loaded.";
 }
-// Attach to window for onClick access
 window.openPlateLoader = (w) => {
     document.getElementById('plateModal').style.display='flex';
     document.getElementById('plateTarget').innerText = w+" lbs";
