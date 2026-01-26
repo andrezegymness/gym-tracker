@@ -33,10 +33,10 @@ const standardSets = [3, 2, 1, 1];
 const maintSets = [2, 2, 2, 2, 1, 1];
 
 // ==========================================
-// 3. DATABASES (UNCUT)
+// 3. DATABASES
 // ==========================================
 
-// A. ORIGINAL ACCESSORY DATA (Kept for Old Tools Compatibility)
+// A. ACCESSORY GLOSSARY (Original)
 const accessoryData = {
   squat: [
     { name: "ATG System", tier: "S", notes: "Full range of motion focus." },
@@ -98,15 +98,13 @@ const accessoryData = {
   ]
 };
 
-// B. THE COMPLETE SMART LIBRARY (Updated with Missing Lifts)
-// Keys: n=name, t=target, p=percent(0.65=65%), r=reps, s=source_max
+// B. SMART LIBRARY (For Add Workout Feature)
 const smartLibrary = {
-    // --- SQUAT ---
     "Squat: Weak Hole": [
         { n: "Pin Squat (Low)", t: "Explosive Start", p: 0.65, r: "3x3", s: "squat" },
         { n: "Pause Squat (3s)", t: "No Bounce", p: 0.70, r: "3x4", s: "squat" },
         { n: "1.5 Rep Squat", t: "TUT", p: 0.60, r: "3x5", s: "squat" },
-        { n: "Box Squat", t: "Hip Power", p: 0.75, r: "4x3", s: "squat" } // Added
+        { n: "Box Squat", t: "Hip Power", p: 0.75, r: "4x3", s: "squat" }
     ],
     "Squat: Mechanics/Core": [
         { n: "Tempo Squat (5-3-0)", t: "Path Control", p: 0.60, r: "3x5", s: "squat" },
@@ -117,14 +115,12 @@ const smartLibrary = {
     "Squat: Overload/CNS": [
         { n: "Heavy Walkout", t: "CNS Priming", p: 1.10, r: "3x15s", s: "squat" },
         { n: "Anderson Squat", t: "Tendon Power", p: 0.85, r: "3x3", s: "squat" },
-        { n: "Supramax Eccentric", t: "Decentric/Neg", p: 1.05, r: "3x1", s: "squat" } // Added
+        { n: "Supramax Eccentric", t: "Decentric/Neg", p: 1.05, r: "3x1", s: "squat" }
     ],
-
-    // --- BENCH ---
     "Bench: Chest Strength": [
         { n: "Long Pause Bench", t: "Start Power", p: 0.75, r: "4x3", s: "bench" },
         { n: "Spoto Press", t: "Reversal", p: 0.70, r: "3x5", s: "bench" },
-        { n: "Dead Press", t: "Concentric Only", p: 0.80, r: "5x1", s: "bench" }, // Added
+        { n: "Dead Press", t: "Concentric Only", p: 0.80, r: "5x1", s: "bench" },
         { n: "Larsen Press", t: "Stability", p: 0.70, r: "3x6", s: "bench" },
         { n: "Weighted Dips", t: "Mass Builder", p: 0.20, r: "3x8", s: "bench" } 
     ],
@@ -135,33 +131,29 @@ const smartLibrary = {
         { n: "Pin Lockouts", t: "Tendons", p: 1.10, r: "3x5", s: "bench" }
     ],
     "Bench: CNS/Overload": [
-        { n: "Heavy Hold", t: "CNS Lockout", p: 1.15, r: "3x15s", s: "bench" }, // Added
-        { n: "Bench Negative", t: "Decentric/Neg", p: 1.05, r: "3x1", s: "bench" }, // Added
-        { n: "Bamboo Bar", t: "Stabilizer Chaos", p: 0.50, r: "3x15", s: "bench" } // Added
+        { n: "Heavy Hold", t: "CNS Lockout", p: 1.15, r: "3x15s", s: "bench" }, 
+        { n: "Bench Negative", t: "Decentric/Neg", p: 1.05, r: "3x1", s: "bench" },
+        { n: "Bamboo Bar", t: "Stabilizer Chaos", p: 0.50, r: "3x15", s: "bench" }
     ],
     "Chest: Isolation (BB)": [
-        { n: "DB Flyes", t: "Stretch", p: 0.20, r: "3x12", s: "bench" }, // Added
-        { n: "Pec Deck", t: "Squeeze", p: 0.25, r: "3x15", s: "bench" }, // Added
-        { n: "Cable Crossover", t: "Inner Chest", p: 0.15, r: "3x15", s: "bench" } // Added
+        { n: "DB Flyes", t: "Stretch", p: 0.20, r: "3x12", s: "bench" },
+        { n: "Pec Deck", t: "Squeeze", p: 0.25, r: "3x15", s: "bench" },
+        { n: "Cable Crossover", t: "Inner Chest", p: 0.15, r: "3x15", s: "bench" }
     ],
-
-    // --- DEADLIFT ---
     "Deadlift: Floor/Start": [
         { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift" },
         { n: "Snatch Grip DL", t: "Upper Back", p: 0.60, r: "3x6", s: "deadlift" },
         { n: "Halting DL", t: "Start Mechanics", p: 0.70, r: "3x5", s: "deadlift" },
-        { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" } // Added
+        { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" }
     ],
     "Deadlift: Hips/Lockout": [
         { n: "Block Pulls", t: "Lockout", p: 0.95, r: "3x3", s: "deadlift" },
         { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
-        { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" }, // Added
+        { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" },
         { n: "Rack Pull Hold", t: "Grip/Traps", p: 1.10, r: "3x10s", s: "deadlift" },
         { n: "Farmer's Walks", t: "Grip/Core", p: 0.40, r: "3x30s", s: "deadlift" },
-        { n: "Tempo Deadlift", t: "Eccentric", p: 0.60, r: "3x3", s: "deadlift" } // Added
+        { n: "Tempo Deadlift", t: "Eccentric", p: 0.60, r: "3x3", s: "deadlift" }
     ],
-
-    // --- BODYBUILDING / AESTHETICS ---
     "Glutes: Aesthetics": [
         { n: "Hip Thrust", t: "Thickness (Max)", p: 0.50, r: "4x10", s: "deadlift" },
         { n: "Cable Abduction", t: "Upper Shelf (Med)", p: 0.10, r: "3x15", s: "squat" },
@@ -173,11 +165,11 @@ const smartLibrary = {
         { n: "Leg Press", t: "Overall Mass", p: 1.50, r: "4x10", s: "squat" },
         { n: "Hack Squat", t: "Outer Sweep", p: 0.60, r: "3x8", s: "squat" },
         { n: "Walking Lunges", t: "Unilateral", p: 0.25, r: "3x12", s: "squat" },
-        { n: "Split Squat", t: "Separation", p: 0.20, r: "3x10", s: "squat" }, // Added
+        { n: "Split Squat", t: "Separation", p: 0.20, r: "3x10", s: "squat" },
         { n: "RDL (Barbell)", t: "Hamstring Hang", p: 0.50, r: "3x8", s: "deadlift" },
         { n: "Stiff Leg DL", t: "Pure Stretch", p: 0.45, r: "3x10", s: "deadlift" },
-        { n: "Good Mornings", t: "Post. Chain", p: 0.40, r: "3x8", s: "squat" }, // Added
-        { n: "Glute Ham Raise", t: "Knee Flexion", p: 0, r: "3xMax", s: "squat" }, // Added
+        { n: "Good Mornings", t: "Post. Chain", p: 0.40, r: "3x8", s: "squat" },
+        { n: "Glute Ham Raise", t: "Knee Flexion", p: 0, r: "3xMax", s: "squat" },
         { n: "Leg Extensions", t: "Quad Detail", p: 0.25, r: "3x15", s: "squat" },
         { n: "Seated Ham Curl", t: "Inner Ham", p: 0.20, r: "3x15", s: "squat" },
         { n: "Lying Ham Curl", t: "Outer Ham", p: 0.20, r: "3x12", s: "squat" }
@@ -185,7 +177,7 @@ const smartLibrary = {
     "Back Thickness/Width": [
         { n: "Pendlay Row", t: "Explosive Back", p: 0.60, r: "4x6", s: "deadlift" },
         { n: "Bent Over Row", t: "Gen Mass", p: 0.55, r: "3x10", s: "deadlift" },
-        { n: "Vertical Row", t: "Rhomboid", p: 0.30, r: "3x12", s: "deadlift" }, // Added
+        { n: "Vertical Row", t: "Rhomboid", p: 0.30, r: "3x12", s: "deadlift" },
         { n: "Lat Pulldown", t: "Width", p: 0.40, r: "3x12", s: "deadlift" },
         { n: "Chest Supp Row", t: "Mid-Back", p: 0.30, r: "3x12", s: "deadlift" },
         { n: "Seal Row", t: "Lats Iso", p: 0.40, r: "4x10", s: "deadlift" }
@@ -210,7 +202,7 @@ const smartLibrary = {
         { n: "Ab Wheel", t: "Stiffness", p: 0, r: "3x10", s: "squat" },
         { n: "Hanging Leg Raise", t: "Hip Flexor", p: 0, r: "3x12", s: "squat" },
         { n: "Cable Crunch", t: "Flexion", p: 0.30, r: "4x15", s: "squat" },
-        { n: "Pallof Press", t: "Anti-Rotation", p: 0.10, r: "3x12", s: "deadlift" } // Added
+        { n: "Pallof Press", t: "Anti-Rotation", p: 0.10, r: "3x12", s: "deadlift" }
     ]
 };
 
@@ -228,13 +220,11 @@ let customLifts = [];
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. INSTANT MEMORY LOAD
     loadUIState();
     loadLocalInputs();
     loadCustomLifts();
     initLibraryMenu();
 
-    // 2. FIREBASE AUTH LISTENER (Andre Sync)
     onAuthStateChanged(auth, (user) => {
         if (user) {
             console.log("Synced Login:", user.email);
@@ -255,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. LISTENERS
     ['squatInput','benchInput','deadliftInput','ohpInput'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.addEventListener('input', () => { generateProgram(); saveUserData(); saveLocalInputs(); });
@@ -309,7 +298,6 @@ function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    // ** DAY 2: PAUSED FIRST, THEN LARSEN **
     { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
@@ -632,7 +620,17 @@ function calculateOneRM(){
 }
 function runRandomizer(){
     document.getElementById('randomizerResult').style.display='block';
-    document.getElementById('randOutputText').innerText="Generated Workout.";
+    const goal = document.getElementById('randGoal').value;
+    const w = parseFloat(document.getElementById('prevWeight').value);
+    const r = parseFloat(document.getElementById('prevReps').value);
+    if(!w || !r) return;
+    
+    let msg = "";
+    if(goal === 'strength') msg = `Target: ${Math.round(w*1.05)} lbs x ${Math.max(1, r-1)} Reps (Strength)`;
+    if(goal === 'pump') msg = `Target: ${Math.round(w*0.80)} lbs x ${r+5} Reps (Pump)`;
+    if(goal === 'recovery') msg = `Target: ${Math.round(w*0.60)} lbs x ${r} Reps (Recovery)`;
+    
+    document.getElementById('randOutputText').innerText=msg;
 }
 function updateAccOptions(){
     const c=document.getElementById('accCategory').value;
@@ -648,6 +646,8 @@ function displayAccDetails(){
 function updatePtMovements(){
     const d=document.getElementById('ptDisplay'); d.style.display='block'; d.innerText="Drill loaded.";
 }
+
+// === FIX FOR BUTTONS (Attach to Window) ===
 window.openPlateLoader = (w) => {
     document.getElementById('plateModal').style.display='flex';
     document.getElementById('plateTarget').innerText = w+" lbs";
@@ -655,3 +655,9 @@ window.openPlateLoader = (w) => {
     p.forEach(x=>{ while(s>=x){ r.push(x); s-=x; } });
     document.getElementById('plateText').innerText = r.length ? r.join(', ') : "Bar";
 };
+window.runRandomizer = runRandomizer;
+window.calculateWarmup = calculateWarmup;
+window.calculateOneRM = calculateOneRM;
+window.updateAccOptions = updateAccOptions;
+window.displayAccDetails = displayAccDetails;
+window.updatePtMovements = updatePtMovements;
