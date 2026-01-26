@@ -1,18 +1,20 @@
 // ==========================================
-// 1. FIREBASE CONFIGURATION
+// 1. FIREBASE CONFIGURATION (REAL KEYS FROM ANDRE APP)
 // ==========================================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M",
+    authDomain: "powerlifting-programs.firebaseapp.com",
+    projectId: "powerlifting-programs",
+    storageBucket: "powerlifting-programs.firebasestorage.app",
+    messagingSenderId: "961044250962",
+    appId: "1:961044250962:web:c45644c186e9bb6ee67a8b",
+    measurementId: "G-501TXRLMSQ"
 };
 
+// Initialize Firebase (Compat Mode for CDN)
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth(); // Init Auth for memory sync
+const auth = firebase.auth();
 
 // ==========================================
 // 2. CONFIGURATION & CONSTANTS
@@ -33,7 +35,7 @@ const standardSets = [3, 2, 1, 1];
 const maintSets = [2, 2, 2, 2, 1, 1];
 
 // ==========================================
-// 3. FULL ACCESSORY DATA (UNCUT)
+// 3. FULL FAT ACCESSORY DATA (UNCUT)
 // ==========================================
 const accessoryData = {
   squat: [
@@ -105,19 +107,21 @@ let isFasted = false;
 let currentUserEmail = "";
 
 // ==========================================
-// 5. INITIALIZATION & LOGIN SYNC (FIXED)
+// 5. INITIALIZATION & LOGIN SYNC
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- AUTH LISTENER (THE REAL FIX) ---
-    // This listens for Firebase Auth session from Andre Map
+    // --- 1. FIREBASE AUTH LISTENER ---
+    // This is the key to syncing with Andre Map. 
+    // Since we use the same API Key, the session cookie is shared.
     auth.onAuthStateChanged((user) => {
         if (user) {
+            console.log("Auto-Logged in via Firebase:", user.email);
             currentUserEmail = user.email;
             loadUserData(user.email);
         } else {
-            // Check manual local storage fallback
-            const savedEmail = localStorage.getItem('currentUserEmail') || localStorage.getItem('userEmail');
+            // Manual check for local storage if Auth cookie is missing
+            const savedEmail = localStorage.getItem('currentUserEmail');
             if (savedEmail) {
                 currentUserEmail = savedEmail;
                 loadUserData(savedEmail);
@@ -141,29 +145,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Login Button Listener (Updated for Password)
+    // Login Button Listener
     const loginBtn = document.getElementById('emailLoginBtn');
     if(loginBtn) {
         loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('emailInput').value.trim().toLowerCase();
-            const pass = document.getElementById('passwordInput').value;
+            // If you added a password field, grab it here:
+            // const pass = document.getElementById('passwordInput').value;
             
-            if(email && pass) {
-                try {
-                    // Actual Firebase Auth Login
-                    await auth.signInWithEmailAndPassword(email, pass);
-                    closeModal('authModal');
-                    alert("Logged in!");
-                } catch (error) {
-                    alert("Login failed: " + error.message);
-                }
-            } else if (email && !pass) {
-                // Legacy Manual Fallback
+            if(email) {
+                // For now, we use the simple load (Andre Map style)
                 currentUserEmail = email;
                 localStorage.setItem('currentUserEmail', email);
                 await loadUserData(email);
                 closeModal('authModal');
-                alert("Manual Mode: Loaded " + email);
+                alert("Loaded: " + email);
             }
         });
     }
@@ -178,10 +174,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 function initProgramData() {
   userProgram = [];
+  // ORIGINAL DAY ORDER PRESERVED (NO SWAPPING LOCATIONS)
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    // ** FLIPPED HERE: Larsen is Day 2, Paused Bench is Day 6 (Logic below flips too) **
-    { name: "Day 2 (Tue)", lifts: [{n: "Larsen Press", t: "bench"}, {n: "Paused Bench", t: "bench"}]},
+    { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
     { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
@@ -226,7 +222,7 @@ function generateProgram() {
         mod = w * maintProg;
     } 
     else if (mode === 'deload') {
-        // ** FLIPPED DELOAD (Week 1 = 50%, Week 2 = 52%) **
+        // ** DELOAD FLIP FIX (Week 1 = 50%, Week 2 = 52%) **
         if (w === 0) mod = (0.50 - startPct);
         if (w === 1) mod = (0.52 - startPct);
         tempoMod = -0.10; 
@@ -271,15 +267,16 @@ function generateProgram() {
         let mx = (lift.isOHP) ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
         let intens = curPct, dReps = reps, fSets = curSets, weightDisplay = "";
         
-        // --- LOGIC SWAP (FLIPPED AS REQUESTED) ---
-        // Larsen Press = Static (Fixed 3 reps)
-        // Paused Bench = Dynamic (follows 'reps')
+        // --- LOGIC REVERSAL FIX (CRITICAL) ---
+        // 1. Paused Bench = Dynamic (follows 'reps')
+        // 2. Larsen Press = Static (Fixed 3 reps)
+        // 3. NO LOCATION CHANGE (Day 2 is still Paused, Larsen)
         
         if (lift.n === "Larsen Press") {
-            dReps = 3; // FIXED REPS
+            dReps = 3; // LARSEN IS NOW STATIC
         }
         else if (lift.n === "Paused Bench") {
-            dReps = reps; // CHANGES WITH PROGRAM
+            dReps = reps; // PAUSED BENCH IS NOW DYNAMIC
         }
         else if (lift.n.includes("Tempo")) { 
             intens = currentTempoPct; dReps = 5; 
@@ -288,7 +285,7 @@ function generateProgram() {
             intens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); 
         }
         else if (lift.n.includes("Paused") && lift.n !== "Paused Bench") { 
-            // Other paused lifts stay static 3
+            // Other paused lifts (like DL) stay static 3
             dReps = 3; 
         }
 
@@ -301,7 +298,6 @@ function generateProgram() {
             weightDisplay = `<strong style="color:#fff;">${weight} lbs</strong>`;
         }
         
-        // Buttons
         let btn = (!lift.isAcc && !lift.n.includes("Tempo")) ? 
             `<span onclick="openPlateLoader(${Math.round((mx*intens*fastedMult)/5)*5})" style="cursor:pointer; color:#2196f3; margin-left:5px;">💿</span>` : '';
 
