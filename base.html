@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base Map Linear</title>
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -169,7 +170,8 @@
         <span class="close-modal" onclick="closeModal('authModal')">&times;</span>
         <h3>Login</h3>
         <div style="display:flex; flex-direction:column; gap:10px;">
-            <input type="email" id="emailInput" placeholder="Email">
+            <input type="email" id="emailInput" placeholder="Email" style="padding:10px; border-radius:4px; border:1px solid #444; background:#333; color:#fff;">
+            <input type="password" id="passwordInput" placeholder="Password" style="padding:10px; border-radius:4px; border:1px solid #444; background:#333; color:#fff;">
             <button class="full-btn" id="emailLoginBtn">Log In</button>
         </div>
     </div>
