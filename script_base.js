@@ -31,12 +31,9 @@ const accRPEs = [10, 9, 8, 7];
 const standardSets = [3, 2, 1, 1];
 const maintSets = [2, 2, 2, 2, 1, 1];
 
-let activeMobileWeek = 0;
-let userProgram = [];
-let isFasted = false;
-let currentUserEmail = ""; 
-
-// FULL ACCESSORY DATA (PRESERVED)
+// ==========================================
+// 3. FULL ACCESSORY DATA (UNCUT)
+// ==========================================
 const accessoryData = {
   squat: [
     { name: "ATG System", tier: "S", notes: "Full range of motion focus." },
@@ -99,12 +96,19 @@ const accessoryData = {
 };
 
 // ==========================================
-// 3. MAIN LOGIC & EVENTS
+// 4. STATE & VARIABLES
+// ==========================================
+let activeMobileWeek = 0;
+let userProgram = [];
+let isFasted = false;
+let currentUserEmail = "";
+
+// ==========================================
+// 5. INITIALIZATION & LOGIN SYNC
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- LOGIN SYNC FIX ---
-    // Look for ANY email key stored by Andre Map
+    // --- LOGIN SYNC (CHECKS ALL KEYS) ---
     const potentialKeys = ['currentUserEmail', 'userEmail', 'email', 'pl_user_email'];
     let foundEmail = null;
     
@@ -115,8 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (foundEmail) {
         currentUserEmail = foundEmail;
         loadUserData(foundEmail); 
-        // Sync it to our key
-        localStorage.setItem('currentUserEmail', foundEmail);
+        localStorage.setItem('currentUserEmail', foundEmail); // Sync to our key
     }
 
     // Input Listeners
@@ -141,9 +144,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('emailInput').value.trim().toLowerCase();
             if(email) {
-                // Save to ALL keys to ensure sync with other app
+                // Save to ALL keys to ensure compatibility with Andre Map
                 localStorage.setItem('currentUserEmail', email);
                 localStorage.setItem('userEmail', email); 
+                localStorage.setItem('email', email);
+                localStorage.setItem('pl_user_email', email);
                 
                 currentUserEmail = email;
                 await loadUserData(email);
@@ -159,14 +164,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 4. GENERATE PROGRAM
+// 6. PROGRAM GENERATION
 // ==========================================
 function initProgramData() {
   userProgram = [];
+  // ORIGINAL DAY ORDER PRESERVED
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    // ** SWAP FIX: Larsen First, Then Paused **
-    { name: "Day 2 (Tue)", lifts: [{n: "Larsen Press", t: "bench"}, {n: "Paused Bench", t: "bench"}]},
+    { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
     { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
@@ -211,12 +216,13 @@ function generateProgram() {
         mod = w * maintProg;
     } 
     else if (mode === 'deload') {
-        // ** DELOAD FLIP FIX (Week 1 = 50%, Week 2 = 52%) **
+        // ** DELOAD FLIP (Week 1 = 50%, Week 2 = 52%) **
         if (w === 0) mod = (0.50 - startPct);
         if (w === 1) mod = (0.52 - startPct);
         tempoMod = -0.10; 
     } 
     else {
+        // Standard Linear
         mod = w * standardProg;
     }
 
@@ -255,9 +261,26 @@ function generateProgram() {
         let mx = (lift.isOHP) ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
         let intens = curPct, dReps = reps, fSets = curSets, weightDisplay = "";
         
-        if (lift.n.includes("Tempo")) { intens = currentTempoPct; dReps = 5; }
-        else if (lift.n === "Pause Squats") { intens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); }
-        else if (lift.n.includes("Paused")) { dReps = 3; }
+        // --- LOGIC REVERSAL FIX ---
+        // 1. Paused Bench = Dynamic (follows 'reps')
+        // 2. Larsen Press = Static (Fixed reps, e.g., 3 or 4)
+        
+        if (lift.n === "Larsen Press") {
+            dReps = 3; // LARSEN IS NOW STATIC
+        }
+        else if (lift.n === "Paused Bench") {
+            dReps = reps; // PAUSED BENCH IS NOW DYNAMIC
+        }
+        else if (lift.n.includes("Tempo")) { 
+            intens = currentTempoPct; dReps = 5; 
+        }
+        else if (lift.n === "Pause Squats") { 
+            intens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); 
+        }
+        else if (lift.n.includes("Paused") && lift.n !== "Paused Bench") { 
+            // Any OTHER paused lift (like Paused DL) stays static 3
+            dReps = 3; 
+        }
 
         if (lift.isAcc) { 
             fSets = accSets[w]; dReps = lift.r; 
