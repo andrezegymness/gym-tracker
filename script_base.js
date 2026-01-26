@@ -12,6 +12,7 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth(); // Init Auth for memory sync
 
 // ==========================================
 // 2. CONFIGURATION & CONSTANTS
@@ -104,23 +105,25 @@ let isFasted = false;
 let currentUserEmail = "";
 
 // ==========================================
-// 5. INITIALIZATION & LOGIN SYNC
+// 5. INITIALIZATION & LOGIN SYNC (FIXED)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- LOGIN SYNC (CHECKS ALL KEYS) ---
-    const potentialKeys = ['currentUserEmail', 'userEmail', 'email', 'pl_user_email'];
-    let foundEmail = null;
-    
-    potentialKeys.forEach(key => {
-        if (!foundEmail) foundEmail = localStorage.getItem(key);
+    // --- AUTH LISTENER (THE REAL FIX) ---
+    // This listens for Firebase Auth session from Andre Map
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUserEmail = user.email;
+            loadUserData(user.email);
+        } else {
+            // Check manual local storage fallback
+            const savedEmail = localStorage.getItem('currentUserEmail') || localStorage.getItem('userEmail');
+            if (savedEmail) {
+                currentUserEmail = savedEmail;
+                loadUserData(savedEmail);
+            }
+        }
     });
-
-    if (foundEmail) {
-        currentUserEmail = foundEmail;
-        loadUserData(foundEmail); 
-        localStorage.setItem('currentUserEmail', foundEmail); // Sync to our key
-    }
 
     // Input Listeners
     const inputs = [
@@ -138,22 +141,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Login Button Listener
+    // Login Button Listener (Updated for Password)
     const loginBtn = document.getElementById('emailLoginBtn');
     if(loginBtn) {
         loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('emailInput').value.trim().toLowerCase();
-            if(email) {
-                // Save to ALL keys to ensure compatibility with Andre Map
-                localStorage.setItem('currentUserEmail', email);
-                localStorage.setItem('userEmail', email); 
-                localStorage.setItem('email', email);
-                localStorage.setItem('pl_user_email', email);
-                
+            const pass = document.getElementById('passwordInput').value;
+            
+            if(email && pass) {
+                try {
+                    // Actual Firebase Auth Login
+                    await auth.signInWithEmailAndPassword(email, pass);
+                    closeModal('authModal');
+                    alert("Logged in!");
+                } catch (error) {
+                    alert("Login failed: " + error.message);
+                }
+            } else if (email && !pass) {
+                // Legacy Manual Fallback
                 currentUserEmail = email;
+                localStorage.setItem('currentUserEmail', email);
                 await loadUserData(email);
                 closeModal('authModal');
-                alert("Logged in as: " + email);
+                alert("Manual Mode: Loaded " + email);
             }
         });
     }
@@ -168,10 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 function initProgramData() {
   userProgram = [];
-  // ORIGINAL DAY ORDER PRESERVED
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
+    // ** FLIPPED HERE: Larsen is Day 2, Paused Bench is Day 6 (Logic below flips too) **
+    { name: "Day 2 (Tue)", lifts: [{n: "Larsen Press", t: "bench"}, {n: "Paused Bench", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
     { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
@@ -216,7 +226,7 @@ function generateProgram() {
         mod = w * maintProg;
     } 
     else if (mode === 'deload') {
-        // ** DELOAD FLIP (Week 1 = 50%, Week 2 = 52%) **
+        // ** FLIPPED DELOAD (Week 1 = 50%, Week 2 = 52%) **
         if (w === 0) mod = (0.50 - startPct);
         if (w === 1) mod = (0.52 - startPct);
         tempoMod = -0.10; 
@@ -261,15 +271,15 @@ function generateProgram() {
         let mx = (lift.isOHP) ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
         let intens = curPct, dReps = reps, fSets = curSets, weightDisplay = "";
         
-        // --- LOGIC REVERSAL FIX ---
-        // 1. Paused Bench = Dynamic (follows 'reps')
-        // 2. Larsen Press = Static (Fixed reps, e.g., 3 or 4)
+        // --- LOGIC SWAP (FLIPPED AS REQUESTED) ---
+        // Larsen Press = Static (Fixed 3 reps)
+        // Paused Bench = Dynamic (follows 'reps')
         
         if (lift.n === "Larsen Press") {
-            dReps = 3; // LARSEN IS NOW STATIC
+            dReps = 3; // FIXED REPS
         }
         else if (lift.n === "Paused Bench") {
-            dReps = reps; // PAUSED BENCH IS NOW DYNAMIC
+            dReps = reps; // CHANGES WITH PROGRAM
         }
         else if (lift.n.includes("Tempo")) { 
             intens = currentTempoPct; dReps = 5; 
@@ -278,7 +288,7 @@ function generateProgram() {
             intens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); 
         }
         else if (lift.n.includes("Paused") && lift.n !== "Paused Bench") { 
-            // Any OTHER paused lift (like Paused DL) stays static 3
+            // Other paused lifts stay static 3
             dReps = 3; 
         }
 
