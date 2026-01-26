@@ -20,7 +20,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ==========================================
-// 2. CONSTANTS
+// 2. CONSTANTS & SETTINGS
 // ==========================================
 const basePctMap = { "5": 0.75, "4": 0.79, "3": 0.83, "2": 0.87, "1": 0.91 };
 const standardProg = 0.0425, maintProg = 0.02, tempoStartPct = 0.71, tempoProg = 0.04;
@@ -36,7 +36,7 @@ const maintSets = [2, 2, 2, 2, 1, 1];
 // 3. DATABASES
 // ==========================================
 
-// A. ACCESSORY GLOSSARY (Original)
+// A. ORIGINAL ACCESSORY DATA (For Old Tools)
 const accessoryData = {
   squat: [
     { name: "ATG System", tier: "S", notes: "Full range of motion focus." },
@@ -98,8 +98,9 @@ const accessoryData = {
   ]
 };
 
-// B. SMART LIBRARY (For Add Workout Feature)
+// B. SMART LIBRARY (The Full 70+ Exercise List)
 const smartLibrary = {
+    // --- SQUAT ---
     "Squat: Weak Hole": [
         { n: "Pin Squat (Low)", t: "Explosive Start", p: 0.65, r: "3x3", s: "squat" },
         { n: "Pause Squat (3s)", t: "No Bounce", p: 0.70, r: "3x4", s: "squat" },
@@ -117,6 +118,8 @@ const smartLibrary = {
         { n: "Anderson Squat", t: "Tendon Power", p: 0.85, r: "3x3", s: "squat" },
         { n: "Supramax Eccentric", t: "Decentric/Neg", p: 1.05, r: "3x1", s: "squat" }
     ],
+
+    // --- BENCH ---
     "Bench: Chest Strength": [
         { n: "Long Pause Bench", t: "Start Power", p: 0.75, r: "4x3", s: "bench" },
         { n: "Spoto Press", t: "Reversal", p: 0.70, r: "3x5", s: "bench" },
@@ -140,6 +143,8 @@ const smartLibrary = {
         { n: "Pec Deck", t: "Squeeze", p: 0.25, r: "3x15", s: "bench" },
         { n: "Cable Crossover", t: "Inner Chest", p: 0.15, r: "3x15", s: "bench" }
     ],
+
+    // --- DEADLIFT ---
     "Deadlift: Floor/Start": [
         { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift" },
         { n: "Snatch Grip DL", t: "Upper Back", p: 0.60, r: "3x6", s: "deadlift" },
@@ -154,6 +159,8 @@ const smartLibrary = {
         { n: "Farmer's Walks", t: "Grip/Core", p: 0.40, r: "3x30s", s: "deadlift" },
         { n: "Tempo Deadlift", t: "Eccentric", p: 0.60, r: "3x3", s: "deadlift" }
     ],
+
+    // --- BODYBUILDING / AESTHETICS ---
     "Glutes: Aesthetics": [
         { n: "Hip Thrust", t: "Thickness (Max)", p: 0.50, r: "4x10", s: "deadlift" },
         { n: "Cable Abduction", t: "Upper Shelf (Med)", p: 0.10, r: "3x15", s: "squat" },
@@ -220,11 +227,13 @@ let customLifts = [];
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
+    // 1. INSTANT MEMORY LOAD
     loadUIState();
     loadLocalInputs();
     loadCustomLifts();
     initLibraryMenu();
 
+    // 2. FIREBASE AUTH LISTENER (Andre Sync)
     onAuthStateChanged(auth, (user) => {
         if (user) {
             console.log("Synced Login:", user.email);
@@ -245,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 3. LISTENERS
     ['squatInput','benchInput','deadliftInput','ohpInput'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.addEventListener('input', () => { generateProgram(); saveUserData(); saveLocalInputs(); });
@@ -298,6 +308,7 @@ function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
+    // ** DAY 2: PAUSED FIRST, THEN LARSEN **
     { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
@@ -618,20 +629,28 @@ function calculateOneRM(){
     const r=parseFloat(document.getElementById('calcReps').value);
     if(w&&r) document.getElementById('oneRmResult').innerText = "Est Max: "+Math.round(w*(1+0.0333*r));
 }
+
+// *** THE RANDOMIZER MATH (FIXED) ***
 function runRandomizer(){
     document.getElementById('randomizerResult').style.display='block';
     const goal = document.getElementById('randGoal').value;
     const w = parseFloat(document.getElementById('prevWeight').value);
     const r = parseFloat(document.getElementById('prevReps').value);
-    if(!w || !r) return;
+    
+    if(!w || !r) {
+        document.getElementById('randOutputText').innerText = "Please enter weight and reps.";
+        return;
+    }
     
     let msg = "";
-    if(goal === 'strength') msg = `Target: ${Math.round(w*1.05)} lbs x ${Math.max(1, r-1)} Reps (Strength)`;
-    if(goal === 'pump') msg = `Target: ${Math.round(w*0.80)} lbs x ${r+5} Reps (Pump)`;
-    if(goal === 'recovery') msg = `Target: ${Math.round(w*0.60)} lbs x ${r} Reps (Recovery)`;
+    // MATH LOGIC:
+    if(goal === 'strength') msg = `Target: ${Math.round((w*1.05)/5)*5} lbs x ${Math.max(1, r-1)} Reps (Strength)`;
+    if(goal === 'pump') msg = `Target: ${Math.round((w*0.80)/5)*5} lbs x ${r+5} Reps (Pump)`;
+    if(goal === 'recovery') msg = `Target: ${Math.round((w*0.60)/5)*5} lbs x ${r} Reps (Recovery)`;
     
-    document.getElementById('randOutputText').innerText=msg;
+    document.getElementById('randOutputText').innerText = msg;
 }
+
 function updateAccOptions(){
     const c=document.getElementById('accCategory').value;
     const m=document.getElementById('accExercise'); m.innerHTML='';
@@ -647,7 +666,7 @@ function updatePtMovements(){
     const d=document.getElementById('ptDisplay'); d.style.display='block'; d.innerText="Drill loaded.";
 }
 
-// === FIX FOR BUTTONS (Attach to Window) ===
+// === BUTTON FIX: EXPOSE FUNCTIONS TO WINDOW ===
 window.openPlateLoader = (w) => {
     document.getElementById('plateModal').style.display='flex';
     document.getElementById('plateTarget').innerText = w+" lbs";
@@ -655,7 +674,7 @@ window.openPlateLoader = (w) => {
     p.forEach(x=>{ while(s>=x){ r.push(x); s-=x; } });
     document.getElementById('plateText').innerText = r.length ? r.join(', ') : "Bar";
 };
-window.runRandomizer = runRandomizer;
+window.runRandomizer = runRandomizer; // This line fixes the button
 window.calculateWarmup = calculateWarmup;
 window.calculateOneRM = calculateOneRM;
 window.updateAccOptions = updateAccOptions;
