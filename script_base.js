@@ -104,7 +104,6 @@ let currentUserEmail = "";
 document.addEventListener('DOMContentLoaded', () => {
     
     // 1. LOAD SAVED UI STATE (The "Memory" Fix)
-    // This restores Week, Mode, Reps, and Fasted status instantly
     loadUIState();
 
     // 2. LOAD SAVED INPUTS (Maxes)
@@ -116,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Synced Login:", user.email);
             currentUserEmail = user.email;
             
-            // Hide Login / Show Logout
             const btn = document.getElementById('login-btn');
             if(btn) {
                 btn.innerText = "Log Out";
@@ -127,19 +125,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     location.reload(); 
                 };
             }
-            
             loadUserData(user.email);
         }
     });
 
     // 4. LISTENERS
-    // Maxes inputs
     ['squatInput','benchInput','deadliftInput','ohpInput'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.addEventListener('input', () => { generateProgram(); saveUserData(); saveLocalInputs(); });
     });
 
-    // Mode/Reps changes - Save State immediately
     document.getElementById('dashMode').addEventListener('change', () => { 
         activeMobileWeek = 0; 
         generateProgram(); 
@@ -151,18 +146,15 @@ document.addEventListener('DOMContentLoaded', () => {
         saveUIState(); 
     });
     
-    // Fasted Toggle - Save State
     const fBtn = document.getElementById('fastedBtn');
     if(fBtn) fBtn.addEventListener('click', () => { 
         toggleFasted(); 
         saveUIState(); 
     });
 
-    // Mobile Nav - Save State
     document.getElementById('prevWeekBtn').addEventListener('click', () => changeMobileWeek(-1));
     document.getElementById('nextWeekBtn').addEventListener('click', () => changeMobileWeek(1));
 
-    // Login Button
     const emailBtn = document.getElementById('emailLoginBtn');
     if(emailBtn) emailBtn.addEventListener('click', handleLogin);
 
@@ -192,8 +184,8 @@ function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    // ** DAY 2: LARSEN FIRST, THEN PAUSED **
-    { name: "Day 2 (Tue)", lifts: [{n: "Larsen Press", t: "bench"}, {n: "Paused Bench", t: "bench"}]},
+    // ** DAY 2: PAUSED BENCH FIRST, THEN LARSEN **
+    { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
     { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
@@ -239,7 +231,6 @@ function generateProgram() {
         mod = w * maintProg;
     } 
     else if (mode === 'deload') {
-        // FLIPPED DELOAD (Week 1=50%, Week 2=52%)
         if (w === 0) mod = (0.50 - startPct);
         if (w === 1) mod = (0.52 - startPct);
         tempoMod = -0.10; 
@@ -265,7 +256,6 @@ function generateProgram() {
     userProgram[w].days.forEach((day, dIdx) => {
       let activeLifts = [...day.lifts];
       
-      // Standard Acc Injection
       if (mode === 'standard_acc') {
         const aReps = accPeakingReps[w];
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
@@ -286,10 +276,10 @@ function generateProgram() {
         
         // --- LOGIC RULES ---
         if (lift.n === "Larsen Press") {
-            dReps = 3; // LARSEN = STATIC 3
+            dReps = 3; // Static 3
         }
         else if (lift.n === "Paused Bench") {
-            dReps = reps; // PAUSED = DYNAMIC (follows program)
+            dReps = reps; // Dynamic
         }
         else if (lift.n.includes("Tempo")) { 
             intens = currentTempoPct; dReps = 5; 
@@ -348,7 +338,7 @@ function changeMobileWeek(dir) {
   if(activeMobileWeek < 0) activeMobileWeek = maxW - 1;
   if(activeMobileWeek >= maxW) activeMobileWeek = 0;
   generateProgram();
-  saveUIState(); // Remember week change
+  saveUIState(); 
 }
 
 async function handleLogin() {
@@ -365,7 +355,7 @@ async function handleLogin() {
     }
 }
 
-// --- NEW UI STATE MEMORY ---
+// --- UI STATE MEMORY ---
 function saveUIState() {
     const state = {
         mode: document.getElementById('dashMode').value,
@@ -430,7 +420,7 @@ async function loadUserData(email) {
             document.getElementById('ohpInput').value = o;
             
             generateProgram();
-            saveLocalInputs(); // Sync cloud to local
+            saveLocalInputs(); 
         }
     } catch(e) { console.error(e); }
 }
