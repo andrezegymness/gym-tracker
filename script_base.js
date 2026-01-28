@@ -196,7 +196,7 @@ const smartLibrary = {
         { n: "Plate Raise", t: "Front Delt", p: 0, r: "3x12", s: "ohp" },
         { n: "Face Pulls", t: "Rear Delt/Health", p: 0.15, r: "3x20", s: "bench" },
         { n: "Rear Delt Fly", t: "Rear Iso", p: 0.10, r: "3x15", s: "bench" },
-        { n: "Upright Rows", t: "Traps/Side", p: 0.30, r: "3x12", s: "ohp" } // Added for Day 5
+        { n: "Upright Rows", t: "Traps/Side", p: 0.30, r: "3x12", s: "ohp" }
     ],
     "Arms (Bi/Tri)": [
         { n: "Rope Pushdown", t: "Tricep Horseshoe", p: 0.25, r: "3x15", s: "bench" },
@@ -222,6 +222,9 @@ let userProgram = [];
 let isFasted = false;
 let currentUserEmail = "";
 let customLifts = []; 
+
+// *** NEW: MODIFIERS FOR ADJUSTING WEIGHTS ***
+let modifiers = {};
 
 // ==========================================
 // 5. INITIALIZATION
@@ -303,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 6. PROGRAM GENERATION (UPDATED DAY 5)
+// 6. PROGRAM GENERATION (UPDATED WITH MODIFIERS)
 // ==========================================
 function initProgramData() {
   userProgram = [];
@@ -319,7 +322,6 @@ function initProgramData() {
         {n: "Chest Supported Row", t: "deadlift"},
         {n: "Face Pulls", t: "bench"}
     ]},
-    // ** DAY 5: SHOULDERS (NEW) **
     { name: "Day 5 (Fri) - Shoulder Day", lifts: [
         {n: "⚠️ Use +Add Workout to populate loads", t: "ohp", isLabel: true},
         {n: "OHP (Strength)", t: "ohp"},
@@ -455,16 +457,15 @@ function generateProgram() {
         if (lift.n === "Chest Supported Row") { finalIntens = 0.30; dReps = 12; fSets = 3; }
         if (lift.n === "Face Pulls") { finalIntens = 0.15; dReps = 20; fSets = 3; }
 
-        // ** NEW OHP & SHOULDER LOGIC **
+        // OHP & Shoulder Logic
         if (lift.n === "OHP (Strength)") {
             if (w === 0) { fSets=4; dReps=6; finalIntens=0.70; }
             if (w === 1) { fSets=4; dReps=5; finalIntens=0.75; }
             if (w === 2) { fSets=4; dReps=4; finalIntens=0.80; }
             if (w === 3) { fSets=3; dReps=3; finalIntens=0.85; } // Peak
         }
-        // Shoulder Accessories Tapering
         if (["Seated DB Press", "Egyptian Lateral Raise", "Rear Delt Fly", "Upright Rows"].includes(lift.n)) {
-             fSets = (w === 3) ? 2 : 3; // Taper volume in week 4
+             fSets = (w === 3) ? 2 : 3; 
              dReps = 12;
              if(lift.n.includes("Seated")) finalIntens = 0.35;
              if(lift.n.includes("Egyptian")) finalIntens = 0.15;
@@ -477,29 +478,46 @@ function generateProgram() {
             return; 
         }
 
+        // *** CALCULATE BASE WEIGHT ***
+        let baseWeight = 0;
         if (lift.isCustom) {
             fSets = "3"; dReps = lift.r;
             let prog = (mode === 'deload') ? -0.10 : (w * 0.02);
-            let weight = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
-            weightDisplay = `<strong style="color:#00e676;">${weight} lbs</strong>`;
+            baseWeight = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
         } 
         else if (lift.isAcc) { 
             fSets = accSets[w]; dReps = lift.r; 
             weightDisplay = `<span style="color:#aaa;">RPE ${accRPEs[w]}</span>`; 
         } 
         else {
-            let weight = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
-            weightDisplay = `<strong style="color:#fff;">${weight} lbs</strong>`;
-        }
-        
-        let clickVal = 0;
-        if(lift.isCustom) {
-            let prog = (mode === 'deload') ? -0.10 : (w * 0.02);
-            clickVal = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
-        } else if (!lift.isAcc) {
-            clickVal = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
+            baseWeight = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
         }
 
+        // *** APPLY PERFORMANCE MODIFIER ***
+        let modifier = modifiers[lift.n] || 1.0;
+        let finalWeight = Math.round((baseWeight * modifier) / 5) * 5;
+        
+        let style = "color:#fff;";
+        let warning = "";
+        
+        if (modifier !== 1.0 && baseWeight > 0) {
+            style = "color:#ff4444; font-weight:bold;";
+            warning = " ⚠️";
+        }
+
+        if (baseWeight > 0) {
+            weightDisplay = `<strong style="${style}">${finalWeight} lbs${warning}</strong>`;
+            
+            // Add the EDIT PENCIL
+            weightDisplay += ` <span onclick="adjustWeight('${lift.n}', ${baseWeight})" style="cursor:pointer; font-size:14px; margin-left:5px; color:#aaa;">✎</span>`;
+        }
+
+        // Backoff display logic
+        if (lift.n === "Primary Bench (Top)") {
+             // Just cleaner display
+        }
+
+        let clickVal = finalWeight;
         let btn = (clickVal > 0) ? 
             `<span onclick="window.openPlateLoader(${clickVal})" style="cursor:pointer; color:#2196f3; margin-left:5px;">💿</span>` : '';
 
@@ -573,6 +591,26 @@ function loadCustomLifts() {
     const data = localStorage.getItem('baseMapCustomLifts');
     if(data) customLifts = JSON.parse(data);
 }
+
+// *** NEW: ADJUST WEIGHT FUNCTION ***
+window.adjustWeight = function(liftName, originalLoad) {
+    let input = prompt(`Adjust load for ${liftName}.\nOriginal: ${originalLoad} lbs\n\nEnter the ACTUAL weight you lifted (or 0 to reset):`);
+    if (input === null) return;
+    
+    let actual = parseFloat(input);
+    
+    if (!actual || actual === 0) {
+        delete modifiers[liftName];
+        alert(`${liftName} reset to standard programming.`);
+    } else {
+        let scalar = actual / originalLoad;
+        modifiers[liftName] = scalar;
+        alert(`${liftName} updated! Future weeks will scale by ${(scalar * 100).toFixed(1)}%`);
+    }
+    
+    saveToCloud(); // Persist modifiers
+    render(); // Update UI immediately
+};
 
 // ==========================================
 // 8. UTILS & DATA
@@ -658,6 +696,10 @@ async function loadUserData(email) {
             document.getElementById('benchInput').value = b;
             document.getElementById('deadliftInput').value = dl;
             document.getElementById('ohpInput').value = o;
+            
+            // LOAD MODIFIERS
+            if (d.modifiers) modifiers = d.modifiers;
+
             generateProgram();
             saveLocalInputs(); 
         }
@@ -671,7 +713,13 @@ async function saveUserData() {
     const dl = parseFloat(document.getElementById('deadliftInput').value)||0;
     const o = parseFloat(document.getElementById('ohpInput').value)||0;
     try {
-        await setDoc(doc(db, "users", currentUserEmail), { s: s, b: b, d: dl, o: o, squat: s, bench: b, deadlift: dl, ohp: o, maxes: { Squat:s, Bench:b, Deadlift:dl, OHP:o }, email: currentUserEmail }, {merge:true});
+        await setDoc(doc(db, "users", currentUserEmail), { 
+            s: s, b: b, d: dl, o: o, 
+            squat: s, bench: b, deadlift: dl, ohp: o, 
+            maxes: { Squat:s, Bench:b, Deadlift:dl, OHP:o }, 
+            modifiers: modifiers, // SAVE MODIFIERS
+            email: currentUserEmail 
+        }, {merge:true});
     } catch(e) { console.error(e); }
 }
 
@@ -731,7 +779,7 @@ window.openPlateLoader = (w) => {
     p.forEach(x=>{ while(s>=x){ r.push(x); s-=x; } });
     document.getElementById('plateText').innerText = r.length ? r.join(', ') : "Bar";
 };
-window.runRandomizer = runRandomizer; // This line fixes the button
+window.runRandomizer = runRandomizer; 
 window.calculateWarmup = calculateWarmup;
 window.calculateOneRM = calculateOneRM;
 window.updateAccOptions = updateAccOptions;
