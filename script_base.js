@@ -302,17 +302,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 6. PROGRAM GENERATION (UPDATED BENCH LOGIC)
+// 6. PROGRAM GENERATION (UPDATED)
 // ==========================================
 function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Primer Bench", t: "bench"}, {n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    { name: "Day 2 (Tue)", lifts: [{n: "Primary Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
+    // ** DAY 2: PRIMARY (Split), LARSEN, CLOSE GRIP (OPT) **
+    { name: "Day 2 (Tue)", lifts: [{n: "Primary Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}, {n: "Close Grip Bench (Optional)", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
-    { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
+    // ** DAY 4: BACK DAY (Auto-Filled) **
+    { name: "Day 4 (Thu) - Back Day", lifts: [
+        {n: "⚠️ Use +Add Workout to populate loads", t: "bench", isLabel: true}, // UI Label
+        {n: "Pendlay Row", t: "deadlift"},
+        {n: "Weighted Pull-ups", t: "deadlift"},
+        {n: "Lat Pulldown", t: "deadlift"},
+        {n: "Chest Supported Row", t: "deadlift"},
+        {n: "Face Pulls", t: "bench"}
+    ]},
     { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
-    { name: "Day 6 (Sat)", lifts: [{n: "Secondary Bench", t: "bench"}, {n: "Pause Squat", t: "squat"}, {n: "Paused DL Cluster", t: "deadlift"}]}
+    // ** DAY 6: SECONDARY, TEMPO, PAUSES **
+    { name: "Day 6 (Sat)", lifts: [{n: "Secondary Bench", t: "bench"}, {n: "Tempo Bench", t: "bench"}, {n: "Pause Squat", t: "squat"}, {n: "Paused DL Cluster", t: "deadlift"}]}
   ];
   for (let w = 0; w < 6; w++) userProgram.push({ week: w + 1, days: JSON.parse(JSON.stringify(daysTemplate)) });
 }
@@ -407,50 +417,52 @@ function generateProgram() {
         let intens = curPct, dReps = reps, fSets = 3, weightDisplay = "";
         let finalIntens = lift.isOHP ? lift.p : intens;
 
-        // --- BENCH & LIFT LOGIC ---
+        // --- LOGIC RULES ---
         if (lift.n === "Primer Bench") {
-            // Monday: Potentiation (Static)
+            // Monday: Static Potentiation
             if (w === 0) { fSets=4; dReps=2; finalIntens=0.70; }
             if (w === 1) { fSets=3; dReps=1; finalIntens=0.75; }
             if (w === 2) { fSets=3; dReps=1; finalIntens=0.80; }
             if (w === 3) { fSets=1; dReps=1; finalIntens=0.70; }
         }
         else if (lift.isPrimaryTop) {
-            // Tuesday: Top Set (Split)
+            // Tuesday: Top Set
             fSets = 1; dReps = reps; finalIntens = curPct;
         }
         else if (lift.isPrimaryBackoff) {
-            // Tuesday: Backoff Set (Split)
+            // Tuesday: Backoff
             fSets = 3; dReps = reps; finalIntens = curPct - 0.05;
         }
         else if (lift.n === "Secondary Bench") {
-            // Saturday: Secondary (Volume Increased: +1 Set, +2 Reps)
-            if (w === 0) { fSets=4; dReps=4; finalIntens=0.70; } // Was 3x2
-            if (w === 1) { fSets=4; dReps=3; finalIntens=0.75; } // Was 3x1
-            if (w === 2) { fSets=3; dReps=3; finalIntens=0.80; } // Was 2x1
-            if (w === 3) { fSets=2; dReps=3; finalIntens=0.70; } // Was 1x1
+            // Saturday: Static (Vol +1 Set, +2 Reps vs old)
+            if (w === 0) { fSets=4; dReps=4; finalIntens=0.70; }
+            if (w === 1) { fSets=4; dReps=3; finalIntens=0.75; }
+            if (w === 2) { fSets=3; dReps=3; finalIntens=0.80; }
+            if (w === 3) { fSets=2; dReps=3; finalIntens=0.70; }
         }
-        else if (lift.n === "Larsen Press") {
-            dReps = 3; 
-        }
-        else if (lift.n === "Paused Bench") {
-            dReps = reps; 
-        }
-        else if (lift.n.includes("Tempo")) { 
-            finalIntens = currentTempoPct; dReps = 5; 
-        }
-        else if (lift.n === "Pause Squats") { 
-            finalIntens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); 
-        }
-        else if (lift.n.includes("Paused") && lift.n !== "Paused Bench") { 
-            dReps = 3; 
+        else if (lift.n === "Larsen Press") { dReps = 3; finalIntens = 0.70; }
+        else if (lift.n.includes("Close Grip")) { dReps = 8; finalIntens = 0.75; } // Added Logic for Optional
+        else if (lift.n === "Paused Bench") { dReps = reps; }
+        else if (lift.n.includes("Tempo")) { finalIntens = currentTempoPct; dReps = 5; }
+        else if (lift.n === "Pause Squats") { finalIntens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); }
+        else if (lift.n.includes("Paused")) { dReps = 3; }
+        
+        // Back Day Logic (Hardcoded Smart Library %s for auto-fill)
+        if (lift.n === "Pendlay Row") { finalIntens = 0.60; dReps = 6; fSets = 4; }
+        if (lift.n === "Weighted Pull-ups") { finalIntens = 0.30; dReps = 8; fSets = 3; } // % of DL
+        if (lift.n === "Lat Pulldown") { finalIntens = 0.40; dReps = 12; fSets = 3; }
+        if (lift.n === "Chest Supported Row") { finalIntens = 0.30; dReps = 12; fSets = 3; }
+        if (lift.n === "Face Pulls") { finalIntens = 0.15; dReps = 20; fSets = 3; }
+
+        if (lift.isLabel) {
+            html += `<tr><td colspan="3" style="padding:5px; color:#FFD700; font-style:italic; font-size:0.9em; text-align:center;">${lift.n}</td></tr>`;
+            return; // Skip weight calc for label
         }
 
-        // Custom/Acc Logic
+        // Custom/Acc Weight Calc
         if (lift.isCustom) {
             fSets = "3"; dReps = lift.r;
-            let prog = (w * 0.02);
-            if (mode === 'deload') prog = -0.10;
+            let prog = (mode === 'deload') ? -0.10 : (w * 0.02);
             let weight = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
             weightDisplay = `<strong style="color:#00e676;">${weight} lbs</strong>`;
         } 
