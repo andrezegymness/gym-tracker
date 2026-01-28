@@ -9,44 +9,176 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // ==========================================
-// 1. FULL ANDRE MAP DATA (DO NOT TRUNCATE)
+// 1. FULL ANDRE MAP DATA (OHP CORRECTED)
 // ==========================================
 const andreData = {
   1: {
-    "Monday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.701, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 3, pct: 0.721, type: "Squat" }, { name: "Pause Squat", sets: 2, reps: 2, pct: 0.74, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ],
-    "Tuesday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.733, type: "Bench" }, { name: "Bench", sets: 4, reps: 3, pct: 0.844, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.756, type: "Bench" } ],
-    "Wednesday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 3, pct: 0.799, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.838, type: "Squat" }, { name: "OHP", sets: 4, reps: 3, pct: 0.804, type: "OHP" } ],
-    "Thursday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.844, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ],
-    "Friday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.799, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 1, pct: 0.903, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.804, type: "OHP" } ],
-    "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.756, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
+    "Monday": [ 
+        { name: "Pause Squat", sets: 2, reps: 2, pct: 0.701, type: "Squat" }, 
+        { name: "Pause Squat", sets: 1, reps: 3, pct: 0.721, type: "Squat" }, 
+        { name: "Pause Squat", sets: 2, reps: 2, pct: 0.74, type: "Squat" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
+        { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" }, 
+        { name: "OHP", sets: 3, reps: 4, pct: 0.75, type: "OHP" } // W1 Mon
+    ],
+    "Tuesday": [ 
+        { name: "Bench", sets: 1, reps: 3, pct: 0.733, type: "Bench" }, 
+        { name: "Bench", sets: 4, reps: 3, pct: 0.844, type: "Bench" }, 
+        { name: "Floor Press", sets: 5, reps: 5, pct: 0.756, type: "Bench" } 
+    ],
+    "Wednesday": [ 
+        { name: "Squat", sets: 1, reps: 3, pct: 0.727, type: "Squat" }, 
+        { name: "Squat", sets: 2, reps: 3, pct: 0.799, type: "Squat" }, 
+        { name: "Squat", sets: 1, reps: 3, pct: 0.838, type: "Squat" } 
+        // OHP Removed from Wed
+    ],
+    "Thursday": [ 
+        { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, 
+        { name: "Bench", sets: 1, reps: 3, pct: 0.844, type: "Bench" }, 
+        { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, 
+        { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } 
+    ],
+    "Friday": [ 
+        { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, 
+        { name: "Squat", sets: 2, reps: 2, pct: 0.799, type: "Squat" }, 
+        { name: "Squat (Heavy)", sets: 1, reps: 1, pct: 0.903, type: "Squat" }, 
+        { name: "OHP", sets: 4, reps: 8, pct: 0.68, type: "OHP" } // W1 Fri
+    ],
+    "Saturday": [ 
+        { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, 
+        { name: "Bench", sets: 3, reps: 4, pct: 0.756, type: "Bench" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
+        { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } 
+    ]
   },
   2: {
-    "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.773, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.831, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" } ],
-    "Tuesday": [ { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, { name: "Bench", sets: 3, reps: 4, pct: 0.811, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.778, type: "Bench" } ],
-    "Wednesday": [ { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } ],
-    "Thursday": [ { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } ],
-    "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" } ],
-    "Saturday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } ]
+    "Monday": [ 
+        { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, 
+        { name: "Squat", sets: 1, reps: 5, pct: 0.773, type: "Squat" }, 
+        { name: "Squat", sets: 1, reps: 4, pct: 0.831, type: "Squat" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
+        { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" },
+        { name: "OHP", sets: 3, reps: 4, pct: 0.79, type: "OHP" } // W2 Mon (+4%)
+    ],
+    "Tuesday": [ 
+        { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, 
+        { name: "Bench", sets: 3, reps: 4, pct: 0.811, type: "Bench" }, 
+        { name: "Floor Press", sets: 5, reps: 5, pct: 0.778, type: "Bench" } 
+    ],
+    "Wednesday": [ 
+        { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, 
+        { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, 
+        { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } 
+        // OHP Removed from Wed
+    ],
+    "Thursday": [ 
+        { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, 
+        { name: "Bench", sets: 2, reps: 2, pct: 0.8, type: "Bench" }, 
+        { name: "AMRAP Bench", sets: 1, reps: "AMRAP", pct: 0.8, type: "Bench" } 
+    ],
+    "Friday": [ 
+        { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, 
+        { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, 
+        { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" },
+        { name: "OHP", sets: 4, reps: 8, pct: 0.72, type: "OHP" } // W2 Fri (+4%)
+    ],
+    "Saturday": [ 
+        { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, 
+        { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, 
+        { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } 
+    ]
   },
   3: {
-    "Monday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 2, pct: 0.779, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.89, type: "Deadlift" }, { name: "OHP", sets: 4, reps: 2, pct: 0.826, type: "OHP" } ],
-    "Tuesday": [ { name: "Bench", sets: 2, reps: 7, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 2, reps: 6, pct: 0.8, type: "Bench" }, { name: "Floor Press", sets: 5, reps: 5, pct: 0.789, type: "Bench" } ],
-    "Wednesday": [ { name: "Squat", sets: 1, reps: 7, pct: 0.76, type: "Squat" }, { name: "Squat", sets: 2, reps: 6, pct: 0.799, type: "Squat" }, { name: "OHP", sets: 4, reps: 6, pct: 0.783, type: "OHP" } ],
-    "Thursday": [ { name: "Bench", sets: 4, reps: 5, pct: 0.7, type: "Bench" } ],
-    "Friday": [ { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Pause Squat", sets: 3, reps: 2, pct: 0.727, type: "Squat" }, { name: "OHP", sets: 4, reps: 2, pct: 0.783, type: "OHP" } ],
-    "Saturday": [ { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, { name: "Deadlift", sets: 2, reps: 2, pct: 0.841, type: "Deadlift" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.738, type: "Deadlift" } ]
+    "Monday": [ 
+        { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, 
+        { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, 
+        { name: "Squat", sets: 1, reps: 2, pct: 0.779, type: "Squat" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.89, type: "Deadlift" }, 
+        { name: "OHP", sets: 3, reps: 4, pct: 0.83, type: "OHP" } // W3 Mon (+4%)
+    ],
+    "Tuesday": [ 
+        { name: "Bench", sets: 2, reps: 7, pct: 0.756, type: "Bench" }, 
+        { name: "Bench", sets: 2, reps: 6, pct: 0.8, type: "Bench" }, 
+        { name: "Floor Press", sets: 5, reps: 5, pct: 0.789, type: "Bench" } 
+    ],
+    "Wednesday": [ 
+        { name: "Squat", sets: 1, reps: 7, pct: 0.76, type: "Squat" }, 
+        { name: "Squat", sets: 2, reps: 6, pct: 0.799, type: "Squat" }
+        // OHP Removed from Wed
+    ],
+    "Thursday": [ 
+        { name: "Bench", sets: 4, reps: 5, pct: 0.7, type: "Bench" } 
+    ],
+    "Friday": [ 
+        { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, 
+        { name: "Pause Squat", sets: 3, reps: 2, pct: 0.727, type: "Squat" }, 
+        { name: "OHP", sets: 4, reps: 8, pct: 0.76, type: "OHP" } // W3 Fri (+4%)
+    ],
+    "Saturday": [ 
+        { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, 
+        { name: "Deadlift", sets: 2, reps: 2, pct: 0.841, type: "Deadlift" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.738, type: "Deadlift" } 
+    ]
   },
   4: {
-    "Monday": [ { name: "Squat", sets: 1, reps: 4, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 1, reps: 4, pct: 0.773, type: "Squat" }, { name: "Squat (Heavy)", sets: 1, reps: 4, pct: 0.903, type: "Squat" }, { name: "Squat (Backoff)", sets: 1, reps: 4, pct: 0.87, type: "Squat" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.738, type: "Deadlift" } ],
-    "Wednesday": [ { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.792, type: "Squat" }, { name: "Bench", sets: 1, reps: 4, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.8, type: "Bench" }, { name: "Bench", sets: 1, reps: 4, pct: 0.867, type: "Bench" } ],
-    "Friday": [ { name: "Squat", sets: 1, reps: 3, pct: 0.903, type: "Squat" }, { name: "Squat", sets: 1, reps: 3, pct: 0.942, type: "Squat" } ],
-    "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 1, reps: 3, pct: 0.8, type: "Bench" }, { name: "Bench (Peak)", sets: 1, reps: 1, pct: 0.989, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 1, pct: 0.89, type: "Deadlift" } ]
+    "Monday": [ 
+        { name: "Squat", sets: 1, reps: 4, pct: 0.753, type: "Squat" }, 
+        { name: "Squat", sets: 1, reps: 4, pct: 0.773, type: "Squat" }, 
+        { name: "Squat (Heavy)", sets: 1, reps: 4, pct: 0.903, type: "Squat" }, 
+        { name: "Squat (Backoff)", sets: 1, reps: 4, pct: 0.87, type: "Squat" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
+        { name: "Deadlift", sets: 2, reps: 3, pct: 0.738, type: "Deadlift" },
+        { name: "OHP", sets: 3, reps: 4, pct: 0.87, type: "OHP" } // W4 Mon (+4% - Peak Mon)
+    ],
+    "Wednesday": [ 
+        { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, 
+        { name: "Squat", sets: 2, reps: 2, pct: 0.792, type: "Squat" }, 
+        { name: "Bench", sets: 1, reps: 4, pct: 0.756, type: "Bench" }, 
+        { name: "Bench", sets: 1, reps: 4, pct: 0.8, type: "Bench" }, 
+        { name: "Bench", sets: 1, reps: 4, pct: 0.867, type: "Bench" } 
+    ],
+    "Friday": [ 
+        { name: "Squat", sets: 1, reps: 3, pct: 0.903, type: "Squat" }, 
+        { name: "Squat", sets: 1, reps: 3, pct: 0.942, type: "Squat" },
+        { name: "OHP", sets: 4, reps: 8, pct: 0.80, type: "OHP" } // W4 Fri (+4% - Peak Fri)
+    ],
+    "Saturday": [ 
+        { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, 
+        { name: "Bench", sets: 1, reps: 3, pct: 0.8, type: "Bench" }, 
+        { name: "Bench (Peak)", sets: 1, reps: 1, pct: 0.989, type: "Bench" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
+        { name: "Deadlift (Heavy)", sets: 1, reps: 1, pct: 0.89, type: "Deadlift" } 
+    ]
   },
   5: {
-    "Monday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.727, type: "Squat" }, { name: "Squat", sets: 2, reps: 2, pct: 0.76, type: "Squat" }, { name: "Bench", sets: 1, reps: 2, pct: 0.6, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.7, type: "Bench" }, { name: "Bench", sets: 2, reps: 2, pct: 0.744, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift (Heavy)", sets: 1, reps: 3, pct: 0.909, type: "Deadlift" } ],
-    "Wednesday": [ { name: "Squat (Peak)", sets: 1, reps: 2, pct: 0.929, type: "Squat" }, { name: "Squat (Max Effort)", sets: 1, reps: 2, pct: 0.961, type: "Squat" }, { name: "Bench", sets: 1, reps: 3, pct: 0.889, type: "Bench" } ],
-    "Friday": [ { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, { name: "Squat", sets: 4, reps: 2, pct: 0.799, type: "Squat" } ],
-    "Saturday": [ { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } ]
+    "Monday": [ 
+        { name: "Squat", sets: 2, reps: 2, pct: 0.727, type: "Squat" }, 
+        { name: "Squat", sets: 2, reps: 2, pct: 0.76, type: "Squat" }, 
+        { name: "Bench", sets: 1, reps: 2, pct: 0.6, type: "Bench" }, 
+        { name: "Bench", sets: 2, reps: 2, pct: 0.7, type: "Bench" }, 
+        { name: "Bench", sets: 2, reps: 2, pct: 0.744, type: "Bench" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
+        { name: "Deadlift (Heavy)", sets: 1, reps: 3, pct: 0.909, type: "Deadlift" },
+        { name: "OHP (Recovery)", sets: 3, reps: 5, pct: 0.60, type: "OHP" } // W5 Mon (Taper/Fall off)
+    ],
+    "Wednesday": [ 
+        { name: "Squat (Peak)", sets: 1, reps: 2, pct: 0.929, type: "Squat" }, 
+        { name: "Squat (Max Effort)", sets: 1, reps: 2, pct: 0.961, type: "Squat" }, 
+        { name: "Bench", sets: 1, reps: 3, pct: 0.889, type: "Bench" } 
+    ],
+    "Friday": [ 
+        { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, 
+        { name: "Squat", sets: 4, reps: 2, pct: 0.799, type: "Squat" } 
+        // OHP Removed from Fri (Peak Week Recovery)
+    ],
+    "Saturday": [ 
+        { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, 
+        { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, 
+        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
+        { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } 
+    ]
   }
 };
 // Deload Logic
