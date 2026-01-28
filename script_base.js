@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 6. PROGRAM GENERATION (UPDATED)
+// 6. PROGRAM GENERATION (UPDATED BENCH LOGIC)
 // ==========================================
 function initProgramData() {
   userProgram = [];
@@ -417,52 +417,57 @@ function generateProgram() {
         let intens = curPct, dReps = reps, fSets = 3, weightDisplay = "";
         let finalIntens = lift.isOHP ? lift.p : intens;
 
-        // --- LOGIC RULES ---
+        // --- BENCH & LIFT LOGIC (Updated with Dynamic Loads) ---
         if (lift.n === "Primer Bench") {
-            // Monday: Static Potentiation
-            if (w === 0) { fSets=4; dReps=2; finalIntens=0.70; }
-            if (w === 1) { fSets=3; dReps=1; finalIntens=0.75; }
-            if (w === 2) { fSets=3; dReps=1; finalIntens=0.80; }
-            if (w === 3) { fSets=1; dReps=1; finalIntens=0.70; }
+            // Monday: Potentiation (Dynamic based on Mode)
+            // Lighter than Primary but scales with Mode
+            let pMod = 0.12; 
+            if (w === 0) { fSets=4; dReps=2; finalIntens = curPct - pMod; }
+            if (w === 1) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.02); }
+            if (w === 2) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.04); }
+            if (w === 3) { fSets=1; dReps=1; finalIntens = 0.70; } // Taper fixed
         }
         else if (lift.isPrimaryTop) {
-            // Tuesday: Top Set
+            // Tuesday: Top Set (Split)
             fSets = 1; dReps = reps; finalIntens = curPct;
         }
         else if (lift.isPrimaryBackoff) {
-            // Tuesday: Backoff
+            // Tuesday: Backoff Set (Split)
             fSets = 3; dReps = reps; finalIntens = curPct - 0.05;
         }
         else if (lift.n === "Secondary Bench") {
-            // Saturday: Static (Vol +1 Set, +2 Reps vs old)
-            if (w === 0) { fSets=4; dReps=4; finalIntens=0.70; }
-            if (w === 1) { fSets=4; dReps=3; finalIntens=0.75; }
-            if (w === 2) { fSets=3; dReps=3; finalIntens=0.80; }
-            if (w === 3) { fSets=2; dReps=3; finalIntens=0.70; }
+            // Saturday: Secondary (Volume Increased: +1 Set, +2 Reps)
+            // Dynamic Load scaling
+            let sMod = 0.15;
+            if (w === 0) { fSets=4; dReps=4; finalIntens = curPct - sMod; } // Was 3x2
+            if (w === 1) { fSets=4; dReps=3; finalIntens = curPct - (sMod - 0.02); } // Was 3x1
+            if (w === 2) { fSets=3; dReps=3; finalIntens = curPct - (sMod - 0.04); } // Was 2x1
+            if (w === 3) { fSets=2; dReps=3; finalIntens = 0.70; } // Was 1x1
         }
         else if (lift.n === "Larsen Press") { dReps = 3; finalIntens = 0.70; }
-        else if (lift.n.includes("Close Grip")) { dReps = 8; finalIntens = 0.75; } // Added Logic for Optional
+        else if (lift.n.includes("Close Grip")) { dReps = 8; finalIntens = 0.75; }
         else if (lift.n === "Paused Bench") { dReps = reps; }
         else if (lift.n.includes("Tempo")) { finalIntens = currentTempoPct; dReps = 5; }
         else if (lift.n === "Pause Squats") { finalIntens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); }
         else if (lift.n.includes("Paused")) { dReps = 3; }
         
-        // Back Day Logic (Hardcoded Smart Library %s for auto-fill)
+        // Back Day Logic
         if (lift.n === "Pendlay Row") { finalIntens = 0.60; dReps = 6; fSets = 4; }
-        if (lift.n === "Weighted Pull-ups") { finalIntens = 0.30; dReps = 8; fSets = 3; } // % of DL
+        if (lift.n === "Weighted Pull-ups") { finalIntens = 0.30; dReps = 8; fSets = 3; }
         if (lift.n === "Lat Pulldown") { finalIntens = 0.40; dReps = 12; fSets = 3; }
         if (lift.n === "Chest Supported Row") { finalIntens = 0.30; dReps = 12; fSets = 3; }
         if (lift.n === "Face Pulls") { finalIntens = 0.15; dReps = 20; fSets = 3; }
 
         if (lift.isLabel) {
             html += `<tr><td colspan="3" style="padding:5px; color:#FFD700; font-style:italic; font-size:0.9em; text-align:center;">${lift.n}</td></tr>`;
-            return; // Skip weight calc for label
+            return; 
         }
 
         // Custom/Acc Weight Calc
         if (lift.isCustom) {
             fSets = "3"; dReps = lift.r;
-            let prog = (mode === 'deload') ? -0.10 : (w * 0.02);
+            let prog = (w * 0.02);
+            if (mode === 'deload') prog = -0.10;
             let weight = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
             weightDisplay = `<strong style="color:#00e676;">${weight} lbs</strong>`;
         } 
