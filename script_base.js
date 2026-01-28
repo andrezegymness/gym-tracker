@@ -195,7 +195,8 @@ const smartLibrary = {
         { n: "Egyptian Lateral", t: "Side Delt (Cap)", p: 0.10, r: "4x15", s: "ohp" },
         { n: "Plate Raise", t: "Front Delt", p: 0, r: "3x12", s: "ohp" },
         { n: "Face Pulls", t: "Rear Delt/Health", p: 0.15, r: "3x20", s: "bench" },
-        { n: "Rear Delt Fly", t: "Rear Iso", p: 0.10, r: "3x15", s: "bench" }
+        { n: "Rear Delt Fly", t: "Rear Iso", p: 0.10, r: "3x15", s: "bench" },
+        { n: "Upright Rows", t: "Traps/Side", p: 0.30, r: "3x12", s: "ohp" } // Added for Day 5
     ],
     "Arms (Bi/Tri)": [
         { n: "Rope Pushdown", t: "Tricep Horseshoe", p: 0.25, r: "3x15", s: "bench" },
@@ -302,26 +303,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 6. PROGRAM GENERATION (UPDATED BENCH LOGIC)
+// 6. PROGRAM GENERATION (UPDATED DAY 5)
 // ==========================================
 function initProgramData() {
   userProgram = [];
   const daysTemplate = [
     { name: "Day 1 (Mon)", lifts: [{n: "Primer Bench", t: "bench"}, {n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    // ** DAY 2: PRIMARY (Split), LARSEN, CLOSE GRIP (OPT) **
     { name: "Day 2 (Tue)", lifts: [{n: "Primary Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}, {n: "Close Grip Bench (Optional)", t: "bench"}]},
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
-    // ** DAY 4: BACK DAY (Auto-Filled) **
     { name: "Day 4 (Thu) - Back Day", lifts: [
-        {n: "⚠️ Use +Add Workout to populate loads", t: "bench", isLabel: true}, // UI Label
+        {n: "⚠️ Use +Add Workout to populate loads", t: "bench", isLabel: true}, 
         {n: "Pendlay Row", t: "deadlift"},
         {n: "Weighted Pull-ups", t: "deadlift"},
         {n: "Lat Pulldown", t: "deadlift"},
         {n: "Chest Supported Row", t: "deadlift"},
         {n: "Face Pulls", t: "bench"}
     ]},
-    { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
-    // ** DAY 6: SECONDARY, TEMPO, PAUSES **
+    // ** DAY 5: SHOULDERS (NEW) **
+    { name: "Day 5 (Fri) - Shoulder Day", lifts: [
+        {n: "⚠️ Use +Add Workout to populate loads", t: "ohp", isLabel: true},
+        {n: "OHP (Strength)", t: "ohp"},
+        {n: "Seated DB Press", t: "ohp"},
+        {n: "Egyptian Lateral Raise", t: "ohp"},
+        {n: "Rear Delt Fly", t: "bench"},
+        {n: "Upright Rows", t: "ohp"}
+    ]},
     { name: "Day 6 (Sat)", lifts: [{n: "Secondary Bench", t: "bench"}, {n: "Tempo Bench", t: "bench"}, {n: "Pause Squat", t: "squat"}, {n: "Paused DL Cluster", t: "deadlift"}]}
   ];
   for (let w = 0; w < 6; w++) userProgram.push({ week: w + 1, days: JSON.parse(JSON.stringify(daysTemplate)) });
@@ -379,7 +385,6 @@ function generateProgram() {
       let activeLifts = [];
 
       // ** PRE-PROCESS: SPLIT PRIMARY BENCH & INJECT ACC/CUSTOM **
-      // 1. Standard Lifts (with Splitting Logic)
       rawLifts.forEach(l => {
           if (l.n === "Primary Bench") {
               // Split into Top Set and Backoff Set
@@ -390,7 +395,6 @@ function generateProgram() {
           }
       });
 
-      // 2. Standard Acc Injection (Preserved)
       if (mode === 'standard_acc') {
         const aReps = accPeakingReps[w];
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
@@ -401,7 +405,6 @@ function generateProgram() {
         if (dIdx === 5) { activeLifts.push({n: "Stiff Leg DL", s:5, r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Glute Ham Raise", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Good Mornings", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "RDLs (PL Specific)", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}); }
       }
 
-      // 3. Custom Lifts Injection
       customLifts.forEach(cl => {
           if (cl.dayIndex === dIdx) {
               activeLifts.push({ n: cl.n, t: cl.s, isCustom: true, p: cl.p, r: cl.r });
@@ -417,32 +420,26 @@ function generateProgram() {
         let intens = curPct, dReps = reps, fSets = 3, weightDisplay = "";
         let finalIntens = lift.isOHP ? lift.p : intens;
 
-        // --- BENCH & LIFT LOGIC (Updated with Dynamic Loads) ---
+        // --- BENCH & LIFT LOGIC ---
         if (lift.n === "Primer Bench") {
-            // Monday: Potentiation (Dynamic based on Mode)
-            // Lighter than Primary but scales with Mode
             let pMod = 0.12; 
             if (w === 0) { fSets=4; dReps=2; finalIntens = curPct - pMod; }
             if (w === 1) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.02); }
             if (w === 2) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.04); }
-            if (w === 3) { fSets=1; dReps=1; finalIntens = 0.70; } // Taper fixed
+            if (w === 3) { fSets=1; dReps=1; finalIntens = 0.70; } 
         }
         else if (lift.isPrimaryTop) {
-            // Tuesday: Top Set (Split)
             fSets = 1; dReps = reps; finalIntens = curPct;
         }
         else if (lift.isPrimaryBackoff) {
-            // Tuesday: Backoff Set (Split)
             fSets = 3; dReps = reps; finalIntens = curPct - 0.05;
         }
         else if (lift.n === "Secondary Bench") {
-            // Saturday: Secondary (Volume Increased: +1 Set, +2 Reps)
-            // Dynamic Load scaling
             let sMod = 0.15;
-            if (w === 0) { fSets=4; dReps=4; finalIntens = curPct - sMod; } // Was 3x2
-            if (w === 1) { fSets=4; dReps=3; finalIntens = curPct - (sMod - 0.02); } // Was 3x1
-            if (w === 2) { fSets=3; dReps=3; finalIntens = curPct - (sMod - 0.04); } // Was 2x1
-            if (w === 3) { fSets=2; dReps=3; finalIntens = 0.70; } // Was 1x1
+            if (w === 0) { fSets=4; dReps=4; finalIntens = curPct - sMod; }
+            if (w === 1) { fSets=4; dReps=3; finalIntens = curPct - (sMod - 0.02); }
+            if (w === 2) { fSets=3; dReps=3; finalIntens = curPct - (sMod - 0.04); }
+            if (w === 3) { fSets=2; dReps=3; finalIntens = 0.70; }
         }
         else if (lift.n === "Larsen Press") { dReps = 3; finalIntens = 0.70; }
         else if (lift.n.includes("Close Grip")) { dReps = 8; finalIntens = 0.75; }
@@ -458,16 +455,31 @@ function generateProgram() {
         if (lift.n === "Chest Supported Row") { finalIntens = 0.30; dReps = 12; fSets = 3; }
         if (lift.n === "Face Pulls") { finalIntens = 0.15; dReps = 20; fSets = 3; }
 
+        // ** NEW OHP & SHOULDER LOGIC **
+        if (lift.n === "OHP (Strength)") {
+            if (w === 0) { fSets=4; dReps=6; finalIntens=0.70; }
+            if (w === 1) { fSets=4; dReps=5; finalIntens=0.75; }
+            if (w === 2) { fSets=4; dReps=4; finalIntens=0.80; }
+            if (w === 3) { fSets=3; dReps=3; finalIntens=0.85; } // Peak
+        }
+        // Shoulder Accessories Tapering
+        if (["Seated DB Press", "Egyptian Lateral Raise", "Rear Delt Fly", "Upright Rows"].includes(lift.n)) {
+             fSets = (w === 3) ? 2 : 3; // Taper volume in week 4
+             dReps = 12;
+             if(lift.n.includes("Seated")) finalIntens = 0.35;
+             if(lift.n.includes("Egyptian")) finalIntens = 0.15;
+             if(lift.n.includes("Rear")) finalIntens = 0.15;
+             if(lift.n.includes("Upright")) finalIntens = 0.30;
+        }
+
         if (lift.isLabel) {
             html += `<tr><td colspan="3" style="padding:5px; color:#FFD700; font-style:italic; font-size:0.9em; text-align:center;">${lift.n}</td></tr>`;
             return; 
         }
 
-        // Custom/Acc Weight Calc
         if (lift.isCustom) {
             fSets = "3"; dReps = lift.r;
-            let prog = (w * 0.02);
-            if (mode === 'deload') prog = -0.10;
+            let prog = (mode === 'deload') ? -0.10 : (w * 0.02);
             let weight = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
             weightDisplay = `<strong style="color:#00e676;">${weight} lbs</strong>`;
         } 
