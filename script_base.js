@@ -302,18 +302,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 6. PROGRAM GENERATION
+// 6. PROGRAM GENERATION (UPDATED BENCH LOGIC)
 // ==========================================
 function initProgramData() {
   userProgram = [];
   const daysTemplate = [
-    { name: "Day 1 (Mon)", lifts: [{n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    // ** DAY 2: PAUSED FIRST, THEN LARSEN **
-    { name: "Day 2 (Tue)", lifts: [{n: "Paused Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]},
+    { name: "Day 1 (Mon)", lifts: [{n: "Primer Bench", t: "bench"}, {n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]}, // Added Primer Bench
+    { name: "Day 2 (Tue)", lifts: [{n: "Primary Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}]}, // Renamed to Primary
     { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
     { name: "Day 4 (Thu)", lifts: [{n: "Tempo Bench", t: "bench"}, {n: "Close Grip", t: "bench"}]},
     { name: "Day 5 (Fri)", lifts: [{n: "Paused Bench (Sgl)", t: "bench"}]},
-    { name: "Day 6 (Sat)", lifts: [{n: "Pause Squats", t: "squat"}, {n: "Paused DL Cluster", t: "deadlift"}, {n: "Comp Bench", t: "bench"}]}
+    { name: "Day 6 (Sat)", lifts: [{n: "Secondary Bench", t: "bench"}, {n: "Pause Squat", t: "squat"}, {n: "Paused DL Cluster", t: "deadlift"}]} // Renamed to Secondary
   ];
   for (let w = 0; w < 6; w++) userProgram.push({ week: w + 1, days: JSON.parse(JSON.stringify(daysTemplate)) });
 }
@@ -332,7 +331,7 @@ function generateProgram() {
   const repsVal = document.getElementById('dashReps').value;
   const reps = parseInt(repsVal); 
   const mode = document.getElementById('dashMode').value;
-  const startPct = basePctMap[reps] || 0.75;
+  const startPct = basePctMap[reps] || 0.75; // Gets user selected mode %
 
   const randCard = document.getElementById('randomizerCard');
   const dashGrid = document.getElementById('dashboardGrid');
@@ -353,7 +352,7 @@ function generateProgram() {
     if (mode === 'deload') mod = (w === 0 ? -0.08 : -0.04);
 
     const currentTempoPct = tempoStartPct + (w * 0.04);
-    const curPct = startPct + mod;
+    const curPct = startPct + mod; // This drives Primary Bench logic dynamically
     const psPct = 0.70 + mod;
 
     let activeClass = (w === activeMobileWeek) ? 'active-week' : '';
@@ -368,7 +367,7 @@ function generateProgram() {
     userProgram[w].days.forEach((day, dIdx) => {
       let activeLifts = [...day.lifts];
       
-      // Standard Acc Injection
+      // Standard Acc Injection (Preserved)
       if (mode === 'standard_acc') {
         const aReps = accPeakingReps[w];
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
@@ -393,21 +392,44 @@ function generateProgram() {
       activeLifts.forEach(lift => {
         let mx = (lift.t === "ohp") ? oMax : (lift.t === "squat" ? sMax : (lift.t === "deadlift" ? dMax : bMax));
         let intens = curPct, dReps = reps, fSets = 3, weightDisplay = "";
-        
-        // --- LOGIC RULES ---
-        if (lift.n === "Larsen Press") {
+        let finalIntens = lift.isOHP ? lift.p : intens;
+
+        // --- NEW BENCH LOGIC (Primer, Primary, Secondary) ---
+        if (lift.n === "Primer Bench") {
+            // Monday: Potentiation (Static)
+            if (w === 0) { fSets=4; dReps=2; finalIntens=0.70; }
+            if (w === 1) { fSets=3; dReps=1; finalIntens=0.75; }
+            if (w === 2) { fSets=3; dReps=1; finalIntens=0.80; }
+            if (w === 3) { fSets=1; dReps=1; finalIntens=0.70; }
+        }
+        else if (lift.n === "Primary Bench") {
+            // Tuesday: Dynamic (Changes with Mode/Reps)
+            // Uses 'curPct' calculated above based on Rep selection
+            fSets = "1 Top + 3 Backoff"; 
+            dReps = reps; // Matches the Rep Mode (e.g., 3 or 5)
+            // Backoff logic displayed in name for clarity? Or separate? 
+            // Keeping it simple: Display Top Set weight
+        }
+        else if (lift.n === "Secondary Bench") {
+            // Saturday: Secondary (Static)
+            if (w === 0) { fSets=3; dReps=2; finalIntens=0.70; }
+            if (w === 1) { fSets=3; dReps=1; finalIntens=0.75; }
+            if (w === 2) { fSets=2; dReps=1; finalIntens=0.80; }
+            if (w === 3) { fSets=1; dReps=1; finalIntens=0.70; }
+        }
+        else if (lift.n === "Larsen Press") {
             dReps = 3; 
         }
         else if (lift.n === "Paused Bench") {
             dReps = reps; 
         }
         else if (lift.n.includes("Tempo")) { 
-            intens = currentTempoPct; dReps = 5; 
+            finalIntens = currentTempoPct; dReps = 5; 
         }
         else if (lift.n === "Pause Squats") { 
-            intens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); 
+            finalIntens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); 
         }
-        else if (lift.n.includes("Paused") && lift.n !== "Paused Bench") { 
+        else if (lift.n.includes("Paused")) { 
             dReps = 3; 
         }
 
@@ -426,9 +448,14 @@ function generateProgram() {
             weightDisplay = `<span style="color:#aaa;">RPE ${accRPEs[w]}</span>`; 
         } 
         else {
-            let finalIntens = lift.isOHP ? lift.p : intens;
             let weight = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
             weightDisplay = `<strong style="color:#fff;">${weight} lbs</strong>`;
+            
+            // Primary Bench Special Display for Backoffs
+            if (lift.n === "Primary Bench") {
+                let backoffWt = Math.round((mx * (finalIntens - 0.05) * fastedMult) / 5) * 5;
+                weightDisplay += `<div style="font-size:0.8em; color:#aaa;">Backoff: ${backoffWt}</div>`;
+            }
         }
         
         let clickVal = 0;
@@ -436,7 +463,6 @@ function generateProgram() {
             let prog = (mode === 'deload') ? -0.10 : (w * 0.02);
             clickVal = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
         } else if (!lift.isAcc) {
-            let finalIntens = lift.isOHP ? lift.p : intens;
             clickVal = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
         }
 
@@ -629,8 +655,6 @@ function calculateOneRM(){
     const r=parseFloat(document.getElementById('calcReps').value);
     if(w&&r) document.getElementById('oneRmResult').innerText = "Est Max: "+Math.round(w*(1+0.0333*r));
 }
-
-// *** THE RANDOMIZER MATH (FIXED) ***
 function runRandomizer(){
     document.getElementById('randomizerResult').style.display='block';
     const goal = document.getElementById('randGoal').value;
@@ -643,7 +667,6 @@ function runRandomizer(){
     }
     
     let msg = "";
-    // MATH LOGIC:
     if(goal === 'strength') msg = `Target: ${Math.round((w*1.05)/5)*5} lbs x ${Math.max(1, r-1)} Reps (Strength)`;
     if(goal === 'pump') msg = `Target: ${Math.round((w*0.80)/5)*5} lbs x ${r+5} Reps (Pump)`;
     if(goal === 'recovery') msg = `Target: ${Math.round((w*0.60)/5)*5} lbs x ${r} Reps (Recovery)`;
@@ -666,7 +689,7 @@ function updatePtMovements(){
     const d=document.getElementById('ptDisplay'); d.style.display='block'; d.innerText="Drill loaded.";
 }
 
-// === BUTTON FIX: EXPOSE FUNCTIONS TO WINDOW ===
+// === FIX FOR BUTTONS (Attach to Window) ===
 window.openPlateLoader = (w) => {
     document.getElementById('plateModal').style.display='flex';
     document.getElementById('plateTarget').innerText = w+" lbs";
@@ -680,3 +703,4 @@ window.calculateOneRM = calculateOneRM;
 window.updateAccOptions = updateAccOptions;
 window.displayAccDetails = displayAccDetails;
 window.updatePtMovements = updatePtMovements;
+window.clearCustomLifts = clearCustomLifts;
