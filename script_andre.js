@@ -9,7 +9,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // ==========================================
-// 1. FULL ANDRE MAP DATA (OHP CORRECTED)
+// 1. FULL ANDRE MAP DATA (DO NOT TRUNCATE)
 // ==========================================
 const andreData = {
   1: {
@@ -19,7 +19,7 @@ const andreData = {
         { name: "Pause Squat", sets: 2, reps: 2, pct: 0.74, type: "Squat" }, 
         { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
         { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" }, 
-        { name: "OHP", sets: 3, reps: 4, pct: 0.75, type: "OHP" } // W1 Mon
+        { name: "OHP", sets: 3, reps: 4, pct: 0.75, type: "OHP" } 
     ],
     "Tuesday": [ 
         { name: "Bench", sets: 1, reps: 3, pct: 0.733, type: "Bench" }, 
@@ -30,7 +30,6 @@ const andreData = {
         { name: "Squat", sets: 1, reps: 3, pct: 0.727, type: "Squat" }, 
         { name: "Squat", sets: 2, reps: 3, pct: 0.799, type: "Squat" }, 
         { name: "Squat", sets: 1, reps: 3, pct: 0.838, type: "Squat" } 
-        // OHP Removed from Wed
     ],
     "Thursday": [ 
         { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, 
@@ -42,7 +41,7 @@ const andreData = {
         { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, 
         { name: "Squat", sets: 2, reps: 2, pct: 0.799, type: "Squat" }, 
         { name: "Squat (Heavy)", sets: 1, reps: 1, pct: 0.903, type: "Squat" }, 
-        { name: "OHP", sets: 4, reps: 8, pct: 0.68, type: "OHP" } // W1 Fri
+        { name: "OHP", sets: 4, reps: 8, pct: 0.68, type: "OHP" } 
     ],
     "Saturday": [ 
         { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, 
@@ -59,7 +58,7 @@ const andreData = {
         { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
         { name: "Deadlift", sets: 2, reps: 3, pct: 0.811, type: "Deadlift" }, 
         { name: "Deadlift", sets: 1, reps: 3, pct: 0.866, type: "Deadlift" },
-        { name: "OHP", sets: 3, reps: 4, pct: 0.79, type: "OHP" } // W2 Mon (+4%)
+        { name: "OHP", sets: 3, reps: 4, pct: 0.79, type: "OHP" } 
     ],
     "Tuesday": [ 
         { name: "Bench", sets: 1, reps: 5, pct: 0.767, type: "Bench" }, 
@@ -70,7 +69,6 @@ const andreData = {
         { name: "Pause Squat", sets: 2, reps: 2, pct: 0.708, type: "Squat" }, 
         { name: "Pause Squat", sets: 1, reps: 2, pct: 0.734, type: "Squat" }, 
         { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" } 
-        // OHP Removed from Wed
     ],
     "Thursday": [ 
         { name: "Bench", sets: 1, reps: 3, pct: 0.856, type: "Bench" }, 
@@ -81,7 +79,7 @@ const andreData = {
         { name: "Squat", sets: 1, reps: 3, pct: 0.753, type: "Squat" }, 
         { name: "Squat", sets: 1, reps: 5, pct: 0.825, type: "Squat" }, 
         { name: "Squat", sets: 2, reps: 5, pct: 0.799, type: "Squat" },
-        { name: "OHP", sets: 4, reps: 8, pct: 0.72, type: "OHP" } // W2 Fri (+4%)
+        { name: "OHP", sets: 4, reps: 8, pct: 0.72, type: "OHP" } 
     ],
     "Saturday": [ 
         { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, 
@@ -96,7 +94,7 @@ const andreData = {
         { name: "Squat", sets: 1, reps: 2, pct: 0.779, type: "Squat" }, 
         { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
         { name: "Deadlift", sets: 1, reps: 3, pct: 0.89, type: "Deadlift" }, 
-        { name: "OHP", sets: 3, reps: 4, pct: 0.83, type: "OHP" } // W3 Mon (+4%)
+        { name: "OHP", sets: 3, reps: 4, pct: 0.83, type: "OHP" } 
     ],
     "Tuesday": [ 
         { name: "Bench", sets: 2, reps: 7, pct: 0.756, type: "Bench" }, 
@@ -106,7 +104,6 @@ const andreData = {
     "Wednesday": [ 
         { name: "Squat", sets: 1, reps: 7, pct: 0.76, type: "Squat" }, 
         { name: "Squat", sets: 2, reps: 6, pct: 0.799, type: "Squat" }
-        // OHP Removed from Wed
     ],
     "Thursday": [ 
         { name: "Bench", sets: 4, reps: 5, pct: 0.7, type: "Bench" } 
@@ -114,7 +111,7 @@ const andreData = {
     "Friday": [ 
         { name: "Pause Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, 
         { name: "Pause Squat", sets: 3, reps: 2, pct: 0.727, type: "Squat" }, 
-        { name: "OHP", sets: 4, reps: 8, pct: 0.76, type: "OHP" } // W3 Fri (+4%)
+        { name: "OHP", sets: 4, reps: 8, pct: 0.76, type: "OHP" } 
     ],
     "Saturday": [ 
         { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, 
@@ -130,7 +127,7 @@ const andreData = {
         { name: "Squat (Backoff)", sets: 1, reps: 4, pct: 0.87, type: "Squat" }, 
         { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
         { name: "Deadlift", sets: 2, reps: 3, pct: 0.738, type: "Deadlift" },
-        { name: "OHP", sets: 3, reps: 4, pct: 0.87, type: "OHP" } // W4 Mon (+4% - Peak Mon)
+        { name: "OHP", sets: 3, reps: 4, pct: 0.87, type: "OHP" } 
     ],
     "Wednesday": [ 
         { name: "Squat", sets: 1, reps: 2, pct: 0.753, type: "Squat" }, 
@@ -142,7 +139,7 @@ const andreData = {
     "Friday": [ 
         { name: "Squat", sets: 1, reps: 3, pct: 0.903, type: "Squat" }, 
         { name: "Squat", sets: 1, reps: 3, pct: 0.942, type: "Squat" },
-        { name: "OHP", sets: 4, reps: 8, pct: 0.80, type: "OHP" } // W4 Fri (+4% - Peak Fri)
+        { name: "OHP", sets: 4, reps: 8, pct: 0.80, type: "OHP" } 
     ],
     "Saturday": [ 
         { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, 
@@ -161,7 +158,7 @@ const andreData = {
         { name: "Bench", sets: 2, reps: 2, pct: 0.744, type: "Bench" }, 
         { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
         { name: "Deadlift (Heavy)", sets: 1, reps: 3, pct: 0.909, type: "Deadlift" },
-        { name: "OHP (Recovery)", sets: 3, reps: 5, pct: 0.60, type: "OHP" } // W5 Mon (Taper/Fall off)
+        { name: "OHP (Recovery)", sets: 3, reps: 5, pct: 0.60, type: "OHP" } 
     ],
     "Wednesday": [ 
         { name: "Squat (Peak)", sets: 1, reps: 2, pct: 0.929, type: "Squat" }, 
@@ -171,7 +168,6 @@ const andreData = {
     "Friday": [ 
         { name: "Squat", sets: 2, reps: 2, pct: 0.753, type: "Squat" }, 
         { name: "Squat", sets: 4, reps: 2, pct: 0.799, type: "Squat" } 
-        // OHP Removed from Fri (Peak Week Recovery)
     ],
     "Saturday": [ 
         { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, 
@@ -317,6 +313,9 @@ const smartLibrary = {
 const state = { maxes: { Squat:0, Bench:0, Deadlift:0, OHP:0 }, activeWeek: 1, unit: 'LBS', completed: {}, accWeights: {}, notes: {}, settings: { bw: '' }, customLifts: [] };
 const inputs = { Squat: document.getElementById('squatInput'), Bench: document.getElementById('benchInput'), Deadlift: document.getElementById('deadliftInput'), OHP: document.getElementById('ohpInput') };
 
+// *** NEW: MODIFIERS ***
+let modifiers = {};
+
 function init() {
     // 1. Initial Load
     loadCustomLifts();
@@ -429,8 +428,11 @@ async function loadFromCloud(uid) {
             if(d.completed) state.completed = d.completed;
             if(d.settings) state.settings = d.settings;
             if(d.accWeights) state.accWeights = d.accWeights || {};
-            if(d.customLifts) state.customLifts = d.customLifts || []; // Load Customs
+            if(d.customLifts) state.customLifts = d.customLifts || [];
             
+            // LOAD MODIFIERS
+            if(d.modifiers) modifiers = d.modifiers || {}; 
+
             inputs.Squat.value = state.maxes.Squat||''; inputs.Bench.value = state.maxes.Bench||'';
             inputs.Deadlift.value = state.maxes.Deadlift||''; inputs.OHP.value = state.maxes.OHP||'';
             if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
@@ -503,8 +505,30 @@ function loadCustomLifts() {
     if(data) state.customLifts = JSON.parse(data);
 }
 
+// *** NEW: ADJUST WEIGHT FUNCTION ***
+window.adjustWeight = function(liftName, originalLoad) {
+    let input = prompt(`Adjust load for ${liftName}.\nOriginal: ${originalLoad} lbs\n\nEnter the ACTUAL weight you lifted (or 0 to reset):`);
+    if (input === null) return;
+    
+    let actual = parseFloat(input);
+    
+    if (!actual || actual === 0) {
+        delete modifiers[liftName];
+        alert(`${liftName} reset to standard programming.`);
+    } else {
+        let scalar = actual / originalLoad;
+        modifiers[liftName] = scalar;
+        alert(`${liftName} updated! Future weeks will scale by ${(scalar * 100).toFixed(1)}%`);
+    }
+    
+    // Save modifiers to cloud inside user object
+    state.modifiers = modifiers; 
+    saveToCloud(); 
+    render(); 
+};
+
 // ==========================================
-// RENDER (WITH CUSTOM LIFTS)
+// RENDER (WITH CUSTOM LIFTS & MODIFIERS)
 // ==========================================
 function render() {
     const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
@@ -531,14 +555,12 @@ function render() {
         const dayIdx = dayMap.indexOf(day);
         state.customLifts.forEach(c => {
             if (c.dayIndex === dayIdx) {
-                // Map library format to Andre format
-                // Custom: {n, p, r, s} -> Andre: {name, sets, reps, pct, type}
                 let typeMap = { 'squat': 'Squat', 'bench': 'Bench', 'deadlift': 'Deadlift', 'ohp': 'OHP' };
                 let pct = c.p;
-                if (state.activeWeek === 6) pct = pct * 0.90; // Deload Logic for Custom
+                if (state.activeWeek === 6) pct = pct * 0.90; 
                 
                 exs.push({
-                    name: c.n + " ⭐", // Star to show it's custom
+                    name: c.n + " ⭐", 
                     sets: "3", 
                     reps: c.r, 
                     pct: pct, 
@@ -559,10 +581,28 @@ function render() {
             const max = state.maxes[m.type] || 0;
             // Handle Custom Rep Strings like "3x15s" vs Andre numbers "3"
             let setRepStr = (typeof m.sets === 'string') ? `${m.sets} Sets` : `${m.sets} x ${m.reps}`;
-            if (m.name.includes("⭐")) setRepStr = `${m.reps}`; // Custom format
+            if (m.name.includes("⭐")) setRepStr = `${m.reps}`; 
 
-            let load = (max > 0) ? Math.round((max * m.pct)/5)*5 + " LBS" : Math.round(m.pct*100) + "%";
-            html += `<tr class="row-${m.type} ${state.completed[uid]?'completed':''}" onclick="toggleComplete('${uid}')"><td>${m.name}</td><td>${setRepStr}</td><td class="load-cell" onclick="event.stopPropagation();openPlateCalc('${load}')">${load}</td></tr>`;
+            let baseLoad = (max > 0) ? Math.round((max * m.pct)/5)*5 : 0;
+            
+            // *** APPLY MODIFIER ***
+            let modifier = modifiers[m.name] || 1.0;
+            let finalLoad = Math.round((baseLoad * modifier) / 5) * 5;
+            let loadDisplay = "";
+            let style = "";
+            let warn = "";
+
+            if (baseLoad > 0) {
+                if (modifier !== 1.0) {
+                    style = "color:#ff4444; font-weight:bold;";
+                    warn = " ⚠️";
+                }
+                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span> <span onclick="adjustWeight('${m.name}', ${baseLoad})" style="cursor:pointer; font-size:12px; color:#aaa; margin-left:5px;">✎</span>`;
+            } else {
+                loadDisplay = Math.round(m.pct*100) + "%";
+            }
+
+            html += `<tr class="row-${m.type} ${state.completed[uid]?'completed':''}" onclick="toggleComplete('${uid}')"><td>${m.name}</td><td>${setRepStr}</td><td class="load-cell" onclick="event.stopPropagation();openPlateCalc('${finalLoad}')">${loadDisplay}</td></tr>`;
         });
         html += `</table>`;
 
