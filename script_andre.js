@@ -246,14 +246,12 @@ const smartLibrary = {
         { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift" },
         { n: "Halting DL", t: "Start Mechanics", p: 0.70, r: "3x5", s: "deadlift" },
         { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" },
-        
-        // ** NEW SMART ADDITION **
+        // ** NEW: SNATCH GRIP RDL (SMART) **
         { n: "Snatch Grip RDL (Smart)", t: "Upper Back", p: 0.40, r: "3x10", s: "deadlift", note: "W1:3x10@40-45% | W2:3x8@45-50% | W3:2x6@50-55% | W4-5:OFF" }
     ],
     "Deadlift: Hips/Lockout": [
-        // ** NEW SMART ADDITION **
+        // ** NEW: BLOCK PULLS (SMART) **
         { n: "Block Pulls (Smart)", t: "Lockout", p: 0.80, r: "3x4", s: "deadlift", note: "3-4in Height. W1:3x4@80% | W2:3x3@85% | W3:2x3@90% | W4:2x1@75%" },
-        
         { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
         { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" },
         { n: "Rack Pull Hold", t: "Grip/Traps", p: 1.10, r: "3x10s", s: "deadlift" },
@@ -346,7 +344,7 @@ function init() {
     window.copyData = () => alert("Data Saved");
     window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
 
-    // TOOL FUNCTIONS (Full features included)
+    // TOOL FUNCTIONS
     window.openMeetPlanner = () => { const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
     window.openPlateCalc = (w) => {
         if(String(w).includes('%')) return; document.getElementById('plateModal').style.display='flex';
@@ -406,10 +404,8 @@ function setupAuthButtons() {
 async function saveToCloud() {
     const user = auth.currentUser; if(!user) return;
     try { 
-        // 1. Private Data
         await setDoc(doc(db, "users", user.uid), state, { merge: true }); 
         
-        // 2. Leaderboard Data
         const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
         if(total > 0) {
             await setDoc(doc(db, "leaderboard", user.uid), {
@@ -429,18 +425,16 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
-            // Data Hydration
             if(d.maxes) { state.maxes.Squat = d.maxes.Squat||d.maxes.squat||0; state.maxes.Bench = d.maxes.Bench||d.maxes.bench||0; state.maxes.Deadlift = d.maxes.Deadlift||d.maxes.deadlift||0; state.maxes.OHP = d.maxes.OHP||d.maxes.ohp||0; }
             if(d.activeWeek) state.activeWeek = d.activeWeek;
             if(d.completed) state.completed = d.completed;
             if(d.settings) state.settings = d.settings;
-            if(d.accWeights) state.accWeights = d.accWeights || {}; // Restore Accessory Weights
+            if(d.accWeights) state.accWeights = d.accWeights || {};
             if(d.customLifts) state.customLifts = d.customLifts || [];
             
             // LOAD MODIFIERS
-            if (d.modifiers) modifiers = d.modifiers || {}; 
+            if(d.modifiers) modifiers = d.modifiers || {}; 
 
-            // Visual Update
             inputs.Squat.value = state.maxes.Squat||''; inputs.Bench.value = state.maxes.Bench||'';
             inputs.Deadlift.value = state.maxes.Deadlift||''; inputs.OHP.value = state.maxes.OHP||'';
             if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
@@ -491,6 +485,14 @@ function addCustomLift() {
     const idx = document.getElementById('libExercise').value;
     const day = parseInt(document.getElementById('libDay').value); // 0=Monday, 1=Tuesday...
     const item = smartLibrary[cat][idx];
+    
+    // ** CUSTOM LOGIC FOR ANDRE MAP (Block/Snatch) **
+    let repsToUse = item.r;
+    let pctToUse = item.p;
+    
+    // Auto-adjust Smart Logic based on week for Andre Map if needed
+    // (Note: Andre map changes state.activeWeek, but custom lifts are static objects. 
+    // We store the base logic and calculate weekly changes in RENDER)
     
     state.customLifts.push({ ...item, dayIndex: day });
     
@@ -551,7 +553,6 @@ function render() {
     const cont = document.getElementById('programContent');
     cont.innerHTML = '';
     
-    // WEEK CHECK
     let weekData = andreData[state.activeWeek];
     if(!weekData) { weekData = andreData[1]; state.activeWeek = 1; }
 
@@ -611,9 +612,17 @@ function render() {
         exs.forEach((m, i) => {
             const uid = `Andre-${state.activeWeek}-${day}-${i}`;
             const max = state.maxes[m.type] || 0;
-            // Handle Custom Rep Strings like "3x15s" vs Andre numbers "3"
-            let setRepStr = (typeof m.sets === 'string') ? `${m.sets} Sets` : `${m.sets} x ${m.reps}`;
-            if (m.name.includes("⭐")) setRepStr = `${m.reps}`; 
+            
+            // --- FIX FOR CUSTOM REPS DISPLAY ---
+            // If the lift has custom "Sets" defined (like our Smart lifts with "3"), use that.
+            // Otherwise default to the standard logic.
+            let setRepStr = "";
+            if (m.name.includes("⭐")) {
+                // If specific reps are provided (like "10" or "4"), combine with sets.
+                setRepStr = (m.sets) ? `${m.sets} x ${m.reps}` : `${m.reps}`;
+            } else {
+                setRepStr = (typeof m.sets === 'string') ? `${m.sets} Sets` : `${m.sets} x ${m.reps}`;
+            }
 
             let baseLoad = (max > 0) ? Math.round((max * m.pct)/5)*5 : 0;
             
@@ -648,7 +657,6 @@ function render() {
                     let load = Math.round((state.maxes[a.base] * (a.basePct + (w * 0.025)))/5)*5;
                     recHtml = `<span class="acc-rec">Rec: ${load} LBS</span>`;
                 }
-                // Use stored weight or empty
                 const val = state.accWeights[accId] || '';
                 accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${val}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
             });
