@@ -252,6 +252,7 @@ const smartLibrary = {
     "Deadlift: Hips/Lockout": [
         // ** NEW: BLOCK PULLS (SMART) **
         { n: "Block Pulls (Smart)", t: "Lockout", p: 0.80, r: "3x4", s: "deadlift", note: "3-4in Height. W1:3x4@80% | W2:3x3@85% | W3:2x3@90% | W4:2x1@75%" },
+        
         { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
         { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" },
         { n: "Rack Pull Hold", t: "Grip/Traps", p: 1.10, r: "3x10s", s: "deadlift" },
@@ -294,7 +295,8 @@ const smartLibrary = {
         { n: "Egyptian Lateral", t: "Side Delt (Cap)", p: 0.10, r: "4x15", s: "ohp" },
         { n: "Plate Raise", t: "Front Delt", p: 0, r: "3x12", s: "ohp" },
         { n: "Face Pulls", t: "Rear Delt/Health", p: 0.15, r: "3x20", s: "bench" },
-        { n: "Rear Delt Fly", t: "Rear Iso", p: 0.10, r: "3x15", s: "bench" }
+        { n: "Rear Delt Fly", t: "Rear Iso", p: 0.10, r: "3x15", s: "bench" },
+        { n: "Upright Rows", t: "Traps/Side", p: 0.30, r: "3x12", s: "ohp" }
     ],
     "Arms (Bi/Tri)": [
         { n: "Rope Pushdown", t: "Tricep Horseshoe", p: 0.25, r: "3x15", s: "bench" },
@@ -344,7 +346,7 @@ function init() {
     window.copyData = () => alert("Data Saved");
     window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
 
-    // TOOL FUNCTIONS (Full features included)
+    // TOOL FUNCTIONS
     window.openMeetPlanner = () => { const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
     window.openPlateCalc = (w) => {
         if(String(w).includes('%')) return; document.getElementById('plateModal').style.display='flex';
@@ -404,10 +406,8 @@ function setupAuthButtons() {
 async function saveToCloud() {
     const user = auth.currentUser; if(!user) return;
     try { 
-        // 1. Private Data
         await setDoc(doc(db, "users", user.uid), state, { merge: true }); 
         
-        // 2. Leaderboard Data
         const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
         if(total > 0) {
             await setDoc(doc(db, "leaderboard", user.uid), {
@@ -427,18 +427,16 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
-            // Data Hydration
             if(d.maxes) { state.maxes.Squat = d.maxes.Squat||d.maxes.squat||0; state.maxes.Bench = d.maxes.Bench||d.maxes.bench||0; state.maxes.Deadlift = d.maxes.Deadlift||d.maxes.deadlift||0; state.maxes.OHP = d.maxes.OHP||d.maxes.ohp||0; }
             if(d.activeWeek) state.activeWeek = d.activeWeek;
             if(d.completed) state.completed = d.completed;
             if(d.settings) state.settings = d.settings;
-            if(d.accWeights) state.accWeights = d.accWeights || {}; // Restore Accessory Weights
+            if(d.accWeights) state.accWeights = d.accWeights || {};
             if(d.customLifts) state.customLifts = d.customLifts || [];
             
             // LOAD MODIFIERS
-            if (d.modifiers) modifiers = d.modifiers || {}; 
+            if(d.modifiers) modifiers = d.modifiers || {}; 
 
-            // Visual Update
             inputs.Squat.value = state.maxes.Squat||''; inputs.Bench.value = state.maxes.Bench||'';
             inputs.Deadlift.value = state.maxes.Deadlift||''; inputs.OHP.value = state.maxes.OHP||'';
             if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
@@ -696,10 +694,11 @@ window.openOverview = function() {
     // Day Map for ordering
     const dayMap = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     
-    let content = `<div class="modal-content large-modal" style="width:95%; height:90vh; overflow-y:auto; background:#1e1e1e; color:#fff;">
+    // *** GRID-TEMPLATE-COLUMNS: Forces 3 columns so you get a 3x2 layout (1 shot) ***
+    let content = `<div class="modal-content large-modal" style="width:98%; max-width:1400px; height:90vh; overflow-y:auto; background:#1e1e1e; color:#fff;">
         <span onclick="this.parentElement.parentElement.remove()" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
         <h2 style="color:#2196f3; text-align:center;">6-Week Program Overview</h2>
-        <div class="overview-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:15px;">`;
+        <div class="overview-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">`;
 
     // Loop through Weeks 1-6
     for (let w = 1; w <= 6; w++) {
