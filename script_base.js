@@ -155,7 +155,6 @@ const smartLibrary = {
     "Deadlift: Hips/Lockout": [
         // ** NEW: BLOCK PULLS (SMART) **
         { n: "Block Pulls (Smart)", t: "Lockout", p: 0.80, r: "3x4", s: "deadlift", note: "3-4in Height. W1:3x4@80% | W2:3x3@85% | W3:2x3@90% | W4:2x1@75%" },
-        
         { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
         { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" },
         { n: "Rack Pull Hold", t: "Grip/Traps", p: 1.10, r: "3x10s", s: "deadlift" },
@@ -268,10 +267,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('dashMode').addEventListener('change', () => { 
+        // RESET WEEK TO 0 and CLEAR PROGRAM DATA so it rebuilds structure
         activeMobileWeek = 0; 
+        userProgram = []; 
         generateProgram(); 
         saveUIState(); 
     });
+    
     document.getElementById('dashReps').addEventListener('change', () => { 
         activeMobileWeek = 0; 
         generateProgram(); 
@@ -303,39 +305,56 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('accExercise').addEventListener('change', displayAccDetails);
     document.getElementById('ptArea').addEventListener('change', updatePtMovements);
 
-    initProgramData();
     generateProgram();
     updateAccOptions();
 });
 
 // ==========================================
-// 6. PROGRAM GENERATION (UPDATED WITH MODIFIERS)
+// 6. PROGRAM GENERATION (UPDATED WITH PHASES)
 // ==========================================
 function initProgramData() {
   userProgram = [];
-  const daysTemplate = [
-    { name: "Day 1 (Mon)", lifts: [{n: "Primer Bench", t: "bench"}, {n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
-    { name: "Day 2 (Tue)", lifts: [{n: "Primary Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}, {n: "Close Grip Bench (Optional)", t: "bench"}]},
-    { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
-    { name: "Day 4 (Thu) - Back Day", lifts: [
-        {n: "⚠️ Use +Add Workout to populate loads", t: "bench", isLabel: true}, 
-        {n: "Pendlay Row", t: "deadlift"},
-        {n: "Weighted Pull-ups", t: "deadlift"},
-        {n: "Lat Pulldown", t: "deadlift"},
-        {n: "Chest Supported Row", t: "deadlift"},
-        {n: "Face Pulls", t: "bench"}
-    ]},
-    { name: "Day 5 (Fri) - Shoulder Day", lifts: [
-        {n: "⚠️ Use +Add Workout to populate loads", t: "ohp", isLabel: true},
-        {n: "OHP (Strength)", t: "ohp"},
-        {n: "Seated DB Press", t: "ohp"},
-        {n: "Egyptian Lateral Raise", t: "ohp"},
-        {n: "Rear Delt Fly", t: "bench"},
-        {n: "Upright Rows", t: "ohp"}
-    ]},
-    { name: "Day 6 (Sat)", lifts: [{n: "Secondary Bench", t: "bench"}, {n: "Tempo Bench", t: "bench"}, {n: "Pause Squat", t: "squat"}, {n: "Paused DL Cluster", t: "deadlift"}]}
-  ];
-  for (let w = 0; w < 6; w++) userProgram.push({ week: w + 1, days: JSON.parse(JSON.stringify(daysTemplate)) });
+  
+  const mode = document.getElementById('dashMode').value;
+  let weeks = 4;
+  if(mode === 'maintenance' || mode === 'phase1' || mode === 'phase2') weeks = 6;
+  if(mode === 'deload') weeks = 2;
+
+  let daysTemplate = [];
+
+  if (mode === 'phase1') {
+      // PHASE 1: BUILDING
+      daysTemplate = [
+          { name: "Day 1: Squat Var", lifts: [{n:"Safety Bar Squat",t:"squat"}, {n:"Belt Squat",t:"squat"}, {n:"RDL",t:"deadlift"}, {n:"Weighted Planks",t:"squat"}] },
+          { name: "Day 2: Bench Var", lifts: [{n:"Close Grip Bench",t:"bench"}, {n:"Incline DB Press",t:"bench"}, {n:"Weighted Dips",t:"bench"}, {n:"Barbell Rows",t:"deadlift"}] },
+          { name: "Day 3: Deadlift Var", lifts: [{n:"Deficit Deadlift",t:"deadlift"}, {n:"Lat Pulldown",t:"deadlift"}, {n:"GHR",t:"squat"}, {n:"Rear Delt Fly",t:"bench"}] },
+          { name: "Day 4: Upper/GPP", lifts: [{n:"OHP (Strict)",t:"ohp"}, {n:"Pull-ups",t:"deadlift"}, {n:"Hammer Curls",t:"deadlift"}, {n:"Lateral Raises",t:"ohp"}] },
+          { name: "Day 5: Secondary", lifts: [{n:"Squat (Low)",t:"squat"}, {n:"Bench (Low)",t:"bench"}, {n:"Split Squats",t:"squat"}, {n:"Face Pulls",t:"bench"}] },
+          { name: "Day 6: Extra (Opt)", lifts: [{n:"Arm Pump",t:"bench"}, {n:"Calves",t:"squat"}, {n:"Sled Drags",t:"deadlift"}] }
+      ];
+  } else if (mode === 'phase2') {
+      // PHASE 2: PEAKING
+      daysTemplate = [
+          { name: "Day 1: Squat/DL Spec", lifts: [{n:"Comp Squat",t:"squat"}, {n:"Comp Deadlift",t:"deadlift"}, {n:"Block Pulls",t:"deadlift"}] },
+          { name: "Day 2: Bench Spec", lifts: [{n:"Comp Bench",t:"bench"}, {n:"Floor Press",t:"bench"}, {n:"Weighted Dips",t:"bench"}] },
+          { name: "Day 3: Squat Vol", lifts: [{n:"Squat (Vol)",t:"squat"}, {n:"Core Stability",t:"squat"}] },
+          { name: "Day 4: Bench Vol", lifts: [{n:"Bench (Vol)",t:"bench"}, {n:"Tricep Pushdown",t:"bench"}, {n:"Rear Delt Fly",t:"bench"}] },
+          { name: "Day 5: Heavy/OHP", lifts: [{n:"Squat (Peak)",t:"squat"}, {n:"OHP (Heavy)",t:"ohp"}, {n:"Leg Extensions",t:"squat"}] },
+          { name: "Day 6: Weak Points", lifts: [{n:"Heavy Holds",t:"squat"}, {n:"Tricep Pushdowns",t:"bench"}, {n:"Grip Work",t:"deadlift"}] }
+      ];
+  } else {
+      // STANDARD / LINEAR TEMPLATE
+      daysTemplate = [
+        { name: "Day 1 (Mon)", lifts: [{n: "Primer Bench", t: "bench"}, {n: "Tempo Squat", t: "squat"}, {n: "Cluster DL", t: "deadlift"}]},
+        { name: "Day 2 (Tue)", lifts: [{n: "Primary Bench", t: "bench"}, {n: "Larsen Press", t: "bench"}, {n: "Close Grip Bench (Optional)", t: "bench"}]},
+        { name: "Day 3 (Wed)", lifts: [{n: "Comp Squat", t: "squat"}]},
+        { name: "Day 4 (Thu) - Back Day", lifts: [{n: "⚠️ Use +Add Workout", t: "bench", isLabel: true}, {n: "Pendlay Row", t: "deadlift"}, {n: "Weighted Pull-ups", t: "deadlift"}, {n: "Lat Pulldown", t: "deadlift"}, {n: "Chest Supported Row", t: "deadlift"}, {n: "Face Pulls", t: "bench"}]},
+        { name: "Day 5 (Fri) - Shoulder Day", lifts: [{n: "⚠️ Use +Add Workout", t: "ohp", isLabel: true}, {n: "OHP (Strength)", t: "ohp"}, {n: "Seated DB Press", t: "ohp"}, {n: "Egyptian Lateral Raise", t: "ohp"}, {n: "Rear Delt Fly", t: "bench"}, {n: "Upright Rows", t: "ohp"}]},
+        { name: "Day 6 (Sat)", lifts: [{n: "Secondary Bench", t: "bench"}, {n: "Tempo Bench", t: "bench"}, {n: "Pause Squat", t: "squat"}, {n: "Paused DL Cluster", t: "deadlift"}]}
+      ];
+  }
+
+  for (let w = 0; w < weeks; w++) userProgram.push({ week: w + 1, days: JSON.parse(JSON.stringify(daysTemplate)) });
 }
 
 function generateProgram() {
@@ -352,7 +371,7 @@ function generateProgram() {
   const repsVal = document.getElementById('dashReps').value;
   const reps = parseInt(repsVal); 
   const mode = document.getElementById('dashMode').value;
-  const startPct = basePctMap[reps] || 0.75; 
+  let startPct = basePctMap[reps] || 0.75; 
 
   // RANDOMIZER MODE CHECK
   const randCard = document.getElementById('randomizerCard');
@@ -367,7 +386,7 @@ function generateProgram() {
       document.querySelector('.mobile-nav').style.display = 'block';
   }
 
-  let numW = (mode === 'maintenance' ? 6 : (mode === 'deload' ? 2 : 4));
+  let numW = userProgram.length;
   const mobLabel = document.getElementById('mobileWeekLabel');
   if(mobLabel) mobLabel.innerText = `Week ${activeMobileWeek + 1}`;
   
@@ -376,21 +395,22 @@ function generateProgram() {
 
   for (let w = 0; w < numW; w++) {
     
-    // ** RELATIVE DELOAD LOGIC **
+    // ** RELATIVE DELOAD LOGIC (Standard) **
     let mod = (mode === 'maintenance' ? w * 0.02 : w * 0.0425);
     if (mode === 'deload') mod = (w === 0 ? -0.08 : -0.04);
 
-    const currentTempoPct = tempoStartPct + (w * 0.04);
-    const curPct = startPct + mod; // Drives Primary Bench
-    const psPct = 0.70 + mod;
+    let currentTempoPct = tempoStartPct + (w * 0.04);
+    let curPct = startPct + mod; 
+    let psPct = 0.70 + mod;
 
     let activeClass = (w === activeMobileWeek) ? 'active-week' : '';
     let styleDef = (window.innerWidth <= 768 && w !== activeMobileWeek) ? 'display:none;' : '';
-    let headerColor = (mode === 'deload') ? '#4caf50' : '#2196f3';
+    let headerColor = (mode === 'deload' || w === 5) ? '#4caf50' : '#2196f3'; 
+    if(mode === 'phase2' && w === 4) headerColor = '#FFD700'; // Peak week gold
 
     html += `<div class="program-card ${activeClass}" style="background:#1e1e1e; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #333; ${styleDef}">
                 <h3 style="color:${headerColor}; border-bottom:1px solid #444; padding-bottom:5px;">
-                    Week ${w + 1} <span style="font-size:0.8em; color:#aaa;">(${Math.round(curPct * 100 * fastedMult)}%)</span>
+                    Week ${w + 1}
                 </h3>`;
 
     userProgram[w].days.forEach((day, dIdx) => {
@@ -400,7 +420,6 @@ function generateProgram() {
       // ** PRE-PROCESS: SPLIT PRIMARY BENCH & INJECT ACC/CUSTOM **
       rawLifts.forEach(l => {
           if (l.n === "Primary Bench") {
-              // Split into Top Set and Backoff Set
               activeLifts.push({ n: "Primary Bench (Top)", t: "bench", isPrimaryTop: true });
               activeLifts.push({ n: "Primary Bench (Backoff)", t: "bench", isPrimaryBackoff: true });
           } else {
@@ -408,44 +427,34 @@ function generateProgram() {
           }
       });
 
+      // STANDARD ACC INJECTION
       if (mode === 'standard_acc') {
-        const aReps = accPeakingReps[w];
+        const aReps = accPeakingReps[w] || 8;
         if (dIdx === 0) activeLifts.push({n: "OHP (Volume)", s:5, r:10, p:ohpVolPct, t:"bench", isOHP: true});
-        if (dIdx === 1) { activeLifts.push({n: "Close Grip Bench", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Weighted Dips", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Floor Press", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Dumbbell Flyes", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}); }
-        if (dIdx === 2) { activeLifts.push({n: "Hack Squat", s:accSets[w], r:aReps, p:0, t:"squat", isAcc: true}, {n: "Leg Press", s:accSets[w], r:aReps, p:0, t:"squat", isAcc: true}, {n: "Belt Squat", s:accSets[w], r:aReps, p:0, t:"squat", isAcc: true}, {n: "Leg Extensions", s:accSets[w], r:aReps, p:0, t:"squat", isAcc: true}); }
-        if (dIdx === 3) { activeLifts.push({n: "Seal Rows (S-Tier)", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Weighted Pull-ups", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "T-Bar Rows", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Dumbbell Row", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Face Pulls", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}); }
-        if (dIdx === 4) { activeLifts = [{n: "OHP (Strength)", s:curSets, r:3, p:ohpStrengthStart + (w*ohpStrengthProg), t:"bench", isOHP: true}, {n: "Seated DB Press", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Lateral Raises", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Rear Delt Flyes", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}, {n: "Upright Rows", s:accSets[w], r:aReps, p:0, t:"bench", isAcc: true}]; }
-        if (dIdx === 5) { activeLifts.push({n: "Stiff Leg DL", s:5, r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Glute Ham Raise", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Good Mornings", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "RDLs (PL Specific)", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}); }
+        if (dIdx === 1) { activeLifts.push({n: "Close Grip Bench", s:accSets[w]||3, r:aReps, p:0, t:"bench", isAcc: true}, {n: "Weighted Dips", s:3, r:aReps, p:0, t:"bench", isAcc: true}, {n: "Floor Press", s:3, r:aReps, p:0, t:"bench", isAcc: true}); }
+        if (dIdx === 2) { activeLifts.push({n: "Hack Squat", s:3, r:aReps, p:0, t:"squat", isAcc: true}, {n: "Leg Press", s:3, r:aReps, p:0, t:"squat", isAcc: true}); }
+        if (dIdx === 3) { activeLifts.push({n: "Seal Rows", s:3, r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Pull-ups", s:3, r:8, p:0, t:"deadlift", isAcc: true}); }
       }
 
       customLifts.forEach((cl, originalIndex) => {
           if (cl.dayIndex === dIdx) {
-              
-              // ** BASE MAP SMART LOGIC (BLOCK/SNATCH) **
-              // Since Base Map generates 4-6 weeks dynamically, we map 'w' (0-5) to logic
               let dynPct = cl.p;
               let dynReps = cl.r;
-
               if (cl.n.includes("Block Pulls (Smart)")) {
                   if (w === 0) { dynPct = 0.80; dynReps = "4"; }
                   if (w === 1) { dynPct = 0.85; dynReps = "3"; }
                   if (w === 2) { dynPct = 0.90; dynReps = "3"; }
                   if (w === 3) { dynPct = 0.75; dynReps = "1"; }
-                  if (w > 3) { dynPct = 0.70; dynReps = "3"; } // Fallback
+                  if (w > 3) { dynPct = 0.70; dynReps = "3"; } 
               }
-              
               if (cl.n.includes("Snatch Grip RDL (Smart)")) {
                   if (w === 0) { dynPct = 0.45; dynReps = "10"; }
                   if (w === 1) { dynPct = 0.50; dynReps = "8"; }
                   if (w === 2) { dynPct = 0.55; dynReps = "6"; }
                   if (w >= 3) { dynPct = 0; dynReps = "OFF"; }
               }
-
               if (dynPct > 0) {
-                 activeLifts.push({ 
-                     n: cl.n, t: cl.s, isCustom: true, p: dynPct, r: dynReps,
-                     dbIndex: originalIndex // Store for deletion
-                 });
+                 activeLifts.push({ n: cl.n, t: cl.s, isCustom: true, p: dynPct, r: dynReps, dbIndex: originalIndex });
               }
           }
       });
@@ -459,55 +468,116 @@ function generateProgram() {
         let intens = curPct, dReps = reps, fSets = 3, weightDisplay = "";
         let finalIntens = lift.isOHP ? lift.p : intens;
 
-        // --- BENCH & LIFT LOGIC ---
-        if (lift.n === "Primer Bench") {
-            let pMod = 0.12; 
-            if (w === 0) { fSets=4; dReps=2; finalIntens = curPct - pMod; }
-            if (w === 1) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.02); }
-            if (w === 2) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.04); }
-            if (w >= 3) { fSets=1; dReps=1; finalIntens = 0.70; } 
-        }
-        else if (lift.isPrimaryTop) {
-            fSets = 1; dReps = reps; finalIntens = curPct;
-        }
-        else if (lift.isPrimaryBackoff) {
-            fSets = 3; dReps = reps; finalIntens = curPct - 0.05;
-        }
-        else if (lift.n === "Secondary Bench") {
-            let sMod = 0.15;
-            if (w === 0) { fSets=4; dReps=4; finalIntens = curPct - sMod; }
-            if (w === 1) { fSets=4; dReps=3; finalIntens = curPct - (sMod - 0.02); }
-            if (w === 2) { fSets=3; dReps=3; finalIntens = curPct - (sMod - 0.04); }
-            if (w >= 3) { fSets=2; dReps=3; finalIntens = 0.70; }
-        }
-        else if (lift.n === "Larsen Press") { dReps = 3; finalIntens = 0.70; }
-        else if (lift.n.includes("Close Grip")) { dReps = 8; finalIntens = 0.75; }
-        else if (lift.n === "Paused Bench") { dReps = reps; }
-        else if (lift.n.includes("Tempo")) { finalIntens = currentTempoPct; dReps = 5; }
-        else if (lift.n === "Pause Squats") { finalIntens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); }
-        else if (lift.n.includes("Paused")) { dReps = 3; }
-        
-        // Back Day Logic
-        if (lift.n === "Pendlay Row") { finalIntens = 0.60; dReps = 6; fSets = 4; }
-        if (lift.n === "Weighted Pull-ups") { finalIntens = 0.30; dReps = 8; fSets = 3; }
-        if (lift.n === "Lat Pulldown") { finalIntens = 0.40; dReps = 12; fSets = 3; }
-        if (lift.n === "Chest Supported Row") { finalIntens = 0.30; dReps = 12; fSets = 3; }
-        if (lift.n === "Face Pulls") { finalIntens = 0.15; dReps = 20; fSets = 3; }
+        // =========================================
+        // LOGIC FOR PHASE 1: BUILDING
+        // =========================================
+        if (mode === 'phase1') {
+            // Default Reps per Week Chart
+            const p1Chart = [
+                {p:0.65, s:3, r:8}, {p:0.67, s:3, r:8}, {p:0.69, s:4, r:6}, 
+                {p:0.72, s:4, r:6}, {p:0.75, s:5, r:5}, {p:0.50, s:3, r:5}
+            ];
+            const p1Acc = [0.60, 0.60, 0.70, 0.70, 0.80, 0.50];
+            const p1AccReps = [15, 15, 12, 12, 8, 10];
 
-        // OHP & Shoulder Logic
-        if (lift.n === "OHP (Strength)") {
-            if (w === 0) { fSets=4; dReps=6; finalIntens=0.70; }
-            if (w === 1) { fSets=4; dReps=5; finalIntens=0.75; }
-            if (w === 2) { fSets=4; dReps=4; finalIntens=0.80; }
-            if (w >= 3) { fSets=3; dReps=3; finalIntens=0.85; } // Peak
+            let c = p1Chart[w];
+            
+            // Main Lifts
+            if(["Safety Bar Squat", "Close Grip Bench", "Deficit Deadlift", "OHP (Strict)"].includes(lift.n)) {
+                finalIntens = c.p; fSets = c.s; dReps = c.r;
+                if(lift.n === "OHP (Strict)") { dReps = 10; fSets = 3; finalIntens = 0.60 + (w*0.02); } // OHP scaling
+            } 
+            // Secondary
+            else if(lift.n.includes("(Low)")) {
+                finalIntens = 0.60; fSets = 3; dReps = 8;
+            }
+            // Accessories
+            else {
+                finalIntens = 0; // Show RPE/Text usually, or calc if possible
+                // Prompt said % of Max Rep Weight, hard to calc without known rep max. 
+                // We will treat as standard accessory logic
+                fSets = 3; dReps = p1AccReps[w];
+                weightDisplay = `${Math.round(p1Acc[w]*100)}% Effort`;
+            }
         }
-        if (["Seated DB Press", "Egyptian Lateral Raise", "Rear Delt Fly", "Upright Rows"].includes(lift.n)) {
-             fSets = (w >= 3) ? 2 : 3; 
-             dReps = 12;
-             if(lift.n.includes("Seated")) finalIntens = 0.35;
-             if(lift.n.includes("Egyptian")) finalIntens = 0.15;
-             if(lift.n.includes("Rear")) finalIntens = 0.15;
-             if(lift.n.includes("Upright")) finalIntens = 0.30;
+
+        // =========================================
+        // LOGIC FOR PHASE 2: PEAKING
+        // =========================================
+        else if (mode === 'phase2') {
+            const p2Chart = [
+                {p:0.85, s:3, r:3}, {p:0.88, s:2, r:2}, {p:0.91, s:3, r:1}, 
+                {p:0.93, s:3, r:1}, {p:0.95, s:1, r:1}, {p:0.50, s:3, r:1}
+            ];
+            let c = p2Chart[w];
+
+            if(["Comp Squat", "Comp Deadlift", "Comp Bench", "Squat (Peak)"].includes(lift.n)) {
+                finalIntens = c.p; fSets = c.s; dReps = c.r;
+            }
+            else if(lift.n === "OHP (Heavy)") {
+                finalIntens = 0.75 + (w*0.02); fSets = 4; dReps = 8;
+            }
+            else if(lift.n.includes("(Vol)")) {
+                finalIntens = 0.65; fSets = 2; dReps = 3;
+            }
+            else {
+                // Accessories taper
+                let accR = [8, 6, 5, 3, 5, 5];
+                fSets = (w >= 2) ? 2 : 3;
+                dReps = accR[w];
+                weightDisplay = "Heavy RPE";
+            }
+        }
+
+        // =========================================
+        // STANDARD LOGIC (For other modes)
+        // =========================================
+        else {
+            if (lift.n === "Primer Bench") {
+                let pMod = 0.12; 
+                if (w === 0) { fSets=4; dReps=2; finalIntens = curPct - pMod; }
+                else if (w === 1) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.02); }
+                else if (w === 2) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.04); }
+                else if (w >= 3) { fSets=1; dReps=1; finalIntens = 0.70; } 
+            }
+            else if (lift.isPrimaryTop) { fSets = 1; dReps = reps; finalIntens = curPct; }
+            else if (lift.isPrimaryBackoff) { fSets = 3; dReps = reps; finalIntens = curPct - 0.05; }
+            else if (lift.n === "Secondary Bench") {
+                let sMod = 0.15;
+                if (w === 0) { fSets=4; dReps=4; finalIntens = curPct - sMod; }
+                else if (w === 1) { fSets=4; dReps=3; finalIntens = curPct - (sMod - 0.02); }
+                else if (w === 2) { fSets=3; dReps=3; finalIntens = curPct - (sMod - 0.04); }
+                else if (w >= 3) { fSets=2; dReps=3; finalIntens = 0.70; }
+            }
+            else if (lift.n === "Larsen Press") { dReps = 3; finalIntens = 0.70; }
+            else if (lift.n.includes("Close Grip")) { dReps = 8; finalIntens = 0.75; }
+            else if (lift.n === "Paused Bench") { dReps = reps; }
+            else if (lift.n.includes("Tempo")) { finalIntens = currentTempoPct; dReps = 5; }
+            else if (lift.n === "Pause Squats") { finalIntens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); }
+            else if (lift.n.includes("Paused")) { dReps = 3; }
+            
+            // Back Day Logic
+            if (lift.n === "Pendlay Row") { finalIntens = 0.60; dReps = 6; fSets = 4; }
+            if (lift.n === "Weighted Pull-ups") { finalIntens = 0.30; dReps = 8; fSets = 3; }
+            if (lift.n === "Lat Pulldown") { finalIntens = 0.40; dReps = 12; fSets = 3; }
+            if (lift.n === "Chest Supported Row") { finalIntens = 0.30; dReps = 12; fSets = 3; }
+            if (lift.n === "Face Pulls") { finalIntens = 0.15; dReps = 20; fSets = 3; }
+
+            // OHP & Shoulder Logic
+            if (lift.n === "OHP (Strength)") {
+                if (w === 0) { fSets=4; dReps=6; finalIntens=0.70; }
+                if (w === 1) { fSets=4; dReps=5; finalIntens=0.75; }
+                if (w === 2) { fSets=4; dReps=4; finalIntens=0.80; }
+                if (w >= 3) { fSets=3; dReps=3; finalIntens=0.85; } // Peak
+            }
+            if (["Seated DB Press", "Egyptian Lateral Raise", "Rear Delt Fly", "Upright Rows"].includes(lift.n)) {
+                 fSets = (w >= 3) ? 2 : 3; 
+                 dReps = 12;
+                 if(lift.n.includes("Seated")) finalIntens = 0.35;
+                 if(lift.n.includes("Egyptian")) finalIntens = 0.15;
+                 if(lift.n.includes("Rear")) finalIntens = 0.15;
+                 if(lift.n.includes("Upright")) finalIntens = 0.30;
+            }
         }
 
         if (lift.isLabel) {
@@ -527,7 +597,7 @@ function generateProgram() {
             weightDisplay = `<span style="color:#aaa;">RPE ${accRPEs[w]}</span>`; 
         } 
         else {
-            baseWeight = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
+            if(finalIntens > 0) baseWeight = Math.round((mx * finalIntens * fastedMult) / 5) * 5;
         }
 
         // *** APPLY PERFORMANCE MODIFIER ***
@@ -542,11 +612,13 @@ function generateProgram() {
             warning = " ⚠️";
         }
 
-        if (baseWeight > 0) {
+        if (baseWeight > 0 && !weightDisplay) {
             weightDisplay = `<strong style="${style}">${finalWeight} lbs${warning}</strong>`;
             
             // Add the EDIT PENCIL
             weightDisplay += ` <span onclick="adjustWeight('${lift.n}', ${baseWeight})" style="cursor:pointer; font-size:14px; margin-left:5px; color:#aaa;">✎</span>`;
+        } else if(!weightDisplay) {
+             weightDisplay = "See Notes";
         }
 
         // Backoff display logic
@@ -689,7 +761,10 @@ function toggleFasted() {
 
 function changeMobileWeek(dir) {
   const mode = document.getElementById('dashMode').value;
-  let maxW = (mode === 'maintenance' ? 6 : (mode === 'deload' ? 2 : 4));
+  let maxW = 4;
+  if(mode === 'maintenance' || mode === 'phase1' || mode === 'phase2') maxW = 6; // Update max weeks here too
+  if(mode === 'deload') maxW = 2;
+  
   activeMobileWeek += dir;
   if(activeMobileWeek < 0) activeMobileWeek = maxW - 1;
   if(activeMobileWeek >= maxW) activeMobileWeek = 0;
