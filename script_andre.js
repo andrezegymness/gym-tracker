@@ -344,7 +344,7 @@ function init() {
     window.copyData = () => alert("Data Saved");
     window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
 
-    // TOOL FUNCTIONS
+    // TOOL FUNCTIONS (Full features included)
     window.openMeetPlanner = () => { const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
     window.openPlateCalc = (w) => {
         if(String(w).includes('%')) return; document.getElementById('plateModal').style.display='flex';
@@ -404,8 +404,10 @@ function setupAuthButtons() {
 async function saveToCloud() {
     const user = auth.currentUser; if(!user) return;
     try { 
+        // 1. Private Data
         await setDoc(doc(db, "users", user.uid), state, { merge: true }); 
         
+        // 2. Leaderboard Data
         const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
         if(total > 0) {
             await setDoc(doc(db, "leaderboard", user.uid), {
@@ -425,16 +427,18 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
+            // Data Hydration
             if(d.maxes) { state.maxes.Squat = d.maxes.Squat||d.maxes.squat||0; state.maxes.Bench = d.maxes.Bench||d.maxes.bench||0; state.maxes.Deadlift = d.maxes.Deadlift||d.maxes.deadlift||0; state.maxes.OHP = d.maxes.OHP||d.maxes.ohp||0; }
             if(d.activeWeek) state.activeWeek = d.activeWeek;
             if(d.completed) state.completed = d.completed;
             if(d.settings) state.settings = d.settings;
-            if(d.accWeights) state.accWeights = d.accWeights || {};
+            if(d.accWeights) state.accWeights = d.accWeights || {}; // Restore Accessory Weights
             if(d.customLifts) state.customLifts = d.customLifts || [];
             
             // LOAD MODIFIERS
-            if(d.modifiers) modifiers = d.modifiers || {}; 
+            if (d.modifiers) modifiers = d.modifiers || {}; 
 
+            // Visual Update
             inputs.Squat.value = state.maxes.Squat||''; inputs.Bench.value = state.maxes.Bench||'';
             inputs.Deadlift.value = state.maxes.Deadlift||''; inputs.OHP.value = state.maxes.OHP||'';
             if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
@@ -681,5 +685,103 @@ function render() {
         cont.appendChild(card);
     });
 }
+
+// ** NEW: OVERVIEW FUNCTION **
+window.openOverview = function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.style.zIndex = '3000';
+    
+    // Day Map for ordering
+    const dayMap = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    
+    let content = `<div class="modal-content large-modal" style="width:95%; height:90vh; overflow-y:auto; background:#1e1e1e; color:#fff;">
+        <span onclick="this.parentElement.parentElement.remove()" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
+        <h2 style="color:#2196f3; text-align:center;">6-Week Program Overview</h2>
+        <div class="overview-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:15px;">`;
+
+    // Loop through Weeks 1-6
+    for (let w = 1; w <= 6; w++) {
+        let weekData = andreData[w];
+        if (!weekData) continue; // Skip if empty
+        
+        let weekHtml = `<div style="background:#222; border:1px solid #444; padding:10px; border-radius:5px;">
+            <h3 style="color:${w===6?'#4caf50':'#FFD700'}; border-bottom:1px solid #555; padding-bottom:5px;">Week ${w} ${w===6?'(Deload)':''}</h3>`;
+            
+        dayMap.forEach((day, dayIdx) => {
+            if (!weekData[day]) return;
+            
+            // Build list of exercises for this day (Base + Custom)
+            let dailyLifts = [...weekData[day]];
+            
+            // Inject Custom/Smart Workouts for this specific week
+            state.customLifts.forEach(c => {
+                if (c.dayIndex === dayIdx) {
+                    let typeMap = { 'squat': 'Squat', 'bench': 'Bench', 'deadlift': 'Deadlift', 'ohp': 'OHP' };
+                    let pct = c.p;
+                    let reps = c.r;
+                    
+                    // Logic for Smart Workouts per week
+                    if (c.n.includes("Block Pulls (Smart)")) {
+                        if (w === 1) { pct = 0.80; reps = "4"; }
+                        if (w === 2) { pct = 0.85; reps = "3"; }
+                        if (w === 3) { pct = 0.90; reps = "3"; }
+                        if (w === 4) { pct = 0.75; reps = "1"; }
+                    }
+                    if (c.n.includes("Snatch Grip RDL (Smart)")) {
+                         if (w === 1) { pct = 0.45; reps = "10"; }
+                         if (w === 2) { pct = 0.50; reps = "8"; }
+                         if (w === 3) { pct = 0.55; reps = "6"; }
+                         if (w >= 4) { pct = 0; reps = "OFF"; }
+                    }
+                    
+                    if (pct > 0) {
+                        if (w === 6) pct = pct * 0.90; 
+                        dailyLifts.push({
+                            name: c.n + " ⭐", 
+                            sets: "3", 
+                            reps: reps, 
+                            pct: pct, 
+                            type: typeMap[c.s]
+                        });
+                    }
+                }
+            });
+
+            if (dailyLifts.length > 0) {
+                weekHtml += `<div style="margin-top:8px;">
+                    <div style="font-size:0.9em; font-weight:bold; color:#aaa;">${day}</div>
+                    <ul style="list-style:none; padding:0; margin:0; font-size:0.85em;">`;
+                    
+                dailyLifts.forEach(m => {
+                    let max = state.maxes[m.type] || 0;
+                    let load = (max > 0) ? Math.round((max * m.pct)/5)*5 : 0;
+                    
+                    // Apply modifiers if any
+                    let mod = modifiers[m.name] || 1.0;
+                    if(mod !== 1.0) load = Math.round((load * mod)/5)*5;
+                    
+                    let setRep = "";
+                    if (String(m.reps).includes('x')) setRep = m.reps;
+                    else setRep = `${m.sets}x${m.reps}`;
+                    
+                    weekHtml += `<li style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding:2px 0;">
+                        <span>${m.name}</span>
+                        <span style="color:#2196f3;">${setRep} @ ${load > 0 ? load : Math.round(m.pct*100)+'%'}</span>
+                    </li>`;
+                });
+                weekHtml += `</ul></div>`;
+            }
+        });
+        
+        weekHtml += `</div>`;
+        content += weekHtml;
+    }
+
+    content += `</div></div>`;
+    modal.innerHTML = content;
+    document.body.appendChild(modal);
+};
 
 init();
