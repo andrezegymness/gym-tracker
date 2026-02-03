@@ -244,12 +244,16 @@ const smartLibrary = {
     // --- DEADLIFT ---
     "Deadlift: Floor/Start": [
         { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift" },
-        { n: "Snatch Grip DL", t: "Upper Back", p: 0.60, r: "3x6", s: "deadlift" },
         { n: "Halting DL", t: "Start Mechanics", p: 0.70, r: "3x5", s: "deadlift" },
-        { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" }
+        { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" },
+        
+        // ** NEW SMART ADDITION **
+        { n: "Snatch Grip RDL (Smart)", t: "Upper Back", p: 0.40, r: "3x10", s: "deadlift", note: "W1:3x10@40-45% | W2:3x8@45-50% | W3:2x6@50-55% | W4-5:OFF" }
     ],
     "Deadlift: Hips/Lockout": [
-        { n: "Block Pulls", t: "Lockout", p: 0.95, r: "3x3", s: "deadlift" },
+        // ** NEW SMART ADDITION **
+        { n: "Block Pulls (Smart)", t: "Lockout", p: 0.80, r: "3x4", s: "deadlift", note: "3-4in Height. W1:3x4@80% | W2:3x3@85% | W3:2x3@90% | W4:2x1@75%" },
+        
         { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
         { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" },
         { n: "Rack Pull Hold", t: "Grip/Traps", p: 1.10, r: "3x10s", s: "deadlift" },
@@ -342,7 +346,7 @@ function init() {
     window.copyData = () => alert("Data Saved");
     window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
 
-    // TOOL FUNCTIONS
+    // TOOL FUNCTIONS (Full features included)
     window.openMeetPlanner = () => { const m=document.getElementById('meetModal'); const g=document.getElementById('meetGrid'); m.style.display='flex'; let h=''; ['Squat','Bench','Deadlift'].forEach(x=>{ const mx=state.maxes[x]||0; h+=`<div class="meet-col"><h4>${x}</h4><div class="attempt-row"><span>Opener</span><span class="attempt-val">${getLoad(0.91,mx)}</span></div><div class="attempt-row"><span>2nd</span><span class="attempt-val">${getLoad(0.96,mx)}</span></div><div class="attempt-row"><span>3rd</span><span class="attempt-val pr">${getLoad(1.02,mx)}</span></div></div>`; }); g.innerHTML=h; };
     window.openPlateCalc = (w) => {
         if(String(w).includes('%')) return; document.getElementById('plateModal').style.display='flex';
@@ -402,8 +406,10 @@ function setupAuthButtons() {
 async function saveToCloud() {
     const user = auth.currentUser; if(!user) return;
     try { 
+        // 1. Private Data
         await setDoc(doc(db, "users", user.uid), state, { merge: true }); 
         
+        // 2. Leaderboard Data
         const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
         if(total > 0) {
             await setDoc(doc(db, "leaderboard", user.uid), {
@@ -423,16 +429,18 @@ async function loadFromCloud(uid) {
         const snap = await getDoc(doc(db, "users", uid));
         if(snap.exists()) {
             const d = snap.data();
+            // Data Hydration
             if(d.maxes) { state.maxes.Squat = d.maxes.Squat||d.maxes.squat||0; state.maxes.Bench = d.maxes.Bench||d.maxes.bench||0; state.maxes.Deadlift = d.maxes.Deadlift||d.maxes.deadlift||0; state.maxes.OHP = d.maxes.OHP||d.maxes.ohp||0; }
             if(d.activeWeek) state.activeWeek = d.activeWeek;
             if(d.completed) state.completed = d.completed;
             if(d.settings) state.settings = d.settings;
-            if(d.accWeights) state.accWeights = d.accWeights || {};
+            if(d.accWeights) state.accWeights = d.accWeights || {}; // Restore Accessory Weights
             if(d.customLifts) state.customLifts = d.customLifts || [];
             
             // LOAD MODIFIERS
-            if(d.modifiers) modifiers = d.modifiers || {}; 
+            if (d.modifiers) modifiers = d.modifiers || {}; 
 
+            // Visual Update
             inputs.Squat.value = state.maxes.Squat||''; inputs.Bench.value = state.maxes.Bench||'';
             inputs.Deadlift.value = state.maxes.Deadlift||''; inputs.OHP.value = state.maxes.OHP||'';
             if(state.settings.bw && document.getElementById('bodyweight')) document.getElementById('bodyweight').value = state.settings.bw;
@@ -543,6 +551,7 @@ function render() {
     const cont = document.getElementById('programContent');
     cont.innerHTML = '';
     
+    // WEEK CHECK
     let weekData = andreData[state.activeWeek];
     if(!weekData) { weekData = andreData[1]; state.activeWeek = 1; }
 
@@ -556,16 +565,39 @@ function render() {
         state.customLifts.forEach(c => {
             if (c.dayIndex === dayIdx) {
                 let typeMap = { 'squat': 'Squat', 'bench': 'Bench', 'deadlift': 'Deadlift', 'ohp': 'OHP' };
-                let pct = c.p;
-                if (state.activeWeek === 6) pct = pct * 0.90; 
                 
-                exs.push({
-                    name: c.n + " ⭐", 
-                    sets: "3", 
-                    reps: c.r, 
-                    pct: pct, 
-                    type: typeMap[c.s] 
-                });
+                // ** ANDRE SMART LOGIC (BLOCK PULLS / SNATCH GRIP) **
+                let pct = c.p;
+                let reps = c.r;
+                let week = state.activeWeek;
+
+                if (c.n.includes("Block Pulls (Smart)")) {
+                    if (week === 1) { pct = 0.80; reps = "4"; }
+                    if (week === 2) { pct = 0.85; reps = "3"; }
+                    if (week === 3) { pct = 0.90; reps = "3"; } // Range 88-90
+                    if (week === 4) { pct = 0.75; reps = "1"; } // Range 70-75
+                    // W5/6 logic defaults to 0.70/Deload
+                }
+                
+                if (c.n.includes("Snatch Grip RDL (Smart)")) {
+                     if (week === 1) { pct = 0.45; reps = "10"; }
+                     if (week === 2) { pct = 0.50; reps = "8"; }
+                     if (week === 3) { pct = 0.55; reps = "6"; }
+                     if (week >= 4) { pct = 0; reps = "OFF"; } // Off logic
+                }
+                
+                if (pct > 0) {
+                    // Deload check
+                    if (state.activeWeek === 6) pct = pct * 0.90; 
+                    
+                    exs.push({
+                        name: c.n + " ⭐", 
+                        sets: "3", 
+                        reps: reps, 
+                        pct: pct, 
+                        type: typeMap[c.s] 
+                    });
+                }
             }
         });
 
@@ -616,6 +648,7 @@ function render() {
                     let load = Math.round((state.maxes[a.base] * (a.basePct + (w * 0.025)))/5)*5;
                     recHtml = `<span class="acc-rec">Rec: ${load} LBS</span>`;
                 }
+                // Use stored weight or empty
                 const val = state.accWeights[accId] || '';
                 accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${val}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
             });
