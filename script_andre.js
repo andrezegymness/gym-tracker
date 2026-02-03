@@ -9,7 +9,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // ==========================================
-// 1. FULL ANDRE MAP DATA (DO NOT TRUNCATE)
+// 1. FULL ANDRE MAP DATA
 // ==========================================
 const andreData = {
   1: {
@@ -490,10 +490,6 @@ function addCustomLift() {
     let repsToUse = item.r;
     let pctToUse = item.p;
     
-    // Auto-adjust Smart Logic based on week for Andre Map if needed
-    // (Note: Andre map changes state.activeWeek, but custom lifts are static objects. 
-    // We store the base logic and calculate weekly changes in RENDER)
-    
     state.customLifts.push({ ...item, dayIndex: day });
     
     saveToCloud(); // Save to Firebase for Andre User
@@ -502,7 +498,16 @@ function addCustomLift() {
     alert(`Added ${item.n} to Week Plan`);
 }
 
+// ** NEW: REMOVE SINGLE LIFT **
+window.removeCustomLift = function(index) {
+    if(!confirm("Remove this custom workout?")) return;
+    state.customLifts.splice(index, 1);
+    saveToCloud();
+    render();
+};
+
 window.clearCustomLifts = function() {
+    if(!confirm("Clear ALL custom workouts?")) return;
     state.customLifts = [];
     saveToCloud();
     render();
@@ -563,7 +568,9 @@ function render() {
         
         // ** INJECT CUSTOM WORKOUTS **
         const dayIdx = dayMap.indexOf(day);
-        state.customLifts.forEach(c => {
+        
+        // Loop through custom lifts and attach their ORIGINAL index so we can delete them
+        state.customLifts.forEach((c, originalIndex) => {
             if (c.dayIndex === dayIdx) {
                 let typeMap = { 'squat': 'Squat', 'bench': 'Bench', 'deadlift': 'Deadlift', 'ohp': 'OHP' };
                 
@@ -596,7 +603,9 @@ function render() {
                         sets: "3", 
                         reps: reps, 
                         pct: pct, 
-                        type: typeMap[c.s] 
+                        type: typeMap[c.s],
+                        isCustom: true,
+                        dbIndex: originalIndex // Store index for deletion
                     });
                 }
             }
@@ -613,13 +622,19 @@ function render() {
             const uid = `Andre-${state.activeWeek}-${day}-${i}`;
             const max = state.maxes[m.type] || 0;
             
-            // --- FIX FOR CUSTOM REPS DISPLAY ---
-            // If the lift has custom "Sets" defined (like our Smart lifts with "3"), use that.
-            // Otherwise default to the standard logic.
+            // --- FIX FOR 3x3x8 DISPLAY ---
             let setRepStr = "";
-            if (m.name.includes("⭐")) {
-                // If specific reps are provided (like "10" or "4"), combine with sets.
-                setRepStr = (m.sets) ? `${m.sets} x ${m.reps}` : `${m.reps}`;
+            if (m.isCustom) {
+                // If the reps string already contains "x" (like "3x8"), just show that.
+                if (String(m.reps).includes('x')) {
+                    setRepStr = m.reps; 
+                } else {
+                    setRepStr = `${m.sets} x ${m.reps}`;
+                }
+                // Add Delete Button for custom lifts
+                if (m.name.includes("⭐")) {
+                    setRepStr += ` <span onclick="removeCustomLift(${m.dbIndex})" style="cursor:pointer; color:red; margin-left:5px;">🗑️</span>`;
+                }
             } else {
                 setRepStr = (typeof m.sets === 'string') ? `${m.sets} Sets` : `${m.sets} x ${m.reps}`;
             }
