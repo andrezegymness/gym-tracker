@@ -418,7 +418,7 @@ function generateProgram() {
         if (dIdx === 5) { activeLifts.push({n: "Stiff Leg DL", s:5, r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Glute Ham Raise", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "Good Mornings", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}, {n: "RDLs (PL Specific)", s:accSets[w], r:aReps, p:0, t:"deadlift", isAcc: true}); }
       }
 
-      customLifts.forEach(cl => {
+      customLifts.forEach((cl, originalIndex) => {
           if (cl.dayIndex === dIdx) {
               
               // ** BASE MAP SMART LOGIC (BLOCK/SNATCH) **
@@ -442,7 +442,10 @@ function generateProgram() {
               }
 
               if (dynPct > 0) {
-                 activeLifts.push({ n: cl.n, t: cl.s, isCustom: true, p: dynPct, r: dynReps });
+                 activeLifts.push({ 
+                     n: cl.n, t: cl.s, isCustom: true, p: dynPct, r: dynReps,
+                     dbIndex: originalIndex // Store for deletion
+                 });
               }
           }
       });
@@ -555,9 +558,25 @@ function generateProgram() {
         let btn = (clickVal > 0) ? 
             `<span onclick="window.openPlateLoader(${clickVal})" style="cursor:pointer; color:#2196f3; margin-left:5px;">💿</span>` : '';
 
+        // --- FIX FOR 3x3x8 DISPLAY ---
+        let setRepStr = "";
+        if (lift.isCustom) {
+            if (String(lift.r).includes('x')) {
+                setRepStr = lift.r; 
+            } else {
+                setRepStr = `${fSets} x ${dReps}`;
+            }
+            // Add Delete Button for custom lifts
+            if (lift.isCustom) {
+                setRepStr += ` <span onclick="removeCustomLift(${lift.dbIndex})" style="cursor:pointer; color:red; margin-left:5px;">🗑️</span>`;
+            }
+        } else {
+            setRepStr = `${fSets}x${dReps}`;
+        }
+
         html += `<tr>
                  <td style="padding:4px 0; color:#ccc;">${lift.n} ${lift.isCustom ? '⭐' : ''}</td>
-                 <td style="padding:4px 0; text-align:center; color:#2196f3;">${fSets}x${dReps}</td>
+                 <td style="padding:4px 0; text-align:center; color:#2196f3;">${setRepStr}</td>
                  <td style="padding:4px 0; text-align:right;">${weightDisplay} ${btn}</td>
                 </tr>`;
       });
@@ -613,7 +632,16 @@ function addCustomLift() {
     alert(`Added ${item.n} to Day ${day + 1}`);
 }
 
+// ** NEW: REMOVE SINGLE LIFT **
+window.removeCustomLift = function(index) {
+    if(!confirm("Remove this custom workout?")) return;
+    customLifts.splice(index, 1);
+    saveCustomLifts();
+    generateProgram();
+};
+
 window.clearCustomLifts = function() {
+    if(!confirm("Clear ALL custom workouts?")) return;
     customLifts = [];
     saveCustomLifts();
     generateProgram();
