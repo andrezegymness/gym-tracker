@@ -147,12 +147,15 @@ const smartLibrary = {
     // --- DEADLIFT ---
     "Deadlift: Floor/Start": [
         { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift" },
-        { n: "Snatch Grip DL", t: "Upper Back", p: 0.60, r: "3x6", s: "deadlift" },
         { n: "Halting DL", t: "Start Mechanics", p: 0.70, r: "3x5", s: "deadlift" },
-        { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" }
+        { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" },
+        // ** NEW: SNATCH GRIP RDL (SMART) **
+        { n: "Snatch Grip RDL (Smart)", t: "Upper Back", p: 0.40, r: "3x10", s: "deadlift", note: "W1:3x10@40-45% | W2:3x8@45-50% | W3:2x6@50-55% | W4-5:OFF" }
     ],
     "Deadlift: Hips/Lockout": [
-        { n: "Block Pulls", t: "Lockout", p: 0.95, r: "3x3", s: "deadlift" },
+        // ** NEW: BLOCK PULLS (SMART) **
+        { n: "Block Pulls (Smart)", t: "Lockout", p: 0.80, r: "3x4", s: "deadlift", note: "3-4in Height. W1:3x4@80% | W2:3x3@85% | W3:2x3@90% | W4:2x1@75%" },
+        
         { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
         { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" },
         { n: "Rack Pull Hold", t: "Grip/Traps", p: 1.10, r: "3x10s", s: "deadlift" },
@@ -351,10 +354,18 @@ function generateProgram() {
   const mode = document.getElementById('dashMode').value;
   const startPct = basePctMap[reps] || 0.75; 
 
+  // RANDOMIZER MODE CHECK
   const randCard = document.getElementById('randomizerCard');
   const dashGrid = document.getElementById('dashboardGrid');
-  if(randCard) randCard.style.display = (mode === 'randomizer' ? 'block' : 'none');
-  if(dashGrid) dashGrid.style.display = (mode === 'randomizer' ? 'none' : 'grid');
+  if (mode === 'randomizer') {
+      randCard.style.display = 'block';
+      dashGrid.style.display = 'none';
+      document.querySelector('.mobile-nav').style.display = 'none';
+  } else {
+      randCard.style.display = 'none';
+      dashGrid.style.display = 'grid';
+      document.querySelector('.mobile-nav').style.display = 'block';
+  }
 
   let numW = (mode === 'maintenance' ? 6 : (mode === 'deload' ? 2 : 4));
   const mobLabel = document.getElementById('mobileWeekLabel');
@@ -409,7 +420,30 @@ function generateProgram() {
 
       customLifts.forEach(cl => {
           if (cl.dayIndex === dIdx) {
-              activeLifts.push({ n: cl.n, t: cl.s, isCustom: true, p: cl.p, r: cl.r });
+              
+              // ** BASE MAP SMART LOGIC (BLOCK/SNATCH) **
+              // Since Base Map generates 4-6 weeks dynamically, we map 'w' (0-5) to logic
+              let dynPct = cl.p;
+              let dynReps = cl.r;
+
+              if (cl.n.includes("Block Pulls (Smart)")) {
+                  if (w === 0) { dynPct = 0.80; dynReps = "4"; }
+                  if (w === 1) { dynPct = 0.85; dynReps = "3"; }
+                  if (w === 2) { dynPct = 0.90; dynReps = "3"; }
+                  if (w === 3) { dynPct = 0.75; dynReps = "1"; }
+                  if (w > 3) { dynPct = 0.70; dynReps = "3"; } // Fallback
+              }
+              
+              if (cl.n.includes("Snatch Grip RDL (Smart)")) {
+                  if (w === 0) { dynPct = 0.45; dynReps = "10"; }
+                  if (w === 1) { dynPct = 0.50; dynReps = "8"; }
+                  if (w === 2) { dynPct = 0.55; dynReps = "6"; }
+                  if (w >= 3) { dynPct = 0; dynReps = "OFF"; }
+              }
+
+              if (dynPct > 0) {
+                 activeLifts.push({ n: cl.n, t: cl.s, isCustom: true, p: dynPct, r: dynReps });
+              }
           }
       });
 
@@ -428,7 +462,7 @@ function generateProgram() {
             if (w === 0) { fSets=4; dReps=2; finalIntens = curPct - pMod; }
             if (w === 1) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.02); }
             if (w === 2) { fSets=3; dReps=1; finalIntens = curPct - (pMod - 0.04); }
-            if (w === 3) { fSets=1; dReps=1; finalIntens = 0.70; } 
+            if (w >= 3) { fSets=1; dReps=1; finalIntens = 0.70; } 
         }
         else if (lift.isPrimaryTop) {
             fSets = 1; dReps = reps; finalIntens = curPct;
@@ -441,7 +475,7 @@ function generateProgram() {
             if (w === 0) { fSets=4; dReps=4; finalIntens = curPct - sMod; }
             if (w === 1) { fSets=4; dReps=3; finalIntens = curPct - (sMod - 0.02); }
             if (w === 2) { fSets=3; dReps=3; finalIntens = curPct - (sMod - 0.04); }
-            if (w === 3) { fSets=2; dReps=3; finalIntens = 0.70; }
+            if (w >= 3) { fSets=2; dReps=3; finalIntens = 0.70; }
         }
         else if (lift.n === "Larsen Press") { dReps = 3; finalIntens = 0.70; }
         else if (lift.n.includes("Close Grip")) { dReps = 8; finalIntens = 0.75; }
@@ -462,10 +496,10 @@ function generateProgram() {
             if (w === 0) { fSets=4; dReps=6; finalIntens=0.70; }
             if (w === 1) { fSets=4; dReps=5; finalIntens=0.75; }
             if (w === 2) { fSets=4; dReps=4; finalIntens=0.80; }
-            if (w === 3) { fSets=3; dReps=3; finalIntens=0.85; } // Peak
+            if (w >= 3) { fSets=3; dReps=3; finalIntens=0.85; } // Peak
         }
         if (["Seated DB Press", "Egyptian Lateral Raise", "Rear Delt Fly", "Upright Rows"].includes(lift.n)) {
-             fSets = (w === 3) ? 2 : 3; 
+             fSets = (w >= 3) ? 2 : 3; 
              dReps = 12;
              if(lift.n.includes("Seated")) finalIntens = 0.35;
              if(lift.n.includes("Egyptian")) finalIntens = 0.15;
@@ -482,8 +516,8 @@ function generateProgram() {
         let baseWeight = 0;
         if (lift.isCustom) {
             fSets = "3"; dReps = lift.r;
-            let prog = (mode === 'deload') ? -0.10 : (w * 0.02);
-            baseWeight = Math.round((mx * (lift.p + prog) * fastedMult) / 5) * 5;
+            // Base logic uses what we calculated in 'dynPct' above
+            baseWeight = Math.round((mx * lift.p * fastedMult) / 5) * 5;
         } 
         else if (lift.isAcc) { 
             fSets = accSets[w]; dReps = lift.r; 
@@ -522,10 +556,10 @@ function generateProgram() {
             `<span onclick="window.openPlateLoader(${clickVal})" style="cursor:pointer; color:#2196f3; margin-left:5px;">💿</span>` : '';
 
         html += `<tr>
-                    <td style="padding:4px 0; color:#ccc;">${lift.n} ${lift.isCustom ? '⭐' : ''}</td>
-                    <td style="padding:4px 0; text-align:center; color:#2196f3;">${fSets}x${dReps}</td>
-                    <td style="padding:4px 0; text-align:right;">${weightDisplay} ${btn}</td>
-                 </tr>`;
+                 <td style="padding:4px 0; color:#ccc;">${lift.n} ${lift.isCustom ? '⭐' : ''}</td>
+                 <td style="padding:4px 0; text-align:center; color:#2196f3;">${fSets}x${dReps}</td>
+                 <td style="padding:4px 0; text-align:right;">${weightDisplay} ${btn}</td>
+                </tr>`;
       });
       html += `</table></div>`;
     });
@@ -739,6 +773,8 @@ function calculateOneRM(){
 }
 function runRandomizer(){
     document.getElementById('randomizerResult').style.display='block';
+    
+    // Fix: Get values from input fields, not select
     const goal = document.getElementById('randGoal').value;
     const w = parseFloat(document.getElementById('prevWeight').value);
     const r = parseFloat(document.getElementById('prevReps').value);
@@ -749,9 +785,9 @@ function runRandomizer(){
     }
     
     let msg = "";
-    if(goal === 'strength') msg = `Target: ${Math.round((w*1.05)/5)*5} lbs x ${Math.max(1, r-1)} Reps (Strength)`;
-    if(goal === 'pump') msg = `Target: ${Math.round((w*0.80)/5)*5} lbs x ${r+5} Reps (Pump)`;
-    if(goal === 'recovery') msg = `Target: ${Math.round((w*0.60)/5)*5} lbs x ${r} Reps (Recovery)`;
+    if(goal === 'strength') msg = `Target: ${Math.round((w*1.05)/5)*5} lbs x ${Math.max(1, r-1)} Reps (Strength Focus)`;
+    if(goal === 'pump') msg = `Target: ${Math.round((w*0.80)/5)*5} lbs x ${r+5} Reps (Pump Focus)`;
+    if(goal === 'recovery') msg = `Target: ${Math.round((w*0.60)/5)*5} lbs x ${r} Reps (Recovery Focus)`;
     
     document.getElementById('randOutputText').innerText = msg;
 }
