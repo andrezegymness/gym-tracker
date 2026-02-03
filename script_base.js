@@ -36,7 +36,7 @@ const maintSets = [2, 2, 2, 2, 1, 1];
 // 3. DATABASES
 // ==========================================
 
-// A. ORIGINAL ACCESSORY DATA (For Old Tools)
+// A. ORIGINAL ACCESSORY DATA
 const accessoryData = {
   squat: [
     { name: "ATG System", tier: "S", notes: "Full range of motion focus." },
@@ -98,9 +98,8 @@ const accessoryData = {
   ]
 };
 
-// B. SMART LIBRARY (The Full 70+ Exercise List)
+// B. SMART LIBRARY
 const smartLibrary = {
-    // --- SQUAT ---
     "Squat: Weak Hole": [
         { n: "Pin Squat (Low)", t: "Explosive Start", p: 0.65, r: "3x3", s: "squat" },
         { n: "Pause Squat (3s)", t: "No Bounce", p: 0.70, r: "3x4", s: "squat" },
@@ -118,8 +117,6 @@ const smartLibrary = {
         { n: "Anderson Squat", t: "Tendon Power", p: 0.85, r: "3x3", s: "squat" },
         { n: "Supramax Eccentric", t: "Decentric/Neg", p: 1.05, r: "3x1", s: "squat" }
     ],
-
-    // --- BENCH ---
     "Bench: Chest Strength": [
         { n: "Long Pause Bench", t: "Start Power", p: 0.75, r: "4x3", s: "bench" },
         { n: "Spoto Press", t: "Reversal", p: 0.70, r: "3x5", s: "bench" },
@@ -143,17 +140,15 @@ const smartLibrary = {
         { n: "Pec Deck", t: "Squeeze", p: 0.25, r: "3x15", s: "bench" },
         { n: "Cable Crossover", t: "Inner Chest", p: 0.15, r: "3x15", s: "bench" }
     ],
-
-    // --- DEADLIFT ---
     "Deadlift: Floor/Start": [
         { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift" },
         { n: "Halting DL", t: "Start Mechanics", p: 0.70, r: "3x5", s: "deadlift" },
         { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" },
-        // ** NEW: SNATCH GRIP RDL (SMART) **
+        // ** SMART WORKOUT **
         { n: "Snatch Grip RDL (Smart)", t: "Upper Back", p: 0.40, r: "3x10", s: "deadlift", note: "W1:3x10@40-45% | W2:3x8@45-50% | W3:2x6@50-55% | W4-5:OFF" }
     ],
     "Deadlift: Hips/Lockout": [
-        // ** NEW: BLOCK PULLS (SMART) **
+        // ** SMART WORKOUT **
         { n: "Block Pulls (Smart)", t: "Lockout", p: 0.80, r: "3x4", s: "deadlift", note: "3-4in Height. W1:3x4@80% | W2:3x3@85% | W3:2x3@90% | W4:2x1@75%" },
         { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
         { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" },
@@ -161,8 +156,6 @@ const smartLibrary = {
         { n: "Farmer's Walks", t: "Grip/Core", p: 0.40, r: "3x30s", s: "deadlift" },
         { n: "Tempo Deadlift", t: "Eccentric", p: 0.60, r: "3x3", s: "deadlift" }
     ],
-
-    // --- BODYBUILDING / AESTHETICS ---
     "Glutes: Aesthetics": [
         { n: "Hip Thrust", t: "Thickness (Max)", p: 0.50, r: "4x10", s: "deadlift" },
         { n: "Cable Abduction", t: "Upper Shelf (Med)", p: 0.10, r: "3x15", s: "squat" },
@@ -310,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 6. PROGRAM GENERATION (UPDATED WITH PHASES)
+// 6. PROGRAM GENERATION (UPDATED WITH PHASES & CALCULATED LOADS)
 // ==========================================
 function initProgramData() {
   userProgram = [];
@@ -469,10 +462,10 @@ function generateProgram() {
         let finalIntens = lift.isOHP ? lift.p : intens;
 
         // =========================================
-        // LOGIC FOR PHASE 1: BUILDING
+        // LOGIC FOR PHASE 1: BUILDING (CALCULATED LOADS)
         // =========================================
         if (mode === 'phase1') {
-            // Default Reps per Week Chart
+            // Reps & Sets Chart for Main Lifts
             const p1Chart = [
                 {p:0.65, s:3, r:8}, {p:0.67, s:3, r:8}, {p:0.69, s:4, r:6}, 
                 {p:0.72, s:4, r:6}, {p:0.75, s:5, r:5}, {p:0.50, s:3, r:5}
@@ -485,24 +478,41 @@ function generateProgram() {
             // Main Lifts
             if(["Safety Bar Squat", "Close Grip Bench", "Deficit Deadlift", "OHP (Strict)"].includes(lift.n)) {
                 finalIntens = c.p; fSets = c.s; dReps = c.r;
-                if(lift.n === "OHP (Strict)") { dReps = 10; fSets = 3; finalIntens = 0.60 + (w*0.02); } // OHP scaling
+                if(lift.n === "OHP (Strict)") { dReps = 10; fSets = 3; finalIntens = 0.60 + (w*0.02); }
+                if(lift.n === "Safety Bar Squat") { mx = sMax * 0.90; } // Adjust max for variation
+                if(lift.n === "Deficit Deadlift") { mx = dMax * 0.90; }
             } 
-            // Secondary
+            // Secondary / Low Intensity
             else if(lift.n.includes("(Low)")) {
                 finalIntens = 0.60; fSets = 3; dReps = 8;
             }
-            // Accessories
+            // Smart Calculations for Accessories
+            else if (lift.n === "Belt Squat" || lift.n === "Leg Press") {
+                finalIntens = 0.50 + (w * 0.02); fSets = 3; dReps = p1AccReps[w];
+                mx = sMax; // Base off Squat
+            }
+            else if (lift.n === "RDL" || lift.n === "Good Mornings") {
+                finalIntens = 0.45 + (w * 0.02); fSets = 3; dReps = 12;
+                mx = dMax; // Base off Deadlift
+            }
+            else if (lift.n === "Incline DB Press" || lift.n === "Weighted Dips") {
+                finalIntens = 0.55 + (w * 0.02); fSets = 3; dReps = 12;
+                mx = bMax; // Base off Bench
+            }
+            else if (lift.n === "Barbell Rows" || lift.n === "Lat Pulldown") {
+                finalIntens = 0.50; fSets = 4; dReps = 12;
+                mx = dMax; // Base off Deadlift
+            }
             else {
-                finalIntens = 0; // Show RPE/Text usually, or calc if possible
-                // Prompt said % of Max Rep Weight, hard to calc without known rep max. 
-                // We will treat as standard accessory logic
+                // Generic Accessories
+                finalIntens = 0; 
                 fSets = 3; dReps = p1AccReps[w];
-                weightDisplay = `${Math.round(p1Acc[w]*100)}% Effort`;
+                weightDisplay = "RPE 7-8";
             }
         }
 
         // =========================================
-        // LOGIC FOR PHASE 2: PEAKING
+        // LOGIC FOR PHASE 2: PEAKING (CALCULATED LOADS)
         // =========================================
         else if (mode === 'phase2') {
             const p2Chart = [
@@ -520,8 +530,21 @@ function generateProgram() {
             else if(lift.n.includes("(Vol)")) {
                 finalIntens = 0.65; fSets = 2; dReps = 3;
             }
+            // Specific Accessories Logic
+            else if(lift.n === "Block Pulls") {
+                finalIntens = 0.90 + (w * 0.02); fSets = 3; dReps = 3; mx = dMax;
+            }
+            else if(lift.n === "Floor Press" || lift.n === "Board Press") {
+                finalIntens = 0.85 + (w * 0.02); fSets = 3; dReps = 4; mx = bMax;
+            }
+            else if(lift.n === "Weighted Dips") {
+                finalIntens = 0.30; fSets = 3; dReps = 8; mx = bMax; // Typically interpreted as added weight
+            }
+            else if(lift.n === "Heavy Holds") {
+                finalIntens = 1.05; fSets = 3; dReps = "15s"; mx = sMax;
+            }
             else {
-                // Accessories taper
+                // Taper logic
                 let accR = [8, 6, 5, 3, 5, 5];
                 fSets = (w >= 2) ? 2 : 3;
                 dReps = accR[w];
