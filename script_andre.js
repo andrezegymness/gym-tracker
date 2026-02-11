@@ -218,6 +218,9 @@ const smartLibrary = {
 
     // --- BENCH ---
     "Bench: Chest Strength": [
+        // ** NEW SMART ADDITION **
+        { n: "Incline Barbell Bench (Smart)", t: "Upper Chest", p: 0.65, r: "3x8", s: "bench", note: "W1:3x8@65% | W2:3x6@70% | W3:3x5@75% | W4:3x4@80%" },
+        
         { n: "Long Pause Bench", t: "Start Power", p: 0.75, r: "4x3", s: "bench" },
         { n: "Spoto Press", t: "Reversal", p: 0.70, r: "3x5", s: "bench" },
         { n: "Dead Press", t: "Concentric Only", p: 0.80, r: "5x1", s: "bench" },
@@ -328,8 +331,9 @@ function init() {
     // Input Listeners
     Object.keys(inputs).forEach(k => { inputs[k].addEventListener('input', e => { state.maxes[k] = parseFloat(e.target.value) || 0; saveToCloud(); render(); }); });
     
-    // NEW: Listener for Deadlift Reps
+    // NEW: Listeners for Deadlift Reps & Overload
     document.getElementById('dlRepInput').addEventListener('change', () => { render(); });
+    document.getElementById('overloadInput').addEventListener('change', () => { render(); });
 
     onAuthStateChanged(auth, user => {
         if(user) { loadFromCloud(user.uid); document.getElementById('login-btn').style.display='none'; }
@@ -491,7 +495,7 @@ function addCustomLift() {
     const day = parseInt(document.getElementById('libDay').value); // 0=Monday, 1=Tuesday...
     const item = smartLibrary[cat][idx];
     
-    // ** CUSTOM LOGIC FOR ANDRE MAP (Block/Snatch) **
+    // ** CUSTOM LOGIC FOR ANDRE MAP (Block/Snatch/Incline) **
     let repsToUse = item.r;
     let pctToUse = item.p;
     
@@ -548,15 +552,16 @@ window.adjustWeight = function(liftName, originalLoad) {
 };
 
 // ==========================================
-// RENDER (WITH CUSTOM LIFTS & MODIFIERS)
+// RENDER (WITH CUSTOM LIFTS, MODIFIERS, & OVERLOAD)
 // ==========================================
 function render() {
     const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
     document.getElementById('currentTotal').innerText = total;
     document.getElementById('currentDots').innerText = calculateDots(total, state.settings.bw);
     
-    // GET SELECTED DEADLIFT REPS
+    // GET SELECTED DEADLIFT REPS & OVERLOAD
     const dlReps = parseInt(document.getElementById('dlRepInput').value);
+    const overloadPct = parseFloat(document.getElementById('overloadInput').value) || 0;
 
     document.querySelectorAll('.nav-btn').forEach(b => {
         b.classList.remove('active');
@@ -582,7 +587,7 @@ function render() {
             if (c.dayIndex === dayIdx) {
                 let typeMap = { 'squat': 'Squat', 'bench': 'Bench', 'deadlift': 'Deadlift', 'ohp': 'OHP' };
                 
-                // ** ANDRE SMART LOGIC (BLOCK PULLS / SNATCH GRIP) **
+                // ** ANDRE SMART LOGIC (BLOCK PULLS / SNATCH GRIP / INCLINE) **
                 let pct = c.p;
                 let reps = c.r;
                 let week = state.activeWeek;
@@ -590,16 +595,22 @@ function render() {
                 if (c.n.includes("Block Pulls (Smart)")) {
                     if (week === 1) { pct = 0.80; reps = "4"; }
                     if (week === 2) { pct = 0.85; reps = "3"; }
-                    if (week === 3) { pct = 0.90; reps = "3"; } // Range 88-90
-                    if (week === 4) { pct = 0.75; reps = "1"; } // Range 70-75
-                    // W5/6 logic defaults to 0.70/Deload
+                    if (week === 3) { pct = 0.90; reps = "3"; } 
+                    if (week === 4) { pct = 0.75; reps = "1"; }
                 }
                 
                 if (c.n.includes("Snatch Grip RDL (Smart)")) {
                      if (week === 1) { pct = 0.45; reps = "10"; }
                      if (week === 2) { pct = 0.50; reps = "8"; }
                      if (week === 3) { pct = 0.55; reps = "6"; }
-                     if (week >= 4) { pct = 0; reps = "OFF"; } // Off logic
+                     if (week >= 4) { pct = 0; reps = "OFF"; }
+                }
+
+                if (c.n.includes("Incline Barbell Bench (Smart)")) {
+                    if (week === 1) { pct = 0.65; reps = "8"; }
+                    if (week === 2) { pct = 0.70; reps = "6"; }
+                    if (week === 3) { pct = 0.75; reps = "5"; }
+                    if (week >= 4) { pct = 0.80; reps = "4"; }
                 }
                 
                 if (pct > 0) {
@@ -633,13 +644,11 @@ function render() {
             // --- FIX FOR 3x3x8 DISPLAY ---
             let setRepStr = "";
             if (m.isCustom) {
-                // If the reps string already contains "x" (like "3x8"), just show that.
                 if (String(m.reps).includes('x')) {
                     setRepStr = m.reps; 
                 } else {
                     setRepStr = `${m.sets} x ${m.reps}`;
                 }
-                // Add Delete Button for custom lifts
                 if (m.name.includes("⭐")) {
                     setRepStr += ` <span onclick="removeCustomLift(${m.dbIndex})" style="cursor:pointer; color:red; margin-left:5px;">🗑️</span>`;
                 }
@@ -652,18 +661,31 @@ function render() {
             // ==========================================
             let adjustedPct = m.pct;
             let warningLabel = "";
+            let isPauseDL = m.name === "Pause Deadlift";
             
-            // UPDATED LOGIC: Includes "Deadlift (Heavy)" for Week 5
-            if (m.name === "Deadlift" || m.name === "Deadlift (Heavy)") {
-                // Apply Dropdown Reps
-                setRepStr = `${m.sets} x ${dlReps}`;
+            if (m.name === "Deadlift" || m.name === "Deadlift (Heavy)" || isPauseDL) {
+                
+                // Reps to apply
+                let currentReps = dlReps;
+                
+                // ** LOGIC: CAP PAUSE DEADLIFT AT 4 REPS **
+                if (isPauseDL && currentReps > 4) currentReps = 4;
+
+                setRepStr = `${m.sets} x ${currentReps}`;
                 
                 // Scale Weight based on Reps (Base is 3)
-                if (dlReps === 1) { adjustedPct += 0.06; warningLabel = " <span style='color:#ff4444; font-size:10px;'>⚠️ HIGH INTENSITY</span>"; }
-                if (dlReps === 2) { adjustedPct += 0.03; warningLabel = " <span style='color:#ff4444; font-size:10px;'>⚠️ HEAVY</span>"; }
-                if (dlReps === 3) { adjustedPct += 0.00; }
-                if (dlReps === 4) { adjustedPct -= 0.04; }
-                if (dlReps === 5) { adjustedPct -= 0.08; }
+                if (currentReps === 1) { adjustedPct += 0.06; warningLabel = " <span style='color:#ff4444; font-size:10px;'>⚠️ HIGH INTENSITY</span>"; }
+                if (currentReps === 2) { adjustedPct += 0.03; warningLabel = " <span style='color:#ff4444; font-size:10px;'>⚠️ HEAVY</span>"; }
+                if (currentReps === 3) { adjustedPct += 0.00; }
+                if (currentReps === 4) { adjustedPct -= 0.04; }
+                if (currentReps === 5) { adjustedPct -= 0.08; }
+            }
+
+            // ==========================================
+            // LOGIC: OVERLOAD BUTTON
+            // ==========================================
+            if (overloadPct > 0) {
+                adjustedPct += overloadPct; 
             }
 
             let baseLoad = (max > 0) ? Math.round((max * adjustedPct)/5)*5 : 0;
@@ -676,7 +698,8 @@ function render() {
             let warn = "";
 
             if (baseLoad > 0) {
-                if (modifier !== 1.0) {
+                // If modified manually OR Overload is active
+                if (modifier !== 1.0 || overloadPct > 0) {
                     style = "color:#ff4444; font-weight:bold;";
                     warn = " ⚠️";
                 }
@@ -758,6 +781,12 @@ window.openOverview = function() {
                          if (w === 2) { pct = 0.50; reps = "8"; }
                          if (w === 3) { pct = 0.55; reps = "6"; }
                          if (w >= 4) { pct = 0; reps = "OFF"; }
+                    }
+                    if (c.n.includes("Incline Barbell Bench (Smart)")) {
+                        if (w === 1) { pct = 0.65; reps = "8"; }
+                        if (w === 2) { pct = 0.70; reps = "6"; }
+                        if (w === 3) { pct = 0.75; reps = "5"; }
+                        if (w >= 4) { pct = 0.80; reps = "4"; }
                     }
                     
                     if (pct > 0) {
