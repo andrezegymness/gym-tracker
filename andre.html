@@ -20,7 +20,6 @@
          <div class="stat-box"><span class="stat-label">DOTS</span><span class="stat-val" id="currentDots">-</span></div>
       </div>
       <div class="header-actions">
-        <button class="action-btn" onclick="openOverview()">📊 Overview</button>
         <button class="action-btn" id="login-btn" onclick="openAuthModal()">Login</button>
         <button class="action-btn" onclick="openTools()">Settings & Tools</button>
       </div>
@@ -33,6 +32,19 @@
       <div class="input-group"><label>Bench</label><input type="number" id="benchInput" placeholder="0"></div>
       <div class="input-group"><label>Deadlift</label><input type="number" id="deadliftInput" placeholder="0"></div>
       <div class="input-group"><label>OHP</label><input type="number" id="ohpInput" placeholder="0"></div>
+    </div>
+    
+    <div class="inputs-grid" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+        <div class="input-group" style="grid-column: span 2;">
+            <label style="color:#2196f3; font-weight:bold;">Deadlift Reps</label>
+            <select id="dlRepInput" style="width:100%; padding:8px; background:#222; color:#fff; border:1px solid #444; border-radius:4px;">
+                <option value="1">1 Rep (Peak Intensity)</option>
+                <option value="2">2 Reps (Heavy)</option>
+                <option value="3" selected>3 Reps (Standard)</option>
+                <option value="4">4 Reps (Volume)</option>
+                <option value="5">5 Reps (Hypertrophy)</option>
+            </select>
+        </div>
     </div>
   </section>
 
@@ -56,7 +68,7 @@
   <div style="margin-top:20px; text-align:center;">
       <button class="action-btn" onclick="openMeetPlanner()">🏆 Meet Planner</button>
   </div>
-  
+   
   <footer><p>Andre's Calibrations &copy; 2026</p></footer>
 </div>
 
