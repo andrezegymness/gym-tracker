@@ -35,7 +35,7 @@
     </div>
     
     <div class="inputs-grid" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
-        <div class="input-group" style="grid-column: span 2;">
+        <div class="input-group">
             <label style="color:#2196f3; font-weight:bold;">Deadlift Reps</label>
             <select id="dlRepInput" style="width:100%; padding:8px; background:#222; color:#fff; border:1px solid #444; border-radius:4px;">
                 <option value="1">1 Rep (Peak Intensity)</option>
@@ -45,12 +45,24 @@
                 <option value="5">5 Reps (Hypertrophy)</option>
             </select>
         </div>
+        <div class="input-group">
+            <label style="color:#ff4444; font-weight:bold;">Overload Mode</label>
+            <select id="overloadInput" style="width:100%; padding:8px; background:#222; color:#fff; border:1px solid #444; border-radius:4px;">
+                <option value="0">OFF</option>
+                <option value="0.04">+4% (Aggressive)</option>
+                <option value="0.06">+6% (Extreme)</option>
+                <option value="0.10">+10% (Supramax)</option>
+            </select>
+        </div>
     </div>
   </section>
 
-  <div style="margin: 15px 0; text-align:center;">
-      <button class="action-btn" onclick="document.getElementById('libraryModal').style.display='flex'" style="background:#2196f3; color:#fff; width:95%; max-width:400px; display:block; margin: 0 auto; padding: 12px; font-weight:bold;">
+  <div style="margin: 15px 0; display:flex; gap:10px; justify-content:center;">
+      <button class="action-btn" onclick="document.getElementById('libraryModal').style.display='flex'" style="background:#2196f3; color:#fff; flex:1; padding: 12px; font-weight:bold;">
           + Add Smart Workout
+      </button>
+      <button class="action-btn" onclick="openOverview()" style="background:#444; color:#fff; flex:1; padding: 12px; font-weight:bold;">
+          📅 Overview
       </button>
   </div>
 
@@ -97,7 +109,7 @@
             </select>
 
             <button id="addLiftBtn" class="full-btn" style="width:100%; background:#4caf50; padding:12px; font-weight:bold; cursor:pointer;">Add to Program</button>
-            <button class="full-btn" onclick="window.clearCustomLifts()" style="width:100%; background:#d32f2f; margin-top:10px; padding:10px; cursor:pointer;">Clear Custom Lifts</button>
+            <button class="full-btn" onclick="window.clearCustomLifts()" style="width:100%; background:#d32f2f; margin-top:10px; padding:10px; cursor:pointer;">Clear ALL Custom Lifts</button>
         </div>
     </div>
 </div>
