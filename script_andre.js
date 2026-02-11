@@ -46,8 +46,8 @@ const andreData = {
     "Saturday": [ 
         { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, 
         { name: "Bench", sets: 3, reps: 4, pct: 0.756, type: "Bench" }, 
-        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
-        { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } 
+        { name: "Pause Deadlift", sets: 1, reps: 3, pct: 0.682, type: "Deadlift" }, // -5%
+        { name: "Pause Deadlift", sets: 2, reps: 3, pct: 0.791, type: "Deadlift" }  // -5%
     ]
   },
   2: {
@@ -83,8 +83,8 @@ const andreData = {
     ],
     "Saturday": [ 
         { name: "Bench", sets: 4, reps: 5, pct: 0.822, type: "Bench" }, 
-        { name: "Deadlift", sets: 2, reps: 2, pct: 0.799, type: "Deadlift" }, 
-        { name: "Deadlift", sets: 1, reps: 2, pct: 0.86, type: "Deadlift" } 
+        { name: "Pause Deadlift", sets: 2, reps: 2, pct: 0.749, type: "Deadlift" }, // -5%
+        { name: "Pause Deadlift", sets: 1, reps: 2, pct: 0.810, type: "Deadlift" }  // -5%
     ]
   },
   3: {
@@ -115,8 +115,8 @@ const andreData = {
     ],
     "Saturday": [ 
         { name: "Bench (Heavy)", sets: 2, reps: 1, pct: 0.933, type: "Bench" }, 
-        { name: "Deadlift", sets: 2, reps: 2, pct: 0.841, type: "Deadlift" }, 
-        { name: "Deadlift", sets: 1, reps: 3, pct: 0.738, type: "Deadlift" } 
+        { name: "Pause Deadlift", sets: 2, reps: 2, pct: 0.791, type: "Deadlift" }, // -5%
+        { name: "Pause Deadlift", sets: 1, reps: 3, pct: 0.688, type: "Deadlift" }  // -5%
     ]
   },
   4: {
@@ -145,8 +145,8 @@ const andreData = {
         { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, 
         { name: "Bench", sets: 1, reps: 3, pct: 0.8, type: "Bench" }, 
         { name: "Bench (Peak)", sets: 1, reps: 1, pct: 0.989, type: "Bench" }, 
-        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
-        { name: "Deadlift (Heavy)", sets: 1, reps: 1, pct: 0.89, type: "Deadlift" } 
+        { name: "Pause Deadlift", sets: 1, reps: 3, pct: 0.682, type: "Deadlift" },   // -5%
+        { name: "Pause Deadlift", sets: 1, reps: 1, pct: 0.840, type: "Deadlift" }    // -5%
     ]
   },
   5: {
@@ -172,8 +172,8 @@ const andreData = {
     "Saturday": [ 
         { name: "Bench", sets: 2, reps: 2, pct: 0.756, type: "Bench" }, 
         { name: "Bench", sets: 4, reps: 2, pct: 0.8, type: "Bench" }, 
-        { name: "Deadlift", sets: 1, reps: 3, pct: 0.732, type: "Deadlift" }, 
-        { name: "Deadlift", sets: 2, reps: 3, pct: 0.841, type: "Deadlift" } 
+        { name: "Pause Deadlift", sets: 1, reps: 3, pct: 0.682, type: "Deadlift" }, // -5%
+        { name: "Pause Deadlift", sets: 2, reps: 3, pct: 0.791, type: "Deadlift" }  // -5%
     ]
   }
 };
@@ -653,7 +653,8 @@ function render() {
             let adjustedPct = m.pct;
             let warningLabel = "";
             
-            if (m.name === "Deadlift") {
+            // UPDATED LOGIC: Includes "Deadlift (Heavy)" for Week 5
+            if (m.name === "Deadlift" || m.name === "Deadlift (Heavy)") {
                 // Apply Dropdown Reps
                 setRepStr = `${m.sets} x ${dlReps}`;
                 
