@@ -9,7 +9,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // ==========================================
-// 1. FULL ANDRE MAP DATA
+// 1. FULL ANDRE MAP DATA (DO NOT TRUNCATE)
 // ==========================================
 const andreData = {
   1: {
@@ -327,6 +327,9 @@ function init() {
 
     // Input Listeners
     Object.keys(inputs).forEach(k => { inputs[k].addEventListener('input', e => { state.maxes[k] = parseFloat(e.target.value) || 0; saveToCloud(); render(); }); });
+    
+    // NEW: Listener for Deadlift Reps
+    document.getElementById('dlRepInput').addEventListener('change', () => { render(); });
 
     onAuthStateChanged(auth, user => {
         if(user) { loadFromCloud(user.uid); document.getElementById('login-btn').style.display='none'; }
@@ -551,6 +554,9 @@ function render() {
     const total = (state.maxes.Squat||0) + (state.maxes.Bench||0) + (state.maxes.Deadlift||0);
     document.getElementById('currentTotal').innerText = total;
     document.getElementById('currentDots').innerText = calculateDots(total, state.settings.bw);
+    
+    // GET SELECTED DEADLIFT REPS
+    const dlReps = parseInt(document.getElementById('dlRepInput').value);
 
     document.querySelectorAll('.nav-btn').forEach(b => {
         b.classList.remove('active');
@@ -641,7 +647,25 @@ function render() {
                 setRepStr = (typeof m.sets === 'string') ? `${m.sets} Sets` : `${m.sets} x ${m.reps}`;
             }
 
-            let baseLoad = (max > 0) ? Math.round((max * m.pct)/5)*5 : 0;
+            // ==========================================
+            // LOGIC: DEADLIFT REP ADJUSTMENT
+            // ==========================================
+            let adjustedPct = m.pct;
+            let warningLabel = "";
+            
+            if (m.name === "Deadlift") {
+                // Apply Dropdown Reps
+                setRepStr = `${m.sets} x ${dlReps}`;
+                
+                // Scale Weight based on Reps (Base is 3)
+                if (dlReps === 1) { adjustedPct += 0.06; warningLabel = " <span style='color:#ff4444; font-size:10px;'>⚠️ HIGH INTENSITY</span>"; }
+                if (dlReps === 2) { adjustedPct += 0.03; warningLabel = " <span style='color:#ff4444; font-size:10px;'>⚠️ HEAVY</span>"; }
+                if (dlReps === 3) { adjustedPct += 0.00; }
+                if (dlReps === 4) { adjustedPct -= 0.04; }
+                if (dlReps === 5) { adjustedPct -= 0.08; }
+            }
+
+            let baseLoad = (max > 0) ? Math.round((max * adjustedPct)/5)*5 : 0;
             
             // *** APPLY MODIFIER ***
             let modifier = modifiers[m.name] || 1.0;
@@ -655,7 +679,7 @@ function render() {
                     style = "color:#ff4444; font-weight:bold;";
                     warn = " ⚠️";
                 }
-                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span> <span onclick="adjustWeight('${m.name}', ${baseLoad})" style="cursor:pointer; font-size:12px; color:#aaa; margin-left:5px;">✎</span>`;
+                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span>${warningLabel} <span onclick="adjustWeight('${m.name}', ${baseLoad})" style="cursor:pointer; font-size:12px; color:#aaa; margin-left:5px;">✎</span>`;
             } else {
                 loadDisplay = Math.round(m.pct*100) + "%";
             }
