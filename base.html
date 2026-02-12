@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base Map Linear</title>
     <link rel="stylesheet" href="style.css">
-</head>
+    </head>
 <body>
 
 <div class="app-container">
@@ -40,11 +40,11 @@
           <select id="dashMode" style="background:#333; color:#fff; border:none; padding:5px;">
               <option value="standard">Standard (4 Weeks)</option>
               <option value="standard_acc">Standard + Acc</option>
-              <option value="phase1">Phase 1: Building (Off-Season)</option>
-              <option value="phase2">Phase 2: Peaking (Push)</option>
               <option value="deload">Deload (2 Weeks)</option>
               <option value="maintenance">Maintenance</option>
               <option value="randomizer">Randomizer</option>
+              <option value="building_offseason">Phase 1: Building (6 Weeks)</option>
+              <option value="peak_push">Phase 2: Peak Push (6 Weeks)</option>
           </select>
       </div>
       <div class="dash-group">
@@ -58,6 +58,16 @@
           </select>
       </div>
       
+      <div class="dash-group">
+          <label style="color:#ff4444; font-size:12px; font-weight:bold;">Overload</label>
+          <select id="overloadInput" style="background:#222; color:#fff; border:1px solid #ff4444; padding:5px; border-radius:4px;">
+              <option value="0">OFF</option>
+              <option value="0.04">+4% (Hard)</option>
+              <option value="0.06">+6% (Extreme)</option>
+              <option value="0.10">+10% (Supramax)</option>
+          </select>
+      </div>
+
       <div class="dash-group">
           <label style="color:#aaa; font-size:12px;">Customize</label>
           <button class="dash-btn" onclick="document.getElementById('libraryModal').style.display='flex'" style="background:#2196f3; color:#fff; border:none; padding:5px 10px; font-weight:bold; cursor:pointer;">+ Add Workout</button>
