@@ -1092,7 +1092,12 @@ function generateProgram() {
             else if (lift.n.includes("Close Grip")) { dReps = 8; finalIntens = 0.75; }
             else if (lift.n === "Paused Bench") { dReps = reps; }
             else if (lift.n.includes("Tempo")) { finalIntens = currentTempoPct; dReps = 5; }
-            else if (lift.n === "Pause Squats") { finalIntens = psPct; dReps = 4; fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); }
+            else if (lift.n.includes("Pause Squat")) { 
+                // PAUSE SQUAT LOGIC (-6% Adjustment)
+                finalIntens = (psPct - 0.06); 
+                dReps = 4; 
+                fSets = (w === 0 ? 4 : (w === 1 ? 3 : 1)); 
+            }
             else if (lift.n.includes("Paused")) { dReps = 3; }
             else if (lift.n === "Comp Squat" || lift.n === "Cluster DL") {
                 // TAPER LOGIC FOR SQUAT/DL (Standard)
