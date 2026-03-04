@@ -305,7 +305,7 @@ window.openPRTracker = function(filterMonths) {
     modal.innerHTML=`<div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:22px;width:${W}px;max-width:95vw;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h2 style="margin:0;color:#FFD700;">🏆 PR Tracker</h2>
-            <button onclick="this.closest('[style*=\\"fixed\\"]').remove()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+            <button onclick="document.getElementById('prTrackerModal').remove()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:18px;align-items:center;">
             <span style="color:#555;font-size:12px;margin-right:4px;">Range:</span>${rangeHtml}
@@ -379,12 +379,13 @@ function buildRPEPicker(liftId) {
     const badge = existing
         ? `<span style="background:${color};color:#000;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:900;">RPE ${existing}</span>`
         : `<span style="color:#444;font-size:10px;">RPE?</span>`;
+    const safeId = liftId.replace(/'/g, '_'); // prevent quote injection
     const dots = [6,7,8,9,10].map(r => {
         const c = rpeColor(r);
-        const sel = existing===r ? `border:2px solid #fff;` : `border:2px solid transparent;`;
-        return `<span onclick="logRPE('${liftId}',${r})" title="RPE ${r} — ${rpeLabel(r)}" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${c};cursor:pointer;${sel}vertical-align:middle;"></span>`;
+        const sel = existing===r ? 'border:2px solid #fff;' : 'border:2px solid transparent;';
+        return `<span onclick="logRPE('${safeId}',${r})" title="RPE ${r}" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${c};cursor:pointer;${sel}vertical-align:middle;"></span>`;
     }).join('');
-    return `<div id="rpe-badge-${liftId}" style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${badge}<span style="color:#333;font-size:10px;">|</span>${dots}</div>`;
+    return `<div id="rpe-badge-${safeId}" style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${badge}<span style="color:#333;font-size:10px;">|</span>${dots}</div>`;
 }
 
 // ==========================================
@@ -857,7 +858,12 @@ function render() {
             html += accHtml + `</div></div>`;
         }
 
-        card.innerHTML = head + html;
+        try {
+            card.innerHTML = head + html;
+        } catch(e) {
+            console.error('Render error for day', day, e);
+            card.innerHTML = head + '<p style="color:red;padding:10px;">Render error: ' + e.message + '</p>';
+        }
         cont.appendChild(card);
     });
 }
