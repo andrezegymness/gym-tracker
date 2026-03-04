@@ -463,6 +463,265 @@ window.openBWChart = function() {
 };
 
 // ==========================================
+// PR TRACKER — NEW FEATURE
+// Stores all-time PRs per lift, logs history
+// with date + weight, shows chart + badge
+// ==========================================
+function getPRData() {
+    return JSON.parse(localStorage.getItem('prData') || '{}');
+}
+function savePRData(data) {
+    localStorage.setItem('prData', JSON.stringify(data));
+}
+
+// Call this whenever a weight is confirmed as a PR
+window.logPR = function(liftName, weight, reps) {
+    const data = getPRData();
+    if (!data[liftName]) data[liftName] = { current: 0, history: [] };
+    const entry = { date: new Date().toLocaleDateString('en-US'), weight: parseFloat(weight), reps: parseInt(reps) || 1 };
+    data[liftName].history.push(entry);
+    // Update current PR if heavier
+    if (entry.weight > data[liftName].current) {
+        data[liftName].current = entry.weight;
+        savePRData(data);
+        toast(`🏆 New PR on ${liftName}: ${weight} lbs!`);
+    } else {
+        savePRData(data);
+        toast(`Logged ${weight} lbs x${entry.reps} for ${liftName}`, 'info');
+    }
+};
+
+window.openPRTracker = function(filterMonths) {
+    const data = getPRData();
+    const lifts = Object.keys(data);
+    filterMonths = filterMonths || 0; // 0 = all time
+
+    const modal = document.createElement('div');
+    modal.id = 'prTrackerModal';
+    modal.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0;`;
+    const W = Math.min(720, window.innerWidth - 40);
+
+    // Filter history by date range
+    function filterHistory(history) {
+        if (!filterMonths) return history;
+        const cutoff = new Date();
+        cutoff.setMonth(cutoff.getMonth() - filterMonths);
+        return history.filter(h => new Date(h.date) >= cutoff);
+    }
+
+    // Range buttons
+    const ranges = [{label:'1M', months:1},{label:'3M', months:3},{label:'6M', months:6},{label:'1Y', months:12},{label:'All', months:0}];
+    const rangeHtml = ranges.map(r =>
+        `<button onclick="document.getElementById('prTrackerModal').remove();openPRTracker(${r.months})"
+            style="background:${filterMonths===r.months?'#FFD700':'#222'};color:${filterMonths===r.months?'#000':'#aaa'};border:1px solid ${filterMonths===r.months?'#FFD700':'#444'};border-radius:5px;padding:5px 12px;cursor:pointer;font-size:12px;font-weight:bold;">${r.label}</button>`
+    ).join('');
+
+    let chartsHtml = '';
+    if (lifts.length === 0) {
+        chartsHtml = `<p style="color:#aaa;text-align:center;margin:30px 0;">No PRs logged yet.<br>Hit the 🏆 button next to any lift to log a PR.</p>`;
+    } else {
+        lifts.forEach(liftName => {
+            const d = data[liftName];
+            if (!d.history || d.history.length === 0) return;
+            const filtered = filterHistory(d.history);
+            if (filtered.length === 0) return;
+
+            const weights = filtered.map(h => h.weight);
+            const minW = Math.min(...weights) - 5, maxW = Math.max(...weights) + 5;
+            const cW = Math.min(W - 40, 620), cH = 160;
+            const pad = { top:15, right:15, bottom:38, left:48 };
+            const chartW = cW - pad.left - pad.right, chartH = cH - pad.top - pad.bottom;
+
+            const pts = filtered.map((h, i) => ({
+                x: pad.left + (filtered.length > 1 ? (i/(filtered.length-1))*chartW : chartW/2),
+                y: pad.top + chartH - ((h.weight - minW) / (maxW - minW || 1)) * chartH,
+                ...h
+            }));
+
+            const polyline = pts.map(p=>`${p.x},${p.y}`).join(' ');
+            const area = `${pts[0].x},${pad.top+chartH} `+pts.map(p=>`${p.x},${p.y}`).join(' ')+` ${pts[pts.length-1].x},${pad.top+chartH}`;
+
+            // Y axis — 4 gridlines
+            let yLabels = '';
+            [0, 0.33, 0.66, 1].forEach(frac => {
+                const val = Math.round(minW + frac*(maxW-minW));
+                const y = pad.top + chartH - frac*chartH;
+                yLabels += `<text x="${pad.left-6}" y="${y+4}" fill="#555" font-size="10" text-anchor="end">${val}</text>`;
+                yLabels += `<line x1="${pad.left}" y1="${y}" x2="${pad.left+chartW}" y2="${y}" stroke="#2a2a2a" stroke-width="1"/>`;
+            });
+
+            // X axis — sparse date labels
+            let xLabels = '';
+            const step = Math.max(1, Math.floor(filtered.length / 6));
+            pts.forEach((p, i) => {
+                if (i % step === 0 || i === pts.length-1)
+                    xLabels += `<text x="${p.x}" y="${pad.top+chartH+18}" fill="#555" font-size="9" text-anchor="middle">${p.date}</text>`;
+            });
+
+            // Personal best line
+            const allTimeBest = Math.max(...d.history.map(h=>h.weight));
+            const pbY = pad.top + chartH - ((allTimeBest - minW)/(maxW - minW || 1))*chartH;
+            const pbLine = allTimeBest <= maxW && allTimeBest >= minW
+                ? `<line x1="${pad.left}" y1="${pbY}" x2="${pad.left+chartW}" y2="${pbY}" stroke="#FFD700" stroke-width="1" stroke-dasharray="4" opacity="0.4"/>
+                   <text x="${pad.left+chartW+2}" y="${pbY+4}" fill="#FFD700" font-size="9">PB</text>`
+                : '';
+
+            const gradId = `grad_${liftName.replace(/\W/g,'_')}`;
+            const entryCount = d.history.length;
+            const filteredMax = Math.max(...filtered.map(h=>h.weight));
+            const trend = filtered.length >= 2
+                ? (() => { const diff = filtered[filtered.length-1].weight - filtered[0].weight; return diff >= 0 ? `+${diff} lbs ↑` : `${diff} lbs ↓`; })()
+                : '';
+
+            chartsHtml += `<div style="background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:15px;margin-bottom:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <div>
+                        <span style="font-weight:900;font-size:1em;color:#fff;">${liftName}</span>
+                        <span style="color:#555;font-size:11px;margin-left:8px;">${entryCount} sessions total</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="color:#FFD700;font-weight:900;font-size:1.1em;">🏆 ${allTimeBest} lbs</span>
+                        ${trend ? `<span style="font-size:11px;color:${trend.includes('↑')?'#4caf50':'#ff5722'};">${trend}</span>` : ''}
+                        <button onclick="clearLiftPR('${liftName}')" style="background:none;border:1px solid #333;color:#555;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:11px;">Clear</button>
+                    </div>
+                </div>
+                <svg width="${cW}" height="${cH}" style="display:block;overflow:visible;">
+                    <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#FFD700" stop-opacity="0.2"/>
+                        <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+                    </linearGradient></defs>
+                    ${yLabels}${xLabels}${pbLine}
+                    <polygon points="${area}" fill="url(#${gradId})"/>
+                    <polyline points="${polyline}" fill="none" stroke="#FFD700" stroke-width="2"/>
+                    ${pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="${p.weight===allTimeBest?5:3.5}" fill="${p.weight===allTimeBest?'#FFD700':'#b8860b'}" stroke="#111" stroke-width="2">
+                        <title>${p.date}: ${p.weight} lbs x${p.reps}</title></circle>`).join('')}
+                </svg>
+                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                    ${filtered.slice(-6).reverse().map(h =>
+                        `<span style="background:#1a1a1a;border:1px solid ${h.weight===allTimeBest?'#FFD700':'#333'};border-radius:4px;padding:3px 8px;font-size:11px;color:#aaa;">
+                            ${h.date}: <strong style="color:${h.weight===allTimeBest?'#FFD700':'#fff'};">${h.weight}</strong> x${h.reps}</span>`
+                    ).join('')}
+                </div>
+            </div>`;
+        });
+        if (!chartsHtml) chartsHtml = `<p style="color:#aaa;text-align:center;margin:20px 0;">No entries in this time range.</p>`;
+    }
+
+    const liftOptions = ['Squat','Bench','Deadlift','OHP','Pause Squat','Floor Press','Close Grip Bench','Block Pulls (Smart)','Other'];
+    modal.innerHTML = `<div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:22px;width:${W}px;max-width:95vw;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h2 style="margin:0;color:#FFD700;">🏆 PR Tracker</h2>
+            <button onclick="this.closest('[style*=\"fixed\"]').remove()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+        </div>
+
+        <!-- Date range filter -->
+        <div style="display:flex;gap:6px;margin-bottom:18px;align-items:center;">
+            <span style="color:#555;font-size:12px;margin-right:4px;">Range:</span>
+            ${rangeHtml}
+        </div>
+
+        <!-- Quick log form -->
+        <div style="background:#111;border:1px solid #333;border-radius:8px;padding:14px;margin-bottom:20px;">
+            <div style="font-size:12px;color:#aaa;margin-bottom:10px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;">Log a Session</div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end;">
+                <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px;">Lift</label>
+                    <select id="prLiftName" style="width:100%;background:#222;color:#fff;border:1px solid #444;padding:8px;border-radius:5px;">${liftOptions.map(l=>`<option>${l}</option>`).join('')}</select></div>
+                <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px;">Weight (lbs)</label>
+                    <input type="number" id="prWeight" placeholder="315" style="width:100%;background:#222;color:#fff;border:1px solid #444;padding:8px;border-radius:5px;"></div>
+                <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px;">Reps</label>
+                    <input type="number" id="prReps" placeholder="1" value="1" style="width:100%;background:#222;color:#fff;border:1px solid #444;padding:8px;border-radius:5px;"></div>
+                <button onclick="
+                    const n=document.getElementById('prLiftName').value;
+                    const w=document.getElementById('prWeight').value;
+                    const r=document.getElementById('prReps').value;
+                    if(w){logPR(n,w,r);document.getElementById('prTrackerModal').remove();setTimeout(()=>openPRTracker(${filterMonths}),200);}"
+                    style="background:#FFD700;color:#000;border:none;padding:8px 14px;border-radius:5px;cursor:pointer;font-weight:900;font-size:13px;">Log</button>
+            </div>
+        </div>
+
+        <div>${chartsHtml}</div>
+    </div>`;
+    document.body.appendChild(modal);
+};
+
+window.clearLiftPR = function(liftName) {
+    if (!confirm(`Clear all PR history for ${liftName}?`)) return;
+    const data = getPRData();
+    delete data[liftName];
+    savePRData(data);
+    toast(`${liftName} PR history cleared`, 'info');
+    const existing = document.getElementById('prTrackerModal');
+    if (existing) existing.remove();
+    setTimeout(() => window.openPRTracker(), 200);
+};
+
+// ==========================================
+// RPE LOGGING — NEW FEATURE
+// Log RPE 1-10 per set, stored by lift+date
+// Shown inline as colored dots under set/rep
+// ==========================================
+function getRPELog() {
+    return JSON.parse(localStorage.getItem('rpeLog') || '{}');
+}
+function saveRPELog(log) {
+    localStorage.setItem('rpeLog', JSON.stringify(log));
+}
+
+function rpeColor(rpe) {
+    if (rpe <= 6) return '#4caf50';
+    if (rpe <= 7) return '#8bc34a';
+    if (rpe === 8) return '#ff9800';
+    if (rpe === 9) return '#ff5722';
+    return '#f44336';
+}
+
+function rpeLabel(rpe) {
+    const labels = { 6:'Easy', 7:'Moderate', 8:'Hard', 9:'Very Hard', 10:'Max' };
+    return labels[rpe] || '';
+}
+
+window.logRPE = function(liftId, rpe) {
+    const log = getRPELog();
+    const today = new Date().toLocaleDateString('en-US');
+    if (!log[today]) log[today] = {};
+    log[today][liftId] = parseInt(rpe);
+    // Keep full history — no expiry
+    saveRPELog(log);
+    // Re-render the RPE badge inline without full re-render
+    const badge = document.getElementById(`rpe-badge-${CSS.escape(liftId)}`);
+    if (badge) {
+        const color = rpeColor(rpe);
+        badge.innerHTML = `<span style="background:${color};color:#000;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:900;">RPE ${rpe}</span>`;
+    }
+    toast(`RPE ${rpe} — ${rpeLabel(rpe)} logged`, 'info');
+};
+
+// Builds the inline RPE picker HTML for a given lift row
+function buildRPEPicker(liftId) {
+    const log = getRPELog();
+    const today = new Date().toLocaleDateString('en-US');
+    const existing = log[today] && log[today][liftId];
+    const color = existing ? rpeColor(existing) : null;
+
+    const badge = existing
+        ? `<span style="background:${color};color:#000;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:900;">RPE ${existing}</span>`
+        : `<span style="color:#444;font-size:10px;">RPE?</span>`;
+
+    const dots = [6,7,8,9,10].map(r => {
+        const c = rpeColor(r);
+        const selected = existing === r ? `border:2px solid #fff;` : `border:2px solid transparent;`;
+        return `<span onclick="logRPE('${liftId}',${r})" title="RPE ${r} — ${rpeLabel(r)}"
+            style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${c};cursor:pointer;${selected}vertical-align:middle;"></span>`;
+    }).join('');
+
+    return `<div id="rpe-badge-${liftId}" style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+        ${badge}
+        <span style="color:#333;font-size:10px;">|</span>
+        ${dots}
+    </div>`;
+}
+
+// ==========================================
 // PDF EXPORT — NEW FEATURE
 // Uses browser print for clean PDF output
 // ==========================================
@@ -889,10 +1148,20 @@ function generateProgram() {
             if (speedNote) setRepStr += `<div style="font-size:9px;color:#aaa;">${speedNote}</div>`;
         }
 
+        // Unique ID for RPE logging keyed by lift name + week
+        const liftId = `base_w${w}_${lift.n.replace(/\W/g,'_')}`;
+        const rpePicker = buildRPEPicker(liftId);
+        // PR badge — show trophy if this lift is a main compound
+        const isMainLift = ['Comp Squat','Primary Bench (Top)','Comp Deadlift','OHP (Strength)'].includes(lift.n);
+        const prBtn = (isMainLift && finalWeight > 0) ? `<span onclick="logPR('${lift.n}',${finalWeight},${dReps})" title="Log as PR" style="cursor:pointer;font-size:13px;margin-left:4px;opacity:0.7;">🏆</span>` : '';
+
         html += `<tr>
-                 <td style="padding:4px 0;color:var(--text,#ccc);">${lift.n}${lift.isCustom?' ⭐':''}</td>
+                 <td style="padding:4px 0;color:var(--text,#ccc);">
+                     ${lift.n}${lift.isCustom?' ⭐':''}
+                     ${rpePicker}
+                 </td>
                  <td style="padding:4px 0;text-align:center;color:#2196f3;">${setRepStr}</td>
-                 <td style="padding:4px 0;text-align:right;">${weightDisplay} ${btn}${timerBtn}</td>
+                 <td style="padding:4px 0;text-align:right;">${weightDisplay} ${btn}${timerBtn}${prBtn}</td>
                 </tr>`;
       });
       html += `</table></div>`;
@@ -1258,6 +1527,12 @@ document.addEventListener('DOMContentLoaded', () => {
         chartBtn.innerText = '📈 BW Chart';
         chartBtn.onclick = window.openBWChart;
         actions.insertBefore(chartBtn, actions.children[2]);
+
+        const prBtn = document.createElement('button');
+        prBtn.className = 'action-btn';
+        prBtn.innerText = '🏆 PRs';
+        prBtn.onclick = window.openPRTracker;
+        actions.insertBefore(prBtn, actions.children[3]);
     }
 
     onAuthStateChanged(auth, (user) => {
