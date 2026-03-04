@@ -7,7 +7,7 @@
 //        dark/light theme toggle
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -302,10 +302,13 @@ window.openPRTracker = function(filterMonths) {
     }
 
     const liftOptions=['Squat','Bench','Deadlift','OHP','Pause Squat','Pause Deadlift','Floor Press','Close Grip Bench','Other'];
+    // Close on backdrop click
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
     modal.innerHTML=`<div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:22px;width:${W}px;max-width:95vw;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h2 style="margin:0;color:#FFD700;">🏆 PR Tracker</h2>
-            <button onclick="document.getElementById('prTrackerModal').remove()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+            <button id="prTrackerCloseBtn" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;line-height:1;">✕</button>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:18px;align-items:center;">
             <span style="color:#555;font-size:12px;margin-right:4px;">Range:</span>${rangeHtml}
@@ -326,6 +329,7 @@ window.openPRTracker = function(filterMonths) {
         <div>${chartsHtml}</div>
     </div>`;
     document.body.appendChild(modal);
+    document.getElementById('prTrackerCloseBtn').addEventListener('click', () => modal.remove());
 };
 
 window.clearLiftPR = function(liftName) {
@@ -1046,7 +1050,9 @@ window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.
 // ==========================================
 function setupAuthButtons() {
     const gBtn = document.getElementById('googleLoginBtn');
-    if(gBtn) gBtn.addEventListener('click', () => signInWithPopup(auth, provider).catch(e => toast('Google login failed: '+e.message,'error')));
+    if(gBtn) gBtn.addEventListener('click', () => signInWithPopup(auth, provider)
+        .then(() => { document.getElementById('authModal').style.display='none'; toast('Logged in with Google!'); })
+        .catch(e => toast('Google login failed: '+e.message,'error')));
 
     const eBtn = document.getElementById('emailLoginBtn');
     if(eBtn) eBtn.addEventListener('click', () => {
@@ -1056,6 +1062,33 @@ function setupAuthButtons() {
             .then(() => { document.getElementById('authModal').style.display='none'; toast('Logged in!'); })
             .catch(e => toast('Login failed: '+e.message,'error'));
     });
+
+    const sBtn = document.getElementById('emailSignupBtn');
+    if(sBtn) sBtn.addEventListener('click', () => {
+        const email = document.getElementById('emailInput').value;
+        const pass  = document.getElementById('passInput').value;
+        if(!email || !pass) { toast('Enter email and password first','error'); return; }
+        if(pass.length < 6) { toast('Password must be at least 6 characters','error'); return; }
+        createUserWithEmailAndPassword(auth, email, pass)
+            .then(() => { document.getElementById('authModal').style.display='none'; toast('Account created! Logged in.'); })
+            .catch(e => toast('Sign up failed: '+e.message,'error'));
+    });
+
+    // Toggle between login/signup hint text
+    const toggle = document.getElementById('authToggleHint');
+    if(toggle) {
+        toggle.addEventListener('click', () => {
+            const loginBtn = document.getElementById('emailLoginBtn');
+            const signupBtn = document.getElementById('emailSignupBtn');
+            const isLogin = loginBtn.style.display !== 'none';
+            loginBtn.style.display = isLogin ? 'none' : '';
+            signupBtn.style.display = isLogin ? '' : 'none';
+            toggle.innerHTML = isLogin
+                ? "Already have an account? <span style='color:#2196f3;cursor:pointer;text-decoration:underline;' id='authToggleHint'>Log in</span>"
+                : "Don't have an account? <span style='color:#2196f3;cursor:pointer;text-decoration:underline;' id='authToggleHint'>Sign up</span>";
+            document.getElementById('authModalTitle').innerText = isLogin ? 'Create Account' : 'Login';
+        });
+    }
 }
 
 // ==========================================
