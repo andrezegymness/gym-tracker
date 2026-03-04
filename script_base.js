@@ -6,7 +6,7 @@
 //        PDF export, dark/light theme toggle
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1318,7 +1318,9 @@ async function loadUserData(email) {
 
 function handleLogin() {
     const email = document.getElementById('emailInput').value.trim().toLowerCase();
-    const pass = document.getElementById('passwordInput').value;
+    // support both id variants
+    const passEl = document.getElementById('passwordInput') || document.getElementById('passInput');
+    const pass = passEl ? passEl.value : '';
     if(email && pass) {
         signInWithEmailAndPassword(auth, email, pass)
             .then(() => {
@@ -1329,6 +1331,20 @@ function handleLogin() {
     } else {
         toast('Please enter email and password', 'error');
     }
+}
+
+function handleSignup() {
+    const email = document.getElementById('emailInput').value.trim().toLowerCase();
+    const passEl = document.getElementById('passwordInput') || document.getElementById('passInput');
+    const pass = passEl ? passEl.value : '';
+    if(!email || !pass) { toast('Enter email and password first', 'error'); return; }
+    if(pass.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
+    createUserWithEmailAndPassword(auth, email, pass)
+        .then(() => {
+            document.getElementById('authModal').style.display='none';
+            toast('Account created! Logged in.');
+        })
+        .catch(e => toast('Sign up failed: ' + e.message, 'error'));
 }
 
 // ==========================================
@@ -1572,6 +1588,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const emailBtn = document.getElementById('emailLoginBtn');
     if(emailBtn) emailBtn.addEventListener('click', handleLogin);
+
+    const signupBtn = document.getElementById('emailSignupBtn');
+    if(signupBtn) signupBtn.addEventListener('click', handleSignup);
+
+    const toggleHint = document.getElementById('authToggleHint');
+    if(toggleHint) toggleHint.addEventListener('click', () => {
+        const lb = document.getElementById('emailLoginBtn');
+        const sb = document.getElementById('emailSignupBtn');
+        const title = document.getElementById('authModalTitle');
+        const isLogin = lb.style.display !== 'none';
+        lb.style.display = isLogin ? 'none' : '';
+        sb.style.display = isLogin ? '' : 'none';
+        if(title) title.innerText = isLogin ? 'Create Account' : 'Login';
+        const hint = document.getElementById('authToggleHint');
+        if(hint) hint.parentElement.innerHTML = isLogin
+            ? 'Already have an account? <span style="color:#2196f3;cursor:pointer;text-decoration:underline;" id="authToggleHint">Log in</span>'
+            : 'Don\'t have an account? <span style="color:#2196f3;cursor:pointer;text-decoration:underline;" id="authToggleHint">Sign up</span>';
+        // re-wire after innerHTML replace
+        const newHint = document.getElementById('authToggleHint');
+        if(newHint) newHint.addEventListener('click', arguments.callee.bind(this));
+    });
 
     document.getElementById('libCategory').addEventListener('change', updateLibExercises);
     document.getElementById('libExercise').addEventListener('change', updateLibDetails);
