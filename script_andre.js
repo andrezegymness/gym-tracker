@@ -339,8 +339,6 @@ window.clearLiftPR = function(liftName) {
     setTimeout(() => window.openPRTracker(), 200);
 };
 
-};
-
 // ==========================================
 // RPE LOGGING — NEW FEATURE
 // ==========================================
