@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warm-Up Calculator — Andre's Calibrations</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg:#080808; --surface:#101010; --surface2:#161616;
+            --border:#1c1c1c; --gold:#FFD700; --red:#e53935;
+            --blue:#1e88e5; --green:#43a047; --text:#e8e8e8; --muted:#444;
+        }
+        body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+
+        .wu-header { background:var(--surface); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:center; gap:16px; }
+        .wu-header a { color:var(--gold); font-size:12px; font-weight:600; letter-spacing:1px; text-decoration:none; text-transform:uppercase; }
+        .wu-header .title { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:3px; }
+        .wu-header .title span { color:var(--gold); }
+
+        .wrap { max-width:860px; margin:0 auto; padding:24px 16px 80px; }
+
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px; margin-bottom:18px; }
+        .card-title { font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:3px; color:var(--muted); margin-bottom:14px; text-transform:uppercase; }
+
+        .field-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:11px; margin-bottom:14px; }
+        .field { display:flex; flex-direction:column; gap:5px; }
+        .field label { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+        .field input, .field select { background:var(--bg); border:1px solid #222; border-radius:8px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; padding:11px 13px; transition:border-color 0.2s; -webkit-appearance:none; }
+        .field input:focus, .field select:focus { outline:none; border-color:var(--gold); }
+        .field select option { background:#111; }
+
+        /* Plate style toggle — replaces unit toggle */
+        .plate-toggle-row { display:flex; gap:6px; margin-bottom:14px; align-items:center; }
+        .plate-toggle-row .tog-label { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-right:4px; }
+        .unit-btn { background:var(--bg); border:1px solid #222; border-radius:7px; color:var(--muted); cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; padding:8px 18px; transition:all 0.2s; }
+        .unit-btn.active { background:var(--gold); border-color:var(--gold); color:#000; }
+
+        .go-btn { background:var(--gold); border:none; border-radius:10px; color:#000; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:3px; padding:15px; transition:all 0.18s; width:100%; }
+        .go-btn:hover { background:#ffe740; transform:translateY(-1px); }
+
+        /* Results */
+        #results { display:none; }
+
+        .wu-set { border-radius:10px; cursor:pointer; margin-bottom:8px; overflow:hidden; transition:transform 0.15s; }
+        .wu-set:hover { transform:translateX(3px); }
+        .wu-set.optional-set { opacity:0.55; }
+        .wu-set.optional-set:hover { opacity:1; }
+        .wu-row { align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:10px; display:flex; gap:12px; padding:13px 16px; }
+        .wu-set.optional-set .wu-row { border-style:dashed; border-color:#252525; }
+        .wu-num { font-family:'Bebas Neue',sans-serif; font-size:1rem; color:var(--muted); width:22px; flex-shrink:0; text-align:center; }
+        .wu-weight { font-family:'Bebas Neue',sans-serif; font-size:1.35rem; color:var(--text); flex:1; letter-spacing:1px; }
+        .wu-reps { font-size:12px; font-weight:600; color:#555; min-width:60px; text-align:right; }
+        .wu-cue { font-size:11px; color:#3a3a3a; border-top:1px solid var(--border); padding:7px 16px; background:var(--surface); font-style:italic; }
+        .wu-set.active-set .wu-row { border-color:var(--gold); background:rgba(255,215,0,0.04); }
+        .wu-set.active-set .wu-weight { color:var(--gold); }
+        .wu-set.active-set .wu-cue { border-color:rgba(255,215,0,0.1); color:#888; }
+
+        /* Badges */
+        .badge { border-radius:4px; font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:1.5px; margin-left:6px; padding:2px 6px; display:inline-block; }
+        .badge-belt    { background:var(--red); color:#fff; }
+        .badge-sleeves { background:#1565c0; color:#fff; }
+        .badge-chalk   { background:#37474f; color:#cfd8dc; }
+        .badge-wraps   { background:#4a148c; color:#e1bee7; }
+        .badge-opt     { background:transparent; border:1px solid #2a2a2a; color:#333; font-size:9px; }
+
+        .opt-divider { font-size:10px; font-weight:700; letter-spacing:2px; color:#252525; text-transform:uppercase; text-align:center; padding:8px 0 3px; border-top:1px dashed #1a1a1a; margin-top:4px; }
+
+        /* Save button */
+        .save-btn { background:transparent; border:1px solid #222; border-radius:10px; color:#555; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; padding:13px; transition:all 0.2s; width:100%; margin-top:12px; }
+        .save-btn:hover { border-color:#555; color:#aaa; }
+        .save-btn.saving { border-color:var(--gold); color:var(--gold); }
+
+        /* Note box */
+        .note-box { background:rgba(255,215,0,0.04); border:1px solid rgba(255,215,0,0.08); border-radius:8px; color:#555; font-size:12px; line-height:1.6; padding:12px 14px; margin-top:14px; }
+        .note-box strong { color:#777; }
+
+        /* Plate modal */
+        .plate-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9000; align-items:center; justify-content:center; padding:20px; }
+        .plate-modal.open { display:flex; }
+        .plate-inner { background:var(--surface); border:1px solid var(--border); border-radius:16px; max-width:540px; padding:24px; width:100%; }
+        .plate-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; }
+        .plate-target { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--gold); letter-spacing:2px; }
+        .plate-sub { font-size:11px; color:#333; margin-top:2px; }
+        .close-plate { background:none; border:none; color:var(--muted); cursor:pointer; font-size:22px; line-height:1; }
+        .barbell-wrap { background:#060606; border:1px solid var(--border); border-radius:10px; padding:18px 8px; margin-bottom:16px; overflow-x:auto; }
+        .barbell-svg { display:block; margin:0 auto; }
+        .plate-breakdown { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
+        .plate-chip { border-radius:6px; font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:1px; padding:5px 11px; }
+
+        /* LBS colors */
+        .plate-45  { background:#0f1128; color:#7986cb; border:1px solid #3f51b5; }
+        .plate-35  { background:#181818; color:#9e9e9e; border:1px solid #555; }
+        .plate-25  { background:#0f1f0f; color:#81c784; border:1px solid #388e3c; }
+        .plate-10  { background:#181818; color:#bbb; border:1px solid #333; }
+        .plate-5   { background:#1f0f0f; color:#ef9a9a; border:1px solid #c62828; }
+        .plate-2h  { background:#111; color:#666; border:1px solid #222; }
+        /* KG colors (IPF official) */
+        .plate-25kg { background:#1a0000; color:#ef5350; border:1px solid #c62828; }
+        .plate-20kg { background:#001528; color:#42a5f5; border:1px solid #1565c0; }
+        .plate-15kg { background:#1a0e00; color:#ffa726; border:1px solid #e65100; }
+        .plate-10kg { background:#001500; color:#66bb6a; border:1px solid #2e7d32; }
+        .plate-5kg  { background:#181500; color:#fff176; border:1px solid #f57f17; }
+        .plate-2h5kg{ background:#0d0018; color:#ce93d8; border:1px solid #6a1b9a; }
+        .plate-1k25kg { background:#111; color:#666; border:1px solid #222; }
+
+        .plate-note { font-size:11px; color:#333; text-align:center; }
+
+        /* Save capture area */
+        #captureArea { background:var(--bg); }
+    </style>
+</head>
+<body>
+
+<header class="wu-header">
+    <a href="index.html">← Menu</a>
+    <div class="title">Warm-Up <span>Calculator</span></div>
+</header>
+
+<div class="wrap">
+
+    <!-- INPUT CARD -->
+    <div class="card">
+        <div class="card-title">Configure Your Warm-Up</div>
+
+        <!-- Plate display preference: always enter LBS, choose how plates show -->
+        <div class="plate-toggle-row">
+            <span class="tog-label">Plate Display</span>
+            <button class="unit-btn active" id="btnLbsPlates" onclick="setPlateMode('lbs')">LBS Plates</button>
+            <button class="unit-btn" id="btnKgPlates" onclick="setPlateMode('kg')">KG Plates</button>
+        </div>
+
+        <div class="field-grid">
+            <div class="field">
+                <label>Target Weight (LBS)</label>
+                <input type="number" id="wuTarget" placeholder="e.g. 405">
+            </div>
+            <div class="field">
+                <label>Lift</label>
+                <select id="wuLift">
+                    <option value="squat">Squat</option>
+                    <option value="bench">Bench Press</option>
+                    <option value="deadlift">Deadlift</option>
+                    <option value="ohp">Overhead Press</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Top Set Reps</label>
+                <select id="wuTopReps">
+                    <option value="1">1 Rep (Max / Single)</option>
+                    <option value="2">2 Reps</option>
+                    <option value="3">3 Reps</option>
+                    <option value="5">5 Reps</option>
+                    <option value="8">8 Reps</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Warm-Up Style</label>
+                <select id="wuStyle">
+                    <option value="standard">Standard</option>
+                    <option value="big">Aggressive (Big Jumps)</option>
+                    <option value="tight">Conservative (Small Jumps)</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="go-btn" onclick="calculate()">Generate Warm-Up</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results">
+        <div id="captureArea">
+            <div class="card-title" style="padding-left:2px;" id="resultsLabel"></div>
+            <div id="wuSets"></div>
+        </div>
+        <button class="save-btn" id="saveBtn" onclick="saveScreenshot()">📸 Save to Camera Roll</button>
+        <div class="note-box">
+            <strong>Tip:</strong> Tap any set row to open the plate loader for that weight.
+            The warm-up calculator is also inside each program under <strong>Settings &amp; Tools</strong>.
+        </div>
+    </div>
+
+</div>
+
+<!-- PLATE MODAL -->
+<div class="plate-modal" id="plateModal">
+    <div class="plate-inner">
+        <div class="plate-header">
+            <div>
+                <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;">Plate Loader</div>
+                <div class="plate-target" id="plateTarget">—</div>
+                <div class="plate-sub" id="plateSub"></div>
+            </div>
+            <button class="close-plate" onclick="closePlate()">✕</button>
+        </div>
+        <div class="barbell-wrap">
+            <svg class="barbell-svg" id="barbellSvg" height="80" viewBox="0 0 480 80" width="480"></svg>
+        </div>
+        <div class="plate-breakdown" id="plateBreakdown"></div>
+        <div class="plate-note" id="plateNote"></div>
+    </div>
+</div>
+
+<!-- html2canvas for screenshot -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let plateMode = 'lbs'; // 'lbs' or 'kg' — only affects the plate loader display
+                        // The user ALWAYS inputs in LBS
+
+function setPlateMode(m) {
+    plateMode = m;
+    document.getElementById('btnLbsPlates').classList.toggle('active', m === 'lbs');
+    document.getElementById('btnKgPlates').classList.toggle('active', m === 'kg');
+}
+
+// ─────────────────────────────────────────────
+// PROTOCOLS  [style][topReps]
+// p = % of top set   r = reps (or 'OPT')
+// ─────────────────────────────────────────────
+function getProtocol(style, topReps) {
+    const r = parseInt(topReps);
+    if (style === 'big') {
+        if (r===1) return [{p:.45,r:5},{p:.68,r:3},{p:.84,r:1},{p:.92,r:1},{p:.97,r:'OPT'}];
+        if (r===2) return [{p:.45,r:5},{p:.65,r:3},{p:.82,r:2},{p:.92,r:1},{p:.97,r:'OPT'}];
+        if (r===3) return [{p:.45,r:5},{p:.65,r:3},{p:.80,r:3},{p:.90,r:2},{p:.96,r:'OPT'}];
+        if (r===5) return [{p:.40,r:5},{p:.60,r:5},{p:.78,r:3},{p:.88,r:2},{p:.95,r:'OPT'}];
+                   return [{p:.35,r:8},{p:.55,r:5},{p:.72,r:4},{p:.85,r:3},{p:.93,r:'OPT'}];
+    }
+    if (style === 'tight') {
+        if (r===1) return [{p:.40,r:8},{p:.52,r:5},{p:.64,r:3},{p:.75,r:2},{p:.84,r:1},{p:.90,r:1},{p:.94,r:1},{p:.98,r:'OPT'}];
+        if (r===2) return [{p:.40,r:6},{p:.52,r:4},{p:.64,r:3},{p:.75,r:2},{p:.85,r:2},{p:.92,r:1},{p:.97,r:'OPT'}];
+        if (r===3) return [{p:.40,r:6},{p:.52,r:5},{p:.64,r:3},{p:.75,r:3},{p:.85,r:2},{p:.92,r:1},{p:.97,r:'OPT'}];
+        if (r===5) return [{p:.35,r:8},{p:.50,r:5},{p:.62,r:5},{p:.75,r:3},{p:.85,r:2},{p:.92,r:1},{p:.97,r:'OPT'}];
+                   return [{p:.30,r:10},{p:.45,r:8},{p:.58,r:6},{p:.70,r:4},{p:.80,r:3},{p:.90,r:2},{p:.96,r:'OPT'}];
+    }
+    // standard
+    if (r===1) return [{p:.505,r:5},{p:.608,r:3},{p:.72,r:2},{p:.834,r:1},{p:.93,r:1},{p:.97,r:'OPT'}];
+    if (r===2) return [{p:.50,r:5},{p:.62,r:3},{p:.76,r:2},{p:.87,r:2},{p:.94,r:1},{p:.97,r:'OPT'}];
+    if (r===3) return [{p:.48,r:5},{p:.60,r:5},{p:.74,r:3},{p:.86,r:3},{p:.93,r:2},{p:.97,r:'OPT'}];
+    if (r===5) return [{p:.45,r:5},{p:.58,r:5},{p:.72,r:5},{p:.84,r:3},{p:.92,r:2},{p:.97,r:'OPT'}];
+               return [{p:.38,r:8},{p:.52,r:6},{p:.66,r:5},{p:.78,r:4},{p:.88,r:3},{p:.95,r:'OPT'}];
+}
+
+// ─────────────────────────────────────────────
+// COACHING CUES
+// ─────────────────────────────────────────────
+const CUES = {
+    squat: [
+        "Empty bar — groove the pattern, full depth.",
+        "Focus foot pressure, push the floor apart.",
+        "Start bracing hard, breath before descent.",
+        "BELT ON — max intra-abdominal pressure.",
+        "Drive knees out, explode from the hole.",
+        "Speed counts — compensatory acceleration.",
+        "Feeler — judge depth and bar speed.",
+        "Final feel — mental rehearsal only."
+    ],
+    bench: [
+        "Empty bar — groove the arc, active lats.",
+        "Drive heels into floor, retract scapula.",
+        "Tight arch, leg drive from the start.",
+        "Explode off chest — compensatory speed.",
+        "Competition pause if applicable.",
+        "HEAVY — lat tension and leg drive.",
+        "Feeler — check touch point and tuck.",
+        "Final feel — mental rehearsal only."
+    ],
+    deadlift: [
+        "Pull the slack out, feel bar tension.",
+        "Chest up, proud chest before the pull.",
+        "Squeeze lats hard — protect your spine.",
+        "BELT ON — brace fully before you grip.",
+        "Competition speed — no hitching.",
+        "Max tension — lat, leg, core all at once.",
+        "Feeler — judge speed off the floor.",
+        "Final feel — mental rehearsal only."
+    ],
+    ohp: [
+        "Empty bar — full ROM, elbows forward.",
+        "Tight core and glutes, vertical bar path.",
+        "Drive through the sticking point fast.",
+        "Full lockout at top — own the rep.",
+        "HEAVY — brace hard before unrack.",
+        "Max bar speed — commit at liftoff.",
+        "Feeler — gauge sticking point location.",
+        "Final feel — mental rehearsal only."
+    ]
+};
+
+// Gear thresholds by lift — percentage of top set
+// belt: put on belt | sleeves: knee sleeves | chalk: chalk up | wraps: wrist wraps
+const GEAR = {
+    squat:    { belt:0.70, sleeves:0.65, chalk:null,  wraps:null  },
+    bench:    { belt:null, sleeves:null,  chalk:null,  wraps:0.72  },
+    deadlift: { belt:0.83, sleeves:null,  chalk:0.60,  wraps:null  },
+    ohp:      { belt:null, sleeves:null,  chalk:null,  wraps:0.75  }
+};
+
+// ─────────────────────────────────────────────
+// ROUND to nearest loadable increment
+// Always LBS input. Round to 5lb steps.
+// ─────────────────────────────────────────────
+function roundLbs(w) { return Math.round(w / 5) * 5; }
+
+// ─────────────────────────────────────────────
+// CALCULATE
+// ─────────────────────────────────────────────
+function calculate() {
+    const raw = parseFloat(document.getElementById('wuTarget').value);
+    if (!raw || raw <= 0) return;
+
+    const lift     = document.getElementById('wuLift').value;
+    const topReps  = document.getElementById('wuTopReps').value;
+    const style    = document.getElementById('wuStyle').value;
+    const protocol = getProtocol(style, topReps);
+    const cues     = CUES[lift] || CUES.squat;
+    const gear     = GEAR[lift] || {};
+
+    const styleLabels = { standard:'Standard', big:'Aggressive', tight:'Conservative' };
+    const repLabels   = { '1':'Singles','2':'Doubles','3':'Triples','5':'5s','8':'8s' };
+    document.getElementById('resultsLabel').innerText =
+        `${lift.charAt(0).toUpperCase()+lift.slice(1)} · ${styleLabels[style]} · Top Set: ${repLabels[topReps]||topReps+' Reps'} · ${raw} LBS`;
+
+    let html = '';
+    let setNum = 1;
+    let optStarted = false;
+
+    protocol.forEach((step, i) => {
+        const w      = roundLbs(raw * step.p);
+        const isOpt  = step.r === 'OPT';
+        const repsStr= isOpt ? 'Optional' : `${step.r} ${parseInt(step.r)===1?'Rep':'Reps'}`;
+        const cue    = cues[Math.min(i, cues.length-1)];
+        const pct    = step.p;
+
+        // Gear badges
+        let badges = '';
+        if (gear.belt    && pct >= gear.belt)    badges += `<span class="badge badge-belt">BELT</span>`;
+        if (gear.sleeves && pct >= gear.sleeves) badges += `<span class="badge badge-sleeves">SLEEVES</span>`;
+        if (gear.chalk   && pct >= gear.chalk)   badges += `<span class="badge badge-chalk">CHALK</span>`;
+        if (gear.wraps   && pct >= gear.wraps)   badges += `<span class="badge badge-wraps">WRAPS</span>`;
+        if (isOpt)                                badges += `<span class="badge badge-opt">Optional</span>`;
+
+        if (isOpt && !optStarted) {
+            optStarted = true;
+            html += `<div class="opt-divider">── Optional Feeler Set ──</div>`;
+        }
+
+        html += `
+        <div class="wu-set ${isOpt?'optional-set':''}"
+             onclick="openPlate(${w})">
+            <div class="wu-row">
+                <div class="wu-num">${isOpt?'—':setNum}</div>
+                <div class="wu-weight">${w} <span style="font-size:0.75rem;color:#444;">LBS</span>${badges}</div>
+                <div class="wu-reps">${repsStr}</div>
+            </div>
+            <div class="wu-cue">${cue}</div>
+        </div>`;
+
+        if (!isOpt) setNum++;
+    });
+
+    document.getElementById('wuSets').innerHTML = html;
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ─────────────────────────────────────────────
+// PLATE CALCULATOR
+// Weight is always in LBS.
+// plateMode controls whether we show LBS or KG plates.
+// ─────────────────────────────────────────────
+const PLATES_LBS = [45, 35, 25, 10, 5, 2.5];
+const BAR_LBS    = 45;
+
+const PLATES_KG  = [25, 20, 15, 10, 5, 2.5, 1.25];
+const BAR_KG_LBS = 44.09; // 20kg bar in lbs
+const KG_PLATE_LBS = { 25:55.12, 20:44.09, 15:33.07, 10:22.05, 5:11.02, 2.5:5.51, 1.25:2.76 };
+
+const PCLASS_LBS = { 45:'plate-45',35:'plate-35',25:'plate-25',10:'plate-10',5:'plate-5',2.5:'plate-2h' };
+const PCLASS_KG  = { 25:'plate-25kg',20:'plate-20kg',15:'plate-15kg',10:'plate-10kg',5:'plate-5kg',2.5:'plate-2h5kg',1.25:'plate-1k25kg' };
+
+const SVG_COL_LBS = { 45:'#3949ab',35:'#757575',25:'#388e3c',10:'#424242',5:'#c62828',2.5:'#4a4a4a' };
+const SVG_COL_KG  = { 25:'#c62828',20:'#1565c0',15:'#e65100',10:'#2e7d32',5:'#f9a825',2.5:'#6a1b9a',1.25:'#37474f' };
+
+function calcPlatesLbs(weightLbs) {
+    let rem = (weightLbs - BAR_LBS) / 2;
+    if (rem < 0) rem = 0;
+    let result = [];
+    PLATES_LBS.forEach(p => { while(rem >= p-0.01){ result.push(p); rem=Math.round((rem-p)*1000)/1000; } });
+    return result;
+}
+
+function calcPlatesKg(weightLbs) {
+    // Convert lbs weight to kg, then solve for kg plates on a 20kg bar
+    const weightKg = weightLbs / 2.20462;
+    let rem = (weightKg - 20) / 2;
+    if (rem < 0) rem = 0;
+    let result = [];
+    PLATES_KG.forEach(p => { while(rem >= p-0.01){ result.push(p); rem=Math.round((rem-p)*1000)/1000; } });
+    return result;
+}
+
+function openPlate(weightLbs) {
+    const isKg = plateMode === 'kg';
+    const plates = isKg ? calcPlatesKg(weightLbs) : calcPlatesLbs(weightLbs);
+    const colors = isKg ? SVG_COL_KG  : SVG_COL_LBS;
+    const pclass = isKg ? PCLASS_KG   : PCLASS_LBS;
+    const bar    = isKg ? 20 : 45;
+    const unit   = isKg ? 'kg' : 'lbs';
+
+    // Show lbs weight always, kg equivalent if in kg mode
+    const kgEquiv = (weightLbs / 2.20462).toFixed(1);
+    document.getElementById('plateTarget').innerText = `${weightLbs} LBS`;
+    document.getElementById('plateSub').innerText    = isKg ? `≈ ${kgEquiv} kg on a 20kg bar` : `45lb bar`;
+
+    drawBarbell(plates, colors);
+
+    const counts = {};
+    plates.forEach(p => counts[p] = (counts[p]||0)+1);
+    let html = '';
+    if (!plates.length) {
+        html = `<div class="plate-chip plate-10" style="color:#555">Bar Only</div>`;
+    } else {
+        Object.entries(counts).sort((a,b)=>b[0]-a[0]).forEach(([p,n]) => {
+            html += `<div class="plate-chip ${pclass[p]||'plate-10'}">${n>1?n+'×':''}${p}${unit}</div>`;
+        });
+    }
+    document.getElementById('plateBreakdown').innerHTML = html;
+    document.getElementById('plateNote').innerText = `${bar}${unit} bar · plates shown per side`;
+
+    document.getElementById('plateModal').classList.add('open');
+}
+
+function closePlate() { document.getElementById('plateModal').classList.remove('open'); }
+document.getElementById('plateModal').addEventListener('click', e => { if(e.target===document.getElementById('plateModal')) closePlate(); });
+
+function drawBarbell(plates, colors) {
+    const svg = document.getElementById('barbellSvg');
+    const W=480, H=80, cx=W/2, barY=H/2, barH=8, sleeveW=155;
+    const maxH = {45:60,35:54,25:48,20:52,15:46,10:38,5:28,2.5:22,1.25:16};
+
+    let e = '';
+    // Center knurl
+    e += `<rect x="${cx-55}" y="${barY-barH/2}" width="110" height="${barH}" rx="3" fill="#2a2a2a"/>`;
+    // Sleeves
+    e += `<rect x="${cx-55-sleeveW}" y="${barY-barH/2+1}" width="${sleeveW}" height="${barH-2}" rx="2" fill="#1a1a1a"/>`;
+    e += `<rect x="${cx+55}" y="${barY-barH/2+1}" width="${sleeveW}" height="${barH-2}" rx="2" fill="#1a1a1a"/>`;
+    // Collars
+    e += `<rect x="${cx-59}" y="${barY-13}" width="7" height="26" rx="2" fill="#383838"/>`;
+    e += `<rect x="${cx+52}" y="${barY-13}" width="7" height="26" rx="2" fill="#383838"/>`;
+
+    let lx = cx-59, rx2 = cx+59;
+    const pw=13, gap=2;
+    plates.forEach(p => {
+        const ph = maxH[p]||34;
+        const col = colors[p]||'#333';
+        lx -= (pw+gap);
+        e += `<rect x="${lx}" y="${barY-ph/2}" width="${pw}" height="${ph}" rx="2" fill="${col}"/>`;
+        e += `<rect x="${rx2}" y="${barY-ph/2}" width="${pw}" height="${ph}" rx="2" fill="${col}"/>`;
+        rx2 += (pw+gap);
+    });
+    // End caps
+    e += `<rect x="${cx-55-sleeveW-9}" y="${barY-18}" width="9" height="36" rx="3" fill="#2a2a2a"/>`;
+    e += `<rect x="${cx+55+sleeveW}" y="${barY-18}" width="9" height="36" rx="3" fill="#2a2a2a"/>`;
+
+    svg.innerHTML = e;
+}
+
+// ─────────────────────────────────────────────
+// SAVE SCREENSHOT
+// Uses html2canvas — works offline after first load
+// Triggers native share sheet / save on mobile
+// ─────────────────────────────────────────────
+function saveScreenshot() {
+    const btn = document.getElementById('saveBtn');
+    btn.classList.add('saving');
+    btn.innerText = '⏳ Generating...';
+
+    const target = document.getElementById('captureArea');
+
+    html2canvas(target, {
+        backgroundColor: '#080808',
+        scale: 2,
+        useCORS: true,
+        logging: false
+    }).then(canvas => {
+        canvas.toBlob(blob => {
+            // Try Web Share API first (iOS/Android native share → Save to Photos)
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob],'warmup.png',{type:'image/png'})] })) {
+                navigator.share({
+                    files: [new File([blob], 'warmup.png', { type:'image/png' })],
+                    title: 'Warm-Up Plan'
+                }).then(() => {
+                    btn.classList.remove('saving');
+                    btn.innerText = '📸 Save to Camera Roll';
+                }).catch(() => fallbackDownload(canvas, btn));
+            } else {
+                // Fallback: trigger download
+                fallbackDownload(canvas, btn);
+            }
+        }, 'image/png');
+    }).catch(err => {
+        btn.classList.remove('saving');
+        btn.innerText = '📸 Save to Camera Roll';
+        alert('Screenshot failed. Try long-pressing the screen to save manually.');
+    });
+}
+
+function fallbackDownload(canvas, btn) {
+    const link = document.createElement('a');
+    link.download = 'warmup-' + Date.now() + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    btn.classList.remove('saving');
+    btn.innerText = '✓ Saved!';
+    setTimeout(() => btn.innerText = '📸 Save to Camera Roll', 2500);
+}
+</script>
+</body>
+</html>
