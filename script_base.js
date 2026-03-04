@@ -608,11 +608,11 @@ window.openPRTracker = function(filterMonths) {
     }
 
     const liftOptions = ['Squat','Bench','Deadlift','OHP','Pause Squat','Floor Press','Close Grip Bench','Block Pulls (Smart)','Other'];
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
     modal.innerHTML = `<div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:22px;width:${W}px;max-width:95vw;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h2 style="margin:0;color:#FFD700;">🏆 PR Tracker</h2>
-            <button onclick="this.closest('[style*=\"fixed\"]').remove()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
-        </div>
+            <button id="prTrackerCloseBtn" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;line-height:1;">✕</button>
 
         <!-- Date range filter -->
         <div style="display:flex;gap:6px;margin-bottom:18px;align-items:center;">
@@ -642,6 +642,7 @@ window.openPRTracker = function(filterMonths) {
         <div>${chartsHtml}</div>
     </div>`;
     document.body.appendChild(modal);
+    document.getElementById('prTrackerCloseBtn').addEventListener('click', () => modal.remove());
 };
 
 window.clearLiftPR = function(liftName) {
