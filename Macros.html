@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macro Calculator — Andre's Calibrations</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Barlow', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ── */
+        .macro-header {
+            background: #111;
+            border-bottom: 1px solid #222;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .macro-header a {
+            color: var(--gold, #FFD700);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .macro-header .page-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #fff;
+        }
+        .macro-header .page-title span { color: var(--gold, #FFD700); }
+
+        /* ── MAIN LAYOUT ── */
+        .macro-wrap {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+
+        /* ── SECTION TITLE ── */
+        .section-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #444;
+            margin-bottom: 12px;
+        }
+
+        /* ── CALCULATOR CARD ── */
+        .calc-card {
+            background: #111;
+            border: 1px solid #1e1e1e;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+
+        /* ── INPUT GRID ── */
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 560px) { .input-row { grid-template-columns: 1fr; } }
+
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #555;
+        }
+        .field input, .field select {
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Barlow', sans-serif;
+            font-size: 15px;
+            padding: 12px 14px;
+            transition: border-color 0.2s;
+            width: 100%;
+            -webkit-appearance: none;
+        }
+        .field input:focus, .field select:focus {
+            outline: none;
+            border-color: var(--gold, #FFD700);
+        }
+        .field select option { background: #111; }
+
+        /* Unit toggle */
+        .unit-toggle {
+            display: flex;
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .unit-toggle button {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 12px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .unit-toggle button.active {
+            background: var(--gold, #FFD700);
+            color: #000;
+        }
+
+        /* Calculate button */
+        .calc-btn {
+            background: var(--gold, #FFD700);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            cursor: pointer;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            margin-top: 8px;
+            padding: 16px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .calc-btn:hover { background: #ffe44d; transform: translateY(-1px); }
+        .calc-btn:active { transform: translateY(0); }
+
+        /* ── RESULTS ── */
+        #results { display: none; }
+
+        .results-header {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #444;
+            margin-bottom: 16px;
+        }
+
+        /* Big calorie display */
+        .calorie-strip {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .cal-box {
+            background: #111;
+            border: 1px solid #1e1e1e;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .cal-box.lift { border-color: #2a2a2a; }
+        .cal-box .cal-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #444;
+            margin-bottom: 6px;
+        }
+        .cal-box .cal-num {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--gold, #FFD700);
+            line-height: 1;
+        }
+        .cal-box .cal-range {
+            font-size: 11px;
+            color: #444;
+            margin-top: 4px;
+        }
+
+        /* Macro bars */
+        .macro-bars { margin-bottom: 20px; }
+        .macro-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+        .macro-bar-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            width: 68px;
+            flex-shrink: 0;
+        }
+        .macro-bar-track {
+            flex: 1;
+            background: #1a1a1a;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .macro-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+        }
+        .bar-protein { background: #2196f3; }
+        .bar-carbs   { background: var(--gold, #FFD700); }
+        .bar-fats    { background: #ff5722; }
+        .macro-bar-val {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            width: 100px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* Detail grid */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        @media(max-width:560px) { .detail-grid { grid-template-columns: 1fr 1fr; } }
+
+        .detail-box {
+            background: #0d0d0d;
+            border: 1px solid #1e1e1e;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+        .detail-box .d-label {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #444;
+            margin-bottom: 5px;
+        }
+        .detail-box .d-val {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #fff;
+        }
+        .detail-box .d-unit { font-size: 11px; color: #444; margin-top: 2px; }
+
+        /* ── TABS ── */
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            background: #0d0d0d;
+            border: 1px solid #1e1e1e;
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            border-radius: 7px;
+            color: #555;
+            cursor: pointer;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            padding: 8px 12px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            flex: 1;
+        }
+        .tab-btn.active { background: #1e1e1e; color: #fff; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── FOOD TABLE ── */
+        .food-section { margin-bottom: 20px; }
+        .food-section-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #333;
+            padding: 10px 0 8px;
+            border-bottom: 1px solid #1a1a1a;
+            margin-bottom: 10px;
+        }
+        .food-table { width: 100%; border-collapse: collapse; }
+        .food-table th {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #333;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        .food-table th:not(:first-child) { text-align: right; }
+        .food-table td {
+            padding: 8px 8px;
+            font-size: 13px;
+            color: #aaa;
+            border-bottom: 1px solid #141414;
+        }
+        .food-table td:not(:first-child) { text-align: right; color: #666; font-size: 12px; }
+        .food-table tr:last-child td { border-bottom: none; }
+        .food-table .food-name { color: #ccc; font-weight: 500; }
+        .food-table .serving { font-size: 11px; color: #333; }
+
+        /* Tier badge */
+        .tier {
+            display: inline-block;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+        .tier-A { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .tier-B { background: rgba(33,150,243,0.15); color: #2196f3; }
+        .tier-C { background: rgba(255,152,0,0.15); color: #ff9800; }
+        .tier-D { background: rgba(244,67,54,0.15); color: #f44336; }
+        .tier-S { background: rgba(255,215,0,0.15); color: #FFD700; }
+
+        /* ── SUPPLEMENT TABLE ── */
+        .supp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        @media(max-width:560px) { .supp-grid { grid-template-columns: 1fr; } }
+        .supp-row {
+            background: #0d0d0d;
+            border: 1px solid #1a1a1a;
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .supp-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ccc;
+            flex: 1;
+        }
+        .supp-note { font-size: 11px; color: #444; margin-top: 3px; }
+
+        /* ── TOOLS LIST ── */
+        .tools-list { display: flex; flex-direction: column; gap: 8px; }
+        .tool-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0d0d0d;
+            border: 1px solid #1a1a1a;
+            border-radius: 10px;
+            color: #ccc;
+            padding: 14px 18px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .tool-link:hover { border-color: #333; color: #fff; background: #141414; }
+        .tool-link .tool-name { font-size: 14px; font-weight: 600; }
+        .tool-link .tool-desc { font-size: 11px; color: #444; margin-top: 2px; }
+        .tool-link .arrow { color: #333; font-size: 18px; }
+
+        /* ── WATER BADGE ── */
+        .water-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(33,150,243,0.07);
+            border: 1px solid rgba(33,150,243,0.2);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+        }
+        .water-icon { font-size: 1.5rem; }
+        .water-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2196f3; }
+        .water-val { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 900; color: #fff; }
+
+        /* ── GRAIN TABLE ── */
+        .grain-list { display: flex; flex-direction: column; gap: 6px; }
+        .grain-row {
+            background: #0d0d0d;
+            border: 1px solid #1a1a1a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px;
+            align-items: start;
+        }
+        .grain-name { font-size: 13px; font-weight: 600; color: #ccc; }
+        .grain-note { font-size: 11px; color: #444; margin-top: 2px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<header class="macro-header">
+    <a href="index.html">← Menu</a>
+    <div class="page-title">Macro <span>Calculator</span></div>
+</header>
+
+<div class="macro-wrap">
+
+    <!-- ── CALCULATOR ── -->
+    <div class="calc-card">
+        <div class="section-label">Your Stats</div>
+        <div class="input-row">
+            <div class="field">
+                <label>Body Weight</label>
+                <input type="number" id="bwInput" placeholder="e.g. 230" min="50" max="500">
+            </div>
+            <div class="field">
+                <label>Unit</label>
+                <div class="unit-toggle">
+                    <button class="active" id="lbsBtn" onclick="setUnit('lbs')">LBS</button>
+                    <button id="kgBtn" onclick="setUnit('kg')">KG</button>
+                </div>
+            </div>
+        </div>
+        <div class="input-row">
+            <div class="field">
+                <label>Goal</label>
+                <select id="goalSelect">
+                    <option value="maintain">Maintain Weight</option>
+                    <option value="loss_slow">Weight Loss — −1 lb/week</option>
+                    <option value="loss_fast">Aggressive Loss — −2 lb/week</option>
+                    <option value="gain">Weight Gain — +1 lb/week</option>
+                </select>
+            </div>
+        </div>
+        <button class="calc-btn" onclick="calculate()">Calculate My Macros</button>
+    </div>
+
+    <!-- ── RESULTS ── -->
+    <div id="results">
+
+        <div class="results-header">Your Results</div>
+
+        <!-- Water -->
+        <div class="water-badge" id="waterBadge">
+            <div class="water-icon">💧</div>
+            <div>
+                <div class="water-label">Daily Water Target</div>
+                <div class="water-val" id="waterVal">—</div>
+            </div>
+        </div>
+
+        <!-- Calorie boxes -->
+        <div class="calorie-strip">
+            <div class="cal-box lift">
+                <div class="cal-label">Lifting Days</div>
+                <div class="cal-num" id="calLift">—</div>
+                <div class="cal-range" id="calLiftRange"></div>
+            </div>
+            <div class="cal-box">
+                <div class="cal-label">Non-Lifting Days</div>
+                <div class="cal-num" id="calRest">—</div>
+                <div class="cal-range" id="calRestRange"></div>
+            </div>
+        </div>
+
+        <!-- Macro panels: lifting vs rest -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+
+            <!-- Lifting day macros -->
+            <div style="background:#111;border:1px solid #1e1e1e;border-radius:12px;padding:16px;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#FFD700;margin-bottom:12px;">🏋️ Lifting Days</div>
+                <div class="macro-bar-row">
+                    <div class="macro-bar-label" style="color:#2196f3;font-size:11px;">Protein</div>
+                    <div class="macro-bar-track"><div class="macro-bar-fill bar-protein" id="barLiftProtein" style="width:0%"></div></div>
+                    <div class="macro-bar-val" id="valLiftProtein" style="font-size:12px;">—</div>
+                </div>
+                <div class="macro-bar-row">
+                    <div class="macro-bar-label" style="color:#FFD700;font-size:11px;">Carbs</div>
+                    <div class="macro-bar-track"><div class="macro-bar-fill bar-carbs" id="barLiftCarbs" style="width:0%"></div></div>
+                    <div class="macro-bar-val" id="valLiftCarbs" style="font-size:12px;">—</div>
+                </div>
+                <div class="macro-bar-row">
+                    <div class="macro-bar-label" style="color:#ff5722;font-size:11px;">Fats</div>
+                    <div class="macro-bar-track"><div class="macro-bar-fill bar-fats" id="barLiftFats" style="width:0%"></div></div>
+                    <div class="macro-bar-val" id="valLiftFats" style="font-size:12px;">—</div>
+                </div>
+            </div>
+
+            <!-- Rest day macros -->
+            <div style="background:#111;border:1px solid #1e1e1e;border-radius:12px;padding:16px;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:12px;">😴 Rest Days</div>
+                <div class="macro-bar-row">
+                    <div class="macro-bar-label" style="color:#2196f3;font-size:11px;">Protein</div>
+                    <div class="macro-bar-track"><div class="macro-bar-fill bar-protein" id="barRestProtein" style="width:0%"></div></div>
+                    <div class="macro-bar-val" id="valRestProtein" style="font-size:12px;">—</div>
+                </div>
+                <div class="macro-bar-row">
+                    <div class="macro-bar-label" style="color:#FFD700;font-size:11px;">Carbs</div>
+                    <div class="macro-bar-track"><div class="macro-bar-fill bar-carbs" id="barRestCarbs" style="width:0%"></div></div>
+                    <div class="macro-bar-val" id="valRestCarbs" style="font-size:12px;">—</div>
+                </div>
+                <div class="macro-bar-row">
+                    <div class="macro-bar-label" style="color:#ff5722;font-size:11px;">Fats</div>
+                    <div class="macro-bar-track"><div class="macro-bar-fill bar-fats" id="barRestFats" style="width:0%"></div></div>
+                    <div class="macro-bar-val" id="valRestFats" style="font-size:12px;">—</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Detail boxes -->
+        <div class="detail-grid">
+            <div class="detail-box">
+                <div class="d-label">Body Weight</div>
+                <div class="d-val" id="dBW">—</div>
+                <div class="d-unit" id="dBWUnit">lbs</div>
+            </div>
+            <div class="detail-box">
+                <div class="d-label">Goal</div>
+                <div class="d-val" id="dGoal" style="font-size:1rem;">—</div>
+            </div>
+            <div class="detail-box">
+                <div class="d-label">Calories / kg</div>
+                <div class="d-val" id="dCalKg">—</div>
+                <div class="d-unit">kcal/kg</div>
+            </div>
+        </div>
+
+        <!-- ── TABS ── -->
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('proteins')">Proteins</button>
+            <button class="tab-btn" onclick="switchTab('carbs')">Carbs</button>
+            <button class="tab-btn" onclick="switchTab('supps')">Supps</button>
+            <button class="tab-btn" onclick="switchTab('tools')">Tools</button>
+            <button class="tab-btn" onclick="switchTab('advanced')">Advanced</button>
+        </div>
+
+        <!-- PROTEINS TAB -->
+        <div class="tab-content active" id="tab-proteins">
+            <div class="food-section">
+                <div class="food-section-title">Meats — Per 2 oz cooked</div>
+                <table class="food-table">
+                    <thead><tr><th>Food</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Tier</th></tr></thead>
+                    <tbody>
+                        <tr><td class="food-name">Beef, regular</td><td>14.2g</td><td>0g</td><td>10.4g</td><td><span class="tier tier-A">A</span></td></tr>
+                        <tr><td class="food-name">Chicken, cooked</td><td>16g</td><td>0g</td><td>1.84g</td><td><span class="tier tier-A">A</span></td></tr>
+                        <tr><td class="food-name">Pork, cooked</td><td>15.82g</td><td>0g</td><td>8.26g</td><td><span class="tier tier-A">A</span></td></tr>
+                        <tr><td class="food-name">Shrimp, cooked</td><td>15.45g</td><td>0.69g</td><td>1.32g</td><td><span class="tier tier-A">A</span></td></tr>
+                        <tr><td class="food-name">Fish (Catfish)</td><td>9.96g</td><td>4.84g</td><td>8.24g</td><td><span class="tier tier-A">A</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="food-section">
+                <div class="food-section-title">Other Proteins</div>
+                <table class="food-table">
+                    <thead><tr><th>Food</th><th>Serving</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+                    <tbody>
+                        <tr><td class="food-name">Tofu</td><td class="serving">4 oz</td><td>7.82g</td><td>2.72g</td><td>3.06g</td></tr>
+                        <tr><td class="food-name">Egg</td><td class="serving">1 large</td><td>6.29g</td><td>0.38g</td><td>4.97g</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="food-section">
+                <div class="food-section-title">Vegetables</div>
+                <table class="food-table">
+                    <thead><tr><th>Food</th><th>Serving</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+                    <tbody>
+                        <tr><td class="food-name">Asparagus</td><td class="serving">1 cup</td><td>2.95g</td><td>5.2g</td><td>0.16g</td></tr>
+                        <tr><td class="food-name">Broccoli</td><td class="serving">1 cup</td><td>2.57g</td><td>6.04g</td><td>0.34g</td></tr>
+                        <tr><td class="food-name">Carrots</td><td class="serving">1 cup</td><td>1.19g</td><td>12.26g</td><td>0.31g</td></tr>
+                        <tr><td class="food-name">Cucumber</td><td class="serving">4 oz</td><td>0.67g</td><td>2.45g</td><td>0.18g</td></tr>
+                        <tr><td class="food-name">Eggplant</td><td class="serving">1 cup</td><td>0.98g</td><td>5.88g</td><td>0.18g</td></tr>
+                        <tr><td class="food-name">Lettuce</td><td class="serving">1 cup</td><td>0.5g</td><td>1.63g</td><td>0.08g</td></tr>
+                        <tr><td class="food-name">Tomato</td><td class="serving">1 cup</td><td>1.58g</td><td>7.06g</td><td>0.36g</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="food-section">
+                <div class="food-section-title">Fruits</div>
+                <table class="food-table">
+                    <thead><tr><th>Food</th><th>Serving</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+                    <tbody>
+                        <tr><td class="food-name">Apple</td><td class="serving">1 (4 oz)</td><td>0.27g</td><td>14.36g</td><td>0.18g</td></tr>
+                        <tr><td class="food-name">Banana</td><td class="serving">1 (6 oz)</td><td>1.85g</td><td>38.85g</td><td>0.56g</td></tr>
+                        <tr><td class="food-name">Grapes</td><td class="serving">1 cup</td><td>1.15g</td><td>28.96g</td><td>0.26g</td></tr>
+                        <tr><td class="food-name">Orange</td><td class="serving">1 (4 oz)</td><td>0.79g</td><td>11.79g</td><td>0.23g</td></tr>
+                        <tr><td class="food-name">Pear</td><td class="serving">1 (5 oz)</td><td>0.54g</td><td>21.91g</td><td>0.17g</td></tr>
+                        <tr><td class="food-name">Peach</td><td class="serving">1 (6 oz)</td><td>1.2g</td><td>12.59g</td><td>0.33g</td></tr>
+                        <tr><td class="food-name">Pineapple</td><td class="serving">1 cup</td><td>0.84g</td><td>19.58g</td><td>0.19g</td></tr>
+                        <tr><td class="food-name">Strawberry</td><td class="serving">1 cup</td><td>1.11g</td><td>12.75g</td><td>0.5g</td></tr>
+                        <tr><td class="food-name">Watermelon</td><td class="serving">1 cup</td><td>0.93g</td><td>11.48g</td><td>0.23g</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CARBS TAB -->
+        <div class="tab-content" id="tab-carbs">
+            <div class="grain-list">
+                <div class="grain-row"><span class="tier tier-A">A</span><div><div class="grain-name">Amaranth</div><div class="grain-note">Pseudograin, high in magnesium, protein, iron, calcium, antioxidants. Anti-nutrients reduced by cooking.</div></div></div>
+                <div class="grain-row"><span class="tier tier-A">A</span><div><div class="grain-name">Barley</div><div class="grain-note">High fiber, excellent for blood sugar, insulin sensitivity, gut health. Low glycemic index.</div></div></div>
+                <div class="grain-row"><span class="tier tier-A">A</span><div><div class="grain-name">Buckwheat</div><div class="grain-note">Complete protein. High in copper, magnesium, antioxidants, fiber. Great for blood sugar and cholesterol.</div></div></div>
+                <div class="grain-row"><span class="tier tier-A">A</span><div><div class="grain-name">Corn</div><div class="grain-note">Highest calorie grain. Good nutrient profile. Cooking reduces phytic acid.</div></div></div>
+                <div class="grain-row"><span class="tier tier-A">A</span><div><div class="grain-name">Oats</div><div class="grain-note">Excellent micronutrient profile, protein, B1, vitamin E, magnesium. Considered a complete protein.</div></div></div>
+                <div class="grain-row"><span class="tier tier-A">A</span><div><div class="grain-name">Quinoa</div><div class="grain-note">Good antioxidants, high resistant starch. Soak to reduce phytic acid and oxalates.</div></div></div>
+                <div class="grain-row"><span class="tier tier-A">A</span><div><div class="grain-name">Wild Rice</div><div class="grain-note">Highest zinc source. Notable for B3. Good for heart health.</div></div></div>
+                <div class="grain-row"><span class="tier tier-A">A</span><div><div class="grain-name">Millet</div><div class="grain-note">High calorie, good protein, B1, selenium, zinc. Soak to reduce phytic acid.</div></div></div>
+                <div class="grain-row"><span class="tier tier-B">B</span><div><div class="grain-name">Farro</div><div class="grain-note">Higher calorie, good protein and selenium. Contains antioxidants.</div></div></div>
+                <div class="grain-row"><span class="tier tier-B">B</span><div><div class="grain-name">Spelt</div><div class="grain-note">Good protein, B3, magnesium, iron, copper, calcium.</div></div></div>
+                <div class="grain-row"><span class="tier tier-B">B</span><div><div class="grain-name">Wheat</div><div class="grain-note">Six main types. Whole grain form has notable antioxidants.</div></div></div>
+                <div class="grain-row"><span class="tier tier-C">C</span><div><div class="grain-name">White Rice</div><div class="grain-note">Higher glycemic index, lower anti-nutrients, less nutritious than whole grains.</div></div></div>
+                <div class="grain-row"><span class="tier tier-C">C</span><div><div class="grain-name">Rye</div><div class="grain-note">Lower calorie, good B6 and B5 source, antioxidants.</div></div></div>
+            </div>
+        </div>
+
+        <!-- SUPPLEMENTS TAB -->
+        <div class="tab-content" id="tab-supps">
+            <div class="food-section-title" style="margin-bottom:12px;">Supplement Tier List</div>
+            <div class="supp-grid">
+                <div class="supp-row"><span class="tier tier-S">S</span><div><div class="supp-name">Creatine Monohydrate</div><div class="supp-note">Consistent, reliable data. Highly recommended for most.</div></div></div>
+                <div class="supp-row"><span class="tier tier-A">A</span><div><div class="supp-name">Whey Protein</div><div class="supp-note">Fast-releasing protein. Great protein source.</div></div></div>
+                <div class="supp-row"><span class="tier tier-A">A</span><div><div class="supp-name">Casein Protein</div><div class="supp-note">Slow-releasing protein. Good protein source.</div></div></div>
+                <div class="supp-row"><span class="tier tier-A">A</span><div><div class="supp-name">Creatine HCO</div><div class="supp-note">Other forms of creatine — not as well-researched but still creatine.</div></div></div>
+                <div class="supp-row"><span class="tier tier-B">B</span><div><div class="supp-name">Beta Alanine</div><div class="supp-note">Increases carnosine production. Good for anaerobic performance.</div></div></div>
+                <div class="supp-row"><span class="tier tier-B">B</span><div><div class="supp-name">Caffeine</div><div class="supp-note">Performance benefits. Watch for tolerance and sleep issues.</div></div></div>
+                <div class="supp-row"><span class="tier tier-B">B</span><div><div class="supp-name">Citrulline Malate</div><div class="supp-note">Increases nitric oxide. Good for pre-workout.</div></div></div>
+                <div class="supp-row"><span class="tier tier-B">B</span><div><div class="supp-name">Plant Protein</div><div class="supp-note">Rice + pea protein blend can be effective.</div></div></div>
+                <div class="supp-row"><span class="tier tier-C">C</span><div><div class="supp-name">Magnesium</div><div class="supp-note">Health benefits, not significant for direct fitness gains.</div></div></div>
+                <div class="supp-row"><span class="tier tier-C">C</span><div><div class="supp-name">Ashwagandha</div><div class="supp-note">Indirect fitness benefits through improved sleep and stress.</div></div></div>
+                <div class="supp-row"><span class="tier tier-D">D</span><div><div class="supp-name">Glutamine</div><div class="supp-note">Conditionally essential amino acid. Often unnecessary.</div></div></div>
+                <div class="supp-row"><span class="tier tier-D">D</span><div><div class="supp-name">CLA</div><div class="supp-note">Limited evidence for fitness benefits.</div></div></div>
+                <div class="supp-row"><span class="tier tier-D">D</span><div><div class="supp-name">Carnitine</div><div class="supp-note">Limited evidence for fitness benefits.</div></div></div>
+                <div class="supp-row"><span class="tier tier-D">D</span><div><div class="supp-name">HMB</div><div class="supp-note">Inconsistent evidence for muscle growth.</div></div></div>
+            </div>
+        </div>
+
+        <!-- TOOLS TAB -->
+        <div class="tab-content" id="tab-tools">
+            <div class="food-section-title" style="margin-bottom:12px;">Recommended Resources</div>
+            <div class="tools-list">
+                <a href="https://apps.apple.com/ca/app/calorie-counter-by-cronometer/id1145935738" target="_blank" class="tool-link">
+                    <div><div class="tool-name">Cronometer</div><div class="tool-desc">Calorie & nutrient tracker — most accurate macro logging app</div></div>
+                    <div class="arrow">↗</div>
+                </a>
+                <a href="https://www.eatthismuch.com/" target="_blank" class="tool-link">
+                    <div><div class="tool-name">Eat This Much</div><div class="tool-desc">Meal planner — generates meals based on your macro targets</div></div>
+                    <div class="arrow">↗</div>
+                </a>
+                <a href="https://www.amazon.com/Kitchen-Digital-Nutritional-Calculator-Counting/dp/B09KRTHFPY" target="_blank" class="tool-link">
+                    <div><div class="tool-name">Food Scale</div><div class="tool-desc">Recommended kitchen scale for precise macro tracking</div></div>
+                    <div class="arrow">↗</div>
+                </a>
+                <a href="https://www.amazon.com/RENPHO-Bluetooth-Bathroom-Composition-Smartphone/dp/B01N1UX8RW" target="_blank" class="tool-link">
+                    <div><div class="tool-name">RENPHO Smart Scale</div><div class="tool-desc">Body composition scale — tracks weight, body fat, muscle mass</div></div>
+                    <div class="arrow">↗</div>
+                </a>
+                <a href="https://www.youtube.com/@Talon_Fitness" target="_blank" class="tool-link">
+                    <div><div class="tool-name">Talon Fitness</div><div class="tool-desc">Recommended YouTube channel for learning more about nutrition</div></div>
+                    <div class="arrow">↗</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- ADVANCED TAB -->
+        <div class="tab-content" id="tab-advanced">
+
+            <div id="advLoginWall" style="text-align:center;padding:40px 20px;">
+                <div style="font-size:2rem;margin-bottom:12px;">🔒</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:8px;">Login Required</div>
+                <div style="font-size:13px;color:#444;margin-bottom:20px;">Track your daily calories over time.<br>Log in to save your history.</div>
+                <button onclick="document.getElementById('authModal') ? (document.getElementById('authModal').style.display='flex') : alert('Please log in from the program pages first.')"
+                    style="background:var(--gold,#FFD700);color:#000;border:none;border-radius:8px;padding:12px 28px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">
+                    Log In
+                </button>
+            </div>
+
+            <div id="advContent" style="display:none;">
+
+                <!-- Log entry form -->
+                <div style="background:#111;border:1px solid #1e1e1e;border-radius:12px;padding:20px;margin-bottom:16px;">
+                    <div class="section-label" style="margin-bottom:14px;">Log Today</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;">
+                        <div class="field">
+                            <label>Date</label>
+                            <input type="date" id="advDate" style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:8px;color:#fff;font-family:'Barlow',sans-serif;font-size:14px;padding:11px 14px;">
+                        </div>
+                        <div class="field">
+                            <label>Target Calories</label>
+                            <input type="number" id="advTarget" placeholder="e.g. 2960">
+                        </div>
+                        <div class="field">
+                            <label>Actual Calories</label>
+                            <input type="number" id="advActual" placeholder="e.g. 2850">
+                        </div>
+                        <button onclick="logCalorieEntry()"
+                            style="background:var(--gold,#FFD700);color:#000;border:none;border-radius:8px;padding:12px 16px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:1px;cursor:pointer;white-space:nowrap;">
+                            + Log
+                        </button>
+                    </div>
+                    <div id="advMsg" style="margin-top:8px;font-size:12px;color:#555;"></div>
+                </div>
+
+                <!-- Summary strip -->
+                <div id="advSummary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;"></div>
+
+                <!-- History list -->
+                <div style="background:#111;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #1a1a1a;">
+                        <div class="section-label" style="margin:0;">Calorie History</div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <select id="advFilter" onchange="renderLog()"
+                                style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:6px;color:#aaa;font-size:12px;padding:5px 8px;">
+                                <option value="0">All Time</option>
+                                <option value="7">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="advLog" style="max-height:400px;overflow-y:auto;"></div>
+                </div>
+
+            </div>
+        </div>
+
+    </div><!-- /results -->
+
+</div><!-- /wrap -->
+
+<script>
+// ── DATA ── exact ranges from Andre's sheet
+// Format: [liftLow, liftHigh, restLow, restHigh, protLow, protHigh, carbLow, carbHigh, fatLow, fatHigh]
+const GOALS = {
+    // base is 230 lbs. All values from Andre's sheet.
+    // liftMacros = lifting day macros, restMacros = non-lifting day macros
+    maintain:  { liftCal:[2960,3060], restCal:[2315,2575], liftProt:[210,260], liftCarb:[300,415], liftFat:[60,80],  restProt:[220,230], restCarb:[210,275], restFat:[40,55], water:2805 },
+    loss_slow: { liftCal:[2315,2575], restCal:[2315,2575], liftProt:[220,250], liftCarb:[255,300], liftFat:[45,60],  restProt:[220,250], restCarb:[210,275], restFat:[40,55], water:2805 },
+    loss_fast: { liftCal:[1900,2070], restCal:[1900,2070], liftProt:[175,210], liftCarb:[210,275], liftFat:[40,55],  restProt:[175,210], restCarb:[175,225], restFat:[35,50], water:2805 },
+    gain:      { liftCal:[3420,3520], restCal:[2315,2575], liftProt:[210,260], liftCarb:[415,505], liftFat:[80,90],  restProt:[220,230], restCarb:[210,275], restFat:[40,55], water:2805 },
+};
+
+const GOAL_LABELS = {
+    maintain:  'Maintain',
+    loss_slow: '−1 lb/week',
+    loss_fast: '−2 lb/week',
+    gain:      '+1 lb/week',
+};
+
+let currentUnit = 'lbs';
+
+function setUnit(u) {
+    currentUnit = u;
+    document.getElementById('lbsBtn').classList.toggle('active', u === 'lbs');
+    document.getElementById('kgBtn').classList.toggle('active', u === 'kg');
+    document.getElementById('bwInput').placeholder = u === 'lbs' ? 'e.g. 230' : 'e.g. 105';
+}
+
+function calculate() {
+    const rawBW = parseFloat(document.getElementById('bwInput').value);
+    if (!rawBW || rawBW <= 0) { alert('Please enter your body weight.'); return; }
+
+    const bwLbs = currentUnit === 'kg' ? rawBW * 2.20462 : rawBW;
+    const bwKg  = currentUnit === 'lbs' ? rawBW / 2.20462 : rawBW;
+    const goal  = document.getElementById('goalSelect').value;
+    const base  = GOALS[goal];
+
+    // Scale all values proportionally from the 230 lb reference
+    const scale = bwLbs / 230;
+
+    function sc(val) { return Math.round(val * scale / 5) * 5; }
+    function scg(val) { return Math.round(val * scale); }
+
+    const liftLow  = sc(base.liftCal[0]);
+    const liftHigh = sc(base.liftCal[1]);
+    const restLow  = sc(base.restCal[0]);
+    const restHigh = sc(base.restCal[1]);
+    // Lifting day macros
+    const lProtLow = scg(base.liftProt[0]), lProtHigh = scg(base.liftProt[1]);
+    const lCarbLow = scg(base.liftCarb[0]), lCarbHigh = scg(base.liftCarb[1]);
+    const lFatLow  = scg(base.liftFat[0]),  lFatHigh  = scg(base.liftFat[1]);
+    // Rest day macros
+    const rProtLow = scg(base.restProt[0]), rProtHigh = scg(base.restProt[1]);
+    const rCarbLow = scg(base.restCarb[0]), rCarbHigh = scg(base.restCarb[1]);
+    const rFatLow  = scg(base.restFat[0]),  rFatHigh  = scg(base.restFat[1]);
+    const water    = Math.round(base.water * scale);
+
+    const liftMid = Math.round((liftLow + liftHigh) / 2);
+
+    // Bar widths for lifting day
+    const lProtMid = Math.round((lProtLow+lProtHigh)/2);
+    const lCarbMid = Math.round((lCarbLow+lCarbHigh)/2);
+    const lFatMid  = Math.round((lFatLow+lFatHigh)/2);
+    const lTotal   = lProtMid*4 + lCarbMid*4 + lFatMid*9;
+    // Bar widths for rest day
+    const rProtMid = Math.round((rProtLow+rProtHigh)/2);
+    const rCarbMid = Math.round((rCarbLow+rCarbHigh)/2);
+    const rFatMid  = Math.round((rFatLow+rFatHigh)/2);
+    const rTotal   = rProtMid*4 + rCarbMid*4 + rFatMid*9;
+
+    // Render calories
+    document.getElementById('calLift').innerText      = liftMid.toLocaleString();
+    document.getElementById('calLiftRange').innerText = `${liftLow.toLocaleString()} – ${liftHigh.toLocaleString()} kcal`;
+    document.getElementById('calRest').innerText      = Math.round((restLow+restHigh)/2).toLocaleString();
+    document.getElementById('calRestRange').innerText = `${restLow.toLocaleString()} – ${restHigh.toLocaleString()} kcal`;
+
+    // Render lifting day macros
+    document.getElementById('valLiftProtein').innerText = `${lProtLow}–${lProtHigh}g`;
+    document.getElementById('valLiftCarbs').innerText   = `${lCarbLow}–${lCarbHigh}g`;
+    document.getElementById('valLiftFats').innerText    = `${lFatLow}–${lFatHigh}g`;
+    // Render rest day macros
+    document.getElementById('valRestProtein').innerText = `${rProtLow}–${rProtHigh}g`;
+    document.getElementById('valRestCarbs').innerText   = `${rCarbLow}–${rCarbHigh}g`;
+    document.getElementById('valRestFats').innerText    = `${rFatLow}–${rFatHigh}g`;
+
+    setTimeout(() => {
+        document.getElementById('barLiftProtein').style.width = ((lProtMid*4)/lTotal*100).toFixed(1)+'%';
+        document.getElementById('barLiftCarbs').style.width   = ((lCarbMid*4)/lTotal*100).toFixed(1)+'%';
+        document.getElementById('barLiftFats').style.width    = ((lFatMid*9)/lTotal*100).toFixed(1)+'%';
+        document.getElementById('barRestProtein').style.width = ((rProtMid*4)/rTotal*100).toFixed(1)+'%';
+        document.getElementById('barRestCarbs').style.width   = ((rCarbMid*4)/rTotal*100).toFixed(1)+'%';
+        document.getElementById('barRestFats').style.width    = ((rFatMid*9)/rTotal*100).toFixed(1)+'%';
+    }, 50);
+
+    document.getElementById('dBW').innerText     = rawBW;
+    document.getElementById('dBWUnit').innerText = currentUnit;
+    document.getElementById('dGoal').innerText   = GOAL_LABELS[goal];
+    document.getElementById('dCalKg').innerText  = Math.round(liftMid / bwKg);
+
+    document.getElementById('waterVal').innerText = `${water} mL  (${(water/1000).toFixed(1)}L)`;
+
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function switchTab(name) {
+    const tabs = ['proteins','carbs','supps','tools','advanced'];
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', tabs[i] === name));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+    if (name === 'advanced') checkAdvancedAuth();
+}
+</script>
+
+<!-- Firebase for Advanced calorie log -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = { apiKey:"AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M", authDomain:"powerlifting-programs.firebaseapp.com", projectId:"powerlifting-programs", storageBucket:"powerlifting-programs.firebasestorage.app", messagingSenderId:"961044250962", appId:"1:961044250962:web:c45644c186e9bb6ee67a8b" };
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+let currentUser = null;
+let logEntries  = [];   // local cache from onSnapshot
+let unsubLog    = null; // unsubscribe handle
+
+// ── AUTH STATE ──
+onAuthStateChanged(auth, user => {
+    currentUser = user;
+    // If advanced tab is open, refresh view
+    const advTab = document.getElementById('tab-advanced');
+    if (advTab && advTab.classList.contains('active')) checkAdvancedAuth();
+});
+
+// ── CHECK AUTH & SHOW/HIDE ──
+window.checkAdvancedAuth = function() {
+    const wall    = document.getElementById('advLoginWall');
+    const content = document.getElementById('advContent');
+    if (!wall || !content) return;
+    if (currentUser) {
+        wall.style.display    = 'none';
+        content.style.display = 'block';
+        // Set date default to today
+        const d = document.getElementById('advDate');
+        if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+        // Pre-fill target from last calculated result if available
+        const calLift = document.getElementById('calLift');
+        const tgt = document.getElementById('advTarget');
+        if (tgt && !tgt.value && calLift && calLift.innerText !== '—') {
+            tgt.value = calLift.innerText.replace(/,/g,'');
+        }
+        subscribeLog();
+    } else {
+        wall.style.display    = 'block';
+        content.style.display = 'none';
+        if (unsubLog) { unsubLog(); unsubLog = null; }
+    }
+};
+
+// ── SUBSCRIBE TO LOG ──
+function subscribeLog() {
+    if (unsubLog || !currentUser) return;
+    const ref = collection(db, 'users', currentUser.uid, 'calorieLog');
+    const q   = query(ref, orderBy('date', 'desc'));
+    unsubLog = onSnapshot(q, snap => {
+        logEntries = [];
+        snap.forEach(d => logEntries.push({ id: d.id, ...d.data() }));
+        renderLog();
+        renderSummary();
+    });
+}
+
+// ── LOG AN ENTRY ──
+window.logCalorieEntry = async function() {
+    if (!currentUser) return;
+    const date   = document.getElementById('advDate').value;
+    const target = parseInt(document.getElementById('advTarget').value) || 0;
+    const actual = parseInt(document.getElementById('advActual').value) || 0;
+    const msg    = document.getElementById('advMsg');
+    if (!date) { msg.innerText = 'Please select a date.'; msg.style.color='#ff5722'; return; }
+    if (!actual) { msg.innerText = 'Please enter actual calories.'; msg.style.color='#ff5722'; return; }
+    try {
+        const ref = doc(db, 'users', currentUser.uid, 'calorieLog', date);
+        await setDoc(ref, { date, target: target||0, actual, uid: currentUser.uid });
+        msg.innerText = '✓ Logged!';
+        msg.style.color = '#4caf50';
+        document.getElementById('advActual').value = '';
+        setTimeout(() => msg.innerText = '', 2000);
+    } catch(e) {
+        msg.innerText = 'Error: ' + e.message;
+        msg.style.color = '#ff5722';
+    }
+};
+
+// ── DELETE ENTRY ──
+window.deleteLogEntry = async function(dateId) {
+    if (!currentUser || !confirm('Delete this entry?')) return;
+    await deleteDoc(doc(db, 'users', currentUser.uid, 'calorieLog', dateId));
+};
+
+// ── RENDER LOG ──
+window.renderLog = function() {
+    const container = document.getElementById('advLog');
+    if (!container) return;
+    const filterDays = parseInt(document.getElementById('advFilter').value) || 0;
+    let entries = [...logEntries];
+    if (filterDays > 0) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - filterDays);
+        entries = entries.filter(e => new Date(e.date) >= cutoff);
+    }
+    if (entries.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:30px;color:#333;font-size:13px;">No entries yet. Log your first day above.</div>';
+        return;
+    }
+    container.innerHTML = entries.map(e => {
+        const diff    = e.actual - (e.target || 0);
+        const diffStr = e.target ? (diff >= 0 ? `+${diff}` : `${diff}`) + ' kcal' : '';
+        const diffCol = diff > 150 ? '#ff5722' : diff < -150 ? '#2196f3' : '#4caf50';
+        const pct     = e.target ? Math.round((e.actual / e.target) * 100) : null;
+        const barW    = e.target ? Math.min(100, pct) : 0;
+        const barCol  = diff > 150 ? '#ff5722' : diff < -150 ? '#2196f3' : '#4caf50';
+        const dateStr = new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+        return `<div style="padding:14px 18px;border-bottom:1px solid #0f0f0f;display:flex;align-items:center;gap:14px;">
+            <div style="flex:0 0 90px;font-size:12px;color:#555;">${dateStr}</div>
+            <div style="flex:1;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px;align-items:baseline;">
+                    <span style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:#fff;">${e.actual.toLocaleString()} <span style="font-size:11px;color:#444;">kcal</span></span>
+                    ${e.target ? `<span style="font-size:11px;color:#333;">Target: ${e.target.toLocaleString()}</span>` : ''}
+                </div>
+                ${e.target ? `<div style="background:#1a1a1a;border-radius:3px;height:4px;overflow:hidden;">
+                    <div style="width:${barW}%;height:100%;background:${barCol};border-radius:3px;transition:width 0.5s;"></div>
+                </div>` : ''}
+            </div>
+            ${diffStr ? `<div style="font-size:12px;font-weight:700;color:${diffCol};min-width:70px;text-align:right;">${diffStr}</div>` : ''}
+            <button onclick="deleteLogEntry('${e.date}')"
+                style="background:none;border:none;color:#333;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;"
+                title="Delete">×</button>
+        </div>`;
+    }).join('');
+};
+
+// ── RENDER SUMMARY ──
+function renderSummary() {
+    const el = document.getElementById('advSummary');
+    if (!el || logEntries.length === 0) { if(el) el.innerHTML=''; return; }
+    const totals = logEntries.reduce((a,e) => ({ sum: a.sum+e.actual, over: a.over+(e.target&&e.actual>e.target+150?1:0), under: a.under+(e.target&&e.actual<e.target-150?1:0), onTarget: a.onTarget+(e.target&&Math.abs(e.actual-e.target)<=150?1:0) }), {sum:0,over:0,under:0,onTarget:0});
+    const avg = Math.round(totals.sum / logEntries.length);
+    const boxes = [
+        { label:'Days Logged',  val: logEntries.length,  unit:'days',      col:'#fff' },
+        { label:'Avg Calories', val: avg.toLocaleString(), unit:'kcal/day', col:'#FFD700' },
+        { label:'On Target',    val: totals.onTarget,    unit:'days',       col:'#4caf50' },
+        { label:'Over Target',  val: totals.over,        unit:'days',       col:'#ff5722' },
+    ];
+    el.innerHTML = boxes.map(b => `
+        <div style="background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#333;margin-bottom:5px;">${b.label}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:900;color:${b.col};">${b.val}</div>
+            <div style="font-size:10px;color:#333;margin-top:2px;">${b.unit}</div>
+        </div>`).join('');
+}
+</script>
+</body>
+</html>
