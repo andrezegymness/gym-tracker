@@ -702,6 +702,7 @@ function buildRPEPicker(liftId) {
     const today = new Date().toLocaleDateString('en-US');
     const existing = log[today] && log[today][liftId];
     const color = existing ? rpeColor(existing) : null;
+    const safeId = liftId.replace(/'/g, '_');
 
     const badge = existing
         ? `<span style="background:${color};color:#000;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:900;">RPE ${existing}</span>`
@@ -709,16 +710,11 @@ function buildRPEPicker(liftId) {
 
     const dots = [6,7,8,9,10].map(r => {
         const c = rpeColor(r);
-        const selected = existing === r ? `border:2px solid #fff;` : `border:2px solid transparent;`;
-        return `<span onclick="logRPE('${liftId}',${r})" title="RPE ${r} — ${rpeLabel(r)}"
-            style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${c};cursor:pointer;${selected}vertical-align:middle;"></span>`;
+        const sel = existing === r ? 'border:2px solid #fff;' : 'border:2px solid transparent;';
+        return `<span onclick="logRPE('${safeId}',${r})" title="RPE ${r}" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${c};cursor:pointer;${sel}vertical-align:middle;"></span>`;
     }).join('');
 
-    return `<div id="rpe-badge-${liftId}" style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
-        ${badge}
-        <span style="color:#333;font-size:10px;">|</span>
-        ${dots}
-    </div>`;
+    return `<div id="rpe-badge-${safeId}" style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${badge}<span style="color:#333;font-size:10px;">|</span>${dots}</div>`;
 }
 
 // ==========================================
