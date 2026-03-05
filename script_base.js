@@ -719,6 +719,302 @@ function buildRPEPicker(liftId) {
 }
 
 // ==========================================
+// MISSED LIFT DIAGNOSTIC — NEW FEATURE
+// ==========================================
+const missedLiftReasons = [
+    { id:'injury',   label:'Small Injuries (Knee/Back)', pct:30, detail:'Neurological inhibition from patellar tendon or SI joint tweaks. Your brain shuts down power production to protect the joint, shifting your bar path out of the groove.' },
+    { id:'program',  label:'Programming / Fatigue Mismanagement', pct:25, detail:'CNS fatigue masking fitness. If volume was pushed too hard last week or the taper was mismanaged, speed off the chest or out of the hole won\'t be there.' },
+    { id:'equip',    label:'Change in Equipment', pct:15, detail:'Switching racks, bars, pads, or even new sleeves changes your brace, walkout timing, and stretch reflex. Calibration to a specific setup matters at elite weights.' },
+    { id:'eating',   label:'Under Eating / Low Fuel', pct:15, detail:'Low glycogen = less ATP. Less food volume = weaker brace against the belt. CNS sluggishness makes the weight feel 20 lbs heavier before you even unrack.' },
+    { id:'hormonal', label:'Hormonal / Cycle Factors (optional)', pct:10, detail:'Fluctuations in estrogen and progesterone can impact recovery, core temp, joint laxity, and how belts/sleeves fit — measurable variables on a max-effort day.' },
+    { id:'schedule', label:'Schedule / Circadian Shift', pct:5, detail:'Circadian rhythm affects CNS readiness. A shift from your adapted training time leaves the body flat. Caffeine and environment can partially override this.' }
+];
+
+window.openMissedLiftDiag = function() {
+    const existing = document.getElementById('missedLiftModal');
+    if(existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'missedLiftModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9500;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0;';
+    modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
+
+    const currentWeek = activeMobileWeek + 1;
+    const mode = document.getElementById('dashMode').value;
+    const modeName = document.getElementById('dashMode').options[document.getElementById('dashMode').selectedIndex].text;
+
+    // Get day names from current program
+    let availableDays = [];
+    if(userProgram.length > 0 && userProgram[activeMobileWeek]) {
+        availableDays = userProgram[activeMobileWeek].days.map(d => d.name);
+    } else {
+        availableDays = ['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6'];
+    }
+
+    const sMax = parseFloat(document.getElementById('squatInput').value) || 0;
+    const bMax = parseFloat(document.getElementById('benchInput').value) || 0;
+    const dMax = parseFloat(document.getElementById('deadliftInput').value) || 0;
+
+    const reasonCheckboxes = missedLiftReasons.map(r => `
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;cursor:pointer;transition:all 0.2s;"
+               onmouseover="this.style.borderColor='#555'" onmouseout="this.style.borderColor=this.querySelector('input').checked?'#d32f2f':'#333'">
+            <input type="checkbox" value="${r.id}" data-pct="${r.pct}" style="margin-top:3px;accent-color:#d32f2f;width:18px;height:18px;flex-shrink:0;"
+                   onchange="updateMissedLiftCalc()">
+            <div>
+                <div style="font-weight:700;color:#fff;font-size:0.95em;">${r.label} <span style="color:#d32f2f;font-size:0.8em;">(−${r.pct}%)</span></div>
+                <div style="color:#777;font-size:0.75em;margin-top:4px;line-height:1.4;">${r.detail}</div>
+            </div>
+        </label>
+    `).join('');
+
+    const dayOptions = availableDays.map((d,i) => `<option value="${d}"${i===0?' selected':''}>${d}</option>`).join('');
+
+    modal.innerHTML = `
+    <div style="background:#111;border:1px solid #333;border-radius:14px;padding:24px;width:95%;max-width:600px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <h2 style="margin:0;color:#d32f2f;font-size:1.3em;">❌ Missed Lift Diagnostic</h2>
+            <button onclick="document.getElementById('missedLiftModal').remove()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+        </div>
+
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:16px;margin-bottom:18px;">
+            <div style="font-size:0.75em;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-weight:bold;">Step 1 — What happened?</div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                <div>
+                    <label style="font-size:0.7em;color:#666;display:block;margin-bottom:4px;">Athlete Name</label>
+                    <input type="text" id="mld-name" placeholder="Full Name" style="width:100%;background:#222;color:#fff;border:1px solid #444;padding:10px;border-radius:6px;font-size:0.9em;">
+                </div>
+                <div>
+                    <label style="font-size:0.7em;color:#666;display:block;margin-bottom:4px;">Which Lift?</label>
+                    <select id="mld-lift" style="width:100%;background:#222;color:#fff;border:1px solid #444;padding:10px;border-radius:6px;font-size:0.9em;">
+                        <option value="Squat">Squat</option>
+                        <option value="Bench">Bench</option>
+                        <option value="Deadlift">Deadlift</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                <div>
+                    <label style="font-size:0.7em;color:#666;display:block;margin-bottom:4px;">Weight Missed (lbs)</label>
+                    <input type="number" id="mld-weight" placeholder="e.g. 455" style="width:100%;background:#222;color:#fff;border:1px solid #444;padding:10px;border-radius:6px;font-size:0.9em;" oninput="updateMissedLiftCalc()">
+                </div>
+                <div>
+                    <label style="font-size:0.7em;color:#666;display:block;margin-bottom:4px;">Session Day</label>
+                    <select id="mld-day" style="width:100%;background:#222;color:#fff;border:1px solid #444;padding:10px;border-radius:6px;font-size:0.9em;">
+                        ${dayOptions}
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div>
+                    <label style="font-size:0.7em;color:#666;display:block;margin-bottom:4px;">Current Week / Mode</label>
+                    <div style="background:#222;border:1px solid #444;padding:10px;border-radius:6px;color:#2196f3;font-weight:bold;font-size:0.85em;">
+                        Week ${currentWeek} · ${modeName}
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:0.7em;color:#666;display:block;margin-bottom:4px;">Program Max</label>
+                    <div id="mld-programmax" style="background:#222;border:1px solid #444;padding:10px;border-radius:6px;color:#FFD700;font-weight:bold;font-size:0.9em;">—</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:16px;margin-bottom:18px;">
+            <div style="font-size:0.75em;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-weight:bold;">Step 2 — Why did you miss? <span style="color:#555;">(select all that apply)</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px;" id="mld-reasons">
+                ${reasonCheckboxes}
+            </div>
+        </div>
+
+        <div id="mld-result" style="background:#0a1a0a;border:2px solid #2e7d32;border-radius:10px;padding:16px;margin-bottom:18px;display:none;">
+            <div style="font-size:0.75em;color:#4caf50;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:bold;">Adjusted Weight Recommendation</div>
+            <div style="display:flex;align-items:baseline;gap:12px;">
+                <span id="mld-adjusted" style="font-size:2em;font-weight:900;color:#4caf50;">—</span>
+                <span id="mld-reduction" style="color:#888;font-size:0.9em;"></span>
+            </div>
+            <div id="mld-breakdown" style="margin-top:10px;font-size:0.8em;color:#666;"></div>
+        </div>
+
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:16px;margin-bottom:18px;">
+            <div style="font-size:0.75em;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:bold;">Step 3 — Notes <span style="color:#555;">(optional)</span></div>
+            <textarea id="mld-notes" rows="3" placeholder="Any additional context — how the warm-ups felt, sleep quality, where in the lift you missed, etc."
+                style="width:100%;background:#222;color:#fff;border:1px solid #444;padding:10px;border-radius:6px;font-size:0.85em;resize:vertical;font-family:inherit;"></textarea>
+        </div>
+
+        <button onclick="sendMissedLiftEmail()" style="width:100%;padding:16px;background:#d32f2f;color:#fff;border:none;border-radius:8px;font-weight:900;font-size:1em;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all 0.2s;"
+                onmouseover="this.style.background='#f44336'" onmouseout="this.style.background='#d32f2f'">
+            📧 Send Diagnostic Report to Coach
+        </button>
+        <p style="text-align:center;color:#555;font-size:0.7em;margin-top:8px;">Opens your email client with the full report pre-filled → andreze@me.com</p>
+    </div>`;
+
+    document.body.appendChild(modal);
+
+    // Auto-fill program max based on selected lift
+    const liftSel = document.getElementById('mld-lift');
+    function updateProgramMax() {
+        const lift = liftSel.value;
+        const max = lift === 'Squat' ? sMax : lift === 'Bench' ? bMax : dMax;
+        document.getElementById('mld-programmax').innerText = max > 0 ? max + ' lbs' : 'Not set';
+    }
+    liftSel.addEventListener('change', () => { updateProgramMax(); updateMissedLiftCalc(); });
+    updateProgramMax();
+};
+
+window.updateMissedLiftCalc = function() {
+    const weight = parseFloat(document.getElementById('mld-weight').value) || 0;
+    const resultBox = document.getElementById('mld-result');
+    const adjustedEl = document.getElementById('mld-adjusted');
+    const reductionEl = document.getElementById('mld-reduction');
+    const breakdownEl = document.getElementById('mld-breakdown');
+
+    const checked = document.querySelectorAll('#mld-reasons input[type="checkbox"]:checked');
+    let totalPct = 0;
+    let reasons = [];
+
+    checked.forEach(cb => {
+        const pct = parseInt(cb.dataset.pct);
+        totalPct += pct;
+        const r = missedLiftReasons.find(x => x.id === cb.value);
+        reasons.push({ label: r.label, pct });
+        cb.closest('label').style.borderColor = '#d32f2f';
+    });
+
+    document.querySelectorAll('#mld-reasons input[type="checkbox"]:not(:checked)').forEach(cb => {
+        cb.closest('label').style.borderColor = '#333';
+    });
+
+    if(weight > 0 && totalPct > 0) {
+        const cappedPct = Math.min(totalPct, 80);
+        const adjusted = Math.round((weight * (1 - cappedPct/100)) / 5) * 5;
+        resultBox.style.display = 'block';
+        adjustedEl.innerText = adjusted + ' lbs';
+        reductionEl.innerText = `(−${cappedPct}% from ${weight} lbs)`;
+        breakdownEl.innerHTML = reasons.map(r => `<span style="display:inline-block;background:#1a2a1a;border:1px solid #2e7d32;border-radius:4px;padding:2px 8px;margin:2px;">${r.label}: −${r.pct}%</span>`).join(' ');
+    } else if(weight > 0 && totalPct === 0) {
+        resultBox.style.display = 'block';
+        adjustedEl.innerText = weight + ' lbs';
+        reductionEl.innerText = '(no reasons selected — select at least one)';
+        breakdownEl.innerHTML = '';
+    } else {
+        resultBox.style.display = 'none';
+    }
+};
+
+window.sendMissedLiftEmail = function() {
+    const name = document.getElementById('mld-name').value.trim();
+    const lift = document.getElementById('mld-lift').value;
+    const weight = document.getElementById('mld-weight').value;
+    const day = document.getElementById('mld-day').value;
+    const notes = document.getElementById('mld-notes').value.trim();
+    const currentWeek = activeMobileWeek + 1;
+    const mode = document.getElementById('dashMode').value;
+    const modeName = document.getElementById('dashMode').options[document.getElementById('dashMode').selectedIndex].text;
+
+    const sMax = parseFloat(document.getElementById('squatInput').value) || 0;
+    const bMax = parseFloat(document.getElementById('benchInput').value) || 0;
+    const dMax = parseFloat(document.getElementById('deadliftInput').value) || 0;
+    const oMax = parseFloat(document.getElementById('ohpInput').value) || 0;
+    const programMax = lift === 'Squat' ? sMax : lift === 'Bench' ? bMax : dMax;
+
+    if(!name) { toast('Enter the athlete name', 'error'); return; }
+    if(!weight) { toast('Enter the weight that was missed', 'error'); return; }
+
+    const checked = document.querySelectorAll('#mld-reasons input[type="checkbox"]:checked');
+    if(checked.length === 0) { toast('Select at least one reason', 'error'); return; }
+
+    let totalPct = 0;
+    let reasonLines = [];
+    checked.forEach(cb => {
+        const pct = parseInt(cb.dataset.pct);
+        totalPct += pct;
+        const r = missedLiftReasons.find(x => x.id === cb.value);
+        reasonLines.push(`• ${r.label} (−${r.pct}%)`);
+    });
+
+    const cappedPct = Math.min(totalPct, 80);
+    const adjusted = Math.round((parseFloat(weight) * (1 - cappedPct/100)) / 5) * 5;
+
+    // Build overview snapshot from current program
+    let overviewLines = [];
+    if(userProgram.length > 0) {
+        const reps = parseInt(document.getElementById('dashReps').value) || 5;
+        const startPct = basePctMap[reps] || 0.75;
+        const overloadPct = parseFloat(document.getElementById('overloadInput').value) || 0;
+        const fastedMult = isFasted ? 0.935 : 1.0;
+
+        for(let w = 0; w < userProgram.length; w++) {
+            let mod = (mode === 'maintenance' ? w * maintProg : w * standardProg);
+            if(mode === 'deload') mod = (w === 0 ? -0.08 : -0.04);
+            let curPct = startPct + mod;
+
+            let weekLines = [`Week ${w+1} (${Math.round((curPct+overloadPct)*100*fastedMult)}%):`];
+            userProgram[w].days.forEach(day => {
+                let dayLifts = day.lifts.filter(l => !l.isLabel).map(l => {
+                    const mx = l.t==='ohp' ? oMax : l.t==='squat' ? sMax : l.t==='deadlift' ? dMax : bMax;
+                    const load = mx > 0 ? Math.round((mx * (curPct + overloadPct) * fastedMult) / 5) * 5 : Math.round(curPct * 100) + '%';
+                    return `  ${l.n}: @ ${load}${typeof load === 'number' ? ' lbs' : ''}`;
+                }).join('\n');
+                weekLines.push(`  ${day.name}:\n${dayLifts}`);
+            });
+            overviewLines.push(weekLines.join('\n'));
+        }
+    }
+
+    const today = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    const subject = `Missed Lift — ${name} — ${lift} — ${today}`;
+
+    const body = `MISSED LIFT DIAGNOSTIC REPORT
+================================
+Date: ${today}
+Athlete: ${name}
+Program: Base Map Linear
+Mode: ${modeName}
+Week: ${currentWeek}
+Session: ${day}
+Fasted: ${isFasted ? 'YES' : 'No'}
+
+MISSED LIFT
+-----------
+Lift: ${lift}
+Program Max: ${programMax} lbs
+Weight Missed: ${weight} lbs
+
+REASONS IDENTIFIED
+------------------
+${reasonLines.join('\n')}
+
+Total Adjustment: −${cappedPct}%
+
+RECOMMENDED WEIGHT FOR TODAY
+-----------------------------
+${adjusted} lbs (down from ${weight} lbs)
+
+${notes ? `ATHLETE NOTES\n-------------\n${notes}\n` : ''}
+PROGRAM OVERVIEW
+${'='.repeat(30)}
+Maxes: S:${sMax} | B:${bMax} | D:${dMax} | OHP:${oMax}
+
+${overviewLines.join('\n\n')}
+
+================================
+Sent from Andre's Calibrations
+Missed Lift Diagnostic Tool`;
+
+    const mailto = `mailto:andreze@me.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailto, '_blank');
+    toast('Opening email client…', 'info');
+
+    setTimeout(() => {
+        const m = document.getElementById('missedLiftModal');
+        if(m) m.remove();
+    }, 1000);
+};
+
+// ==========================================
 // PDF EXPORT — NEW FEATURE
 // Uses browser print for clean PDF output
 // ==========================================
