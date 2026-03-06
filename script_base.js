@@ -1952,14 +1952,16 @@ window.adjustWeight = function(liftName, originalLoad) {
 // FIREBASE — AUTH, SAVE, LOAD
 // ==========================================
 async function saveUserData() {
-    if(!currentUserEmail) return;
+    console.log('[BASE] saveUserData called. email:', currentUserEmail, 'authUser:', !!auth.currentUser);
+    if(!currentUserEmail) { console.warn('[BASE] SKIP: no email'); return; }
     const user = auth.currentUser;
-    if(!user) return;
+    if(!user) { console.warn('[BASE] SKIP: no auth.currentUser'); return; }
 
     const s = parseFloat(document.getElementById('squatInput').value)||0;
     const b = parseFloat(document.getElementById('benchInput').value)||0;
     const dl = parseFloat(document.getElementById('deadliftInput').value)||0;
     const o = parseFloat(document.getElementById('ohpInput').value)||0;
+    console.log(`[BASE] Saving: uid=${user.uid} S=${s} B=${b} D=${dl} total=${s+b+dl}`);
 
     // Save user data — use uid (not email) for consistency with Andre Map
     try {
@@ -1973,7 +1975,8 @@ async function saveUserData() {
             name: baseUserName || currentUserEmail,
             program: 'base'
         }, {merge:true});
-    } catch(e) { console.error('User data save error:', e); }
+        console.log('[BASE] Users doc saved OK');
+    } catch(e) { console.error('[BASE] Users doc FAILED:', e.code, e.message); }
 
     // Save leaderboard — separate try/catch so it always attempts
     const total = s + b + dl;
@@ -1982,6 +1985,7 @@ async function saveUserData() {
             const displayName = baseUserName || currentUserEmail || "Anonymous";
             const mode = document.getElementById('dashMode');
             const modeName = mode ? mode.options[mode.selectedIndex].text : 'Standard';
+            console.log(`[BASE] Leaderboard write: id=${user.uid} name=${displayName} total=${total}`);
             await setDoc(doc(db, "leaderboard", user.uid), {
                 email: currentUserEmail, name: displayName,
                 total, squat:s, bench:b, deadlift:dl, unit:'LBS',
@@ -1990,7 +1994,10 @@ async function saveUserData() {
                 mode: modeName,
                 updatedAt: Date.now()
             });
-        } catch(e) { console.error('Leaderboard save error:', e); }
+            console.log('[BASE] Leaderboard saved OK');
+        } catch(e) { console.error('[BASE] Leaderboard FAILED:', e.code, e.message); }
+    } else {
+        console.log('[BASE] Leaderboard skipped: total=0');
     }
 }
 
