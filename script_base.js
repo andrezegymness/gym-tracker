@@ -2156,6 +2156,7 @@ function changeMobileWeek(dir) {
     if(activeMobileWeek >= maxW) activeMobileWeek = 0;
     generateProgram();
     saveUIState();
+    saveUserData();
 }
 
 function calculateWarmup() {
@@ -2389,8 +2390,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.getElementById('dashMode').addEventListener('change', () => { activeMobileWeek=0; userProgram=[]; generateProgram(); saveUIState(); });
-    document.getElementById('dashReps').addEventListener('change', () => { activeMobileWeek=0; generateProgram(); saveUIState(); });
+    document.getElementById('dashMode').addEventListener('change', () => { activeMobileWeek=0; userProgram=[]; generateProgram(); saveUIState(); saveUserData(); });
+    document.getElementById('dashReps').addEventListener('change', () => { activeMobileWeek=0; generateProgram(); saveUIState(); saveUserData(); });
     document.getElementById('overloadInput').addEventListener('change', () => generateProgram());
 
     const fBtn = document.getElementById('fastedBtn');
