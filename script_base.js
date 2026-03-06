@@ -1974,9 +1974,15 @@ async function saveUserData() {
             const user = auth.currentUser;
             const leaderboardId = user ? user.uid : currentUserEmail;
             const displayName = baseUserName || currentUserEmail || "Anonymous";
+            const mode = document.getElementById('dashMode');
+            const modeName = mode ? mode.options[mode.selectedIndex].text : 'Standard';
             await setDoc(doc(db, "leaderboard", leaderboardId), {
                 email: currentUserEmail, name: displayName,
-                total, squat:s, bench:b, deadlift:dl, unit:'LBS'
+                total, squat:s, bench:b, deadlift:dl, unit:'LBS',
+                program: 'Base Map Linear',
+                week: activeMobileWeek + 1,
+                mode: modeName,
+                updatedAt: Date.now()
             });
         }
     } catch(e) { console.error('Save error:', e); }
