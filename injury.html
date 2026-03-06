@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Injury Pro Beta — Andre's Calibrations</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body{background:#0a0a0a;color:#e0e0e0;font-family:'Roboto',sans-serif;margin:0;padding:10px;min-height:100vh}
+        .ip-container{max-width:700px;margin:0 auto;padding-bottom:80px}
+        .ip-header{text-align:center;padding:20px 0;border-bottom:2px solid #00e676;margin-bottom:24px}
+        .ip-header h1{color:#00e676;font-size:1.6rem;font-weight:900;letter-spacing:2px;margin:0}
+        .ip-header .beta{background:#00e676;color:#000;padding:2px 8px;border-radius:4px;font-size:0.7rem;font-weight:900;margin-left:8px;vertical-align:middle}
+        .ip-header p{color:#666;font-size:0.8rem;margin-top:8px}
+        .back-link{color:#00e676;text-decoration:none;font-weight:bold;font-size:0.8rem;display:inline-block;margin-bottom:10px}
+        .card{background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:20px;margin-bottom:16px;animation:fadeIn 0.4s}
+        .phase-label{font-size:0.65rem;color:#00e676;text-transform:uppercase;letter-spacing:2px;font-weight:bold;margin-bottom:10px}
+        .q-title{font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:12px;line-height:1.4}
+        .q-sub{font-size:0.8rem;color:#555;margin-bottom:14px;line-height:1.4}
+        .opt-btn{display:block;width:100%;text-align:left;padding:14px 16px;margin-bottom:8px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;color:#ccc;cursor:pointer;font-size:0.9rem;transition:all 0.2s;line-height:1.3;font-family:inherit}
+        .opt-btn:hover{border-color:#00e676;background:rgba(0,230,118,0.04)}
+        .opt-btn.sel{border-color:#00e676;background:rgba(0,230,118,0.1);color:#fff}
+        .multi-btn{display:inline-block;padding:10px 14px;margin:3px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;color:#999;cursor:pointer;font-size:0.82rem;transition:all 0.15s}
+        .multi-btn.sel{border-color:#00e676;background:rgba(0,230,118,0.1);color:#fff}
+        .multi-btn:hover{border-color:#444}
+        .next-btn{width:100%;padding:14px;background:#00e676;color:#000;border:none;border-radius:10px;font-weight:900;font-size:1rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:10px;transition:all 0.2s}
+        .next-btn:hover{background:#69f0ae}
+        .next-btn:disabled{background:#222;color:#555;cursor:not-allowed}
+        .progress-bar{height:4px;background:#1a1a1a;border-radius:2px;margin-bottom:20px;overflow:hidden}
+        .progress-fill{height:100%;background:linear-gradient(90deg,#00e676,#00bfa5);transition:width 0.5s;border-radius:2px}
+        .sev-btn{padding:6px 10px;border:1px solid #2a2a2a;background:#1a1a1a;color:#777;border-radius:5px;cursor:pointer;font-size:0.75rem;transition:all 0.15s}
+        .sev-btn.active{color:#fff}
+        .sev-btn.active.s1{background:#1b5e20;border-color:#4caf50}
+        .sev-btn.active.s2{background:#e65100;border-color:#ff9800}
+        .sev-btn.active.s3{background:#b71c1c;border-color:#f44336}
+        /* Report */
+        .phase-block{background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:16px;margin-bottom:14px}
+        .phase-title{font-weight:900;font-size:1rem;margin-bottom:4px}
+        .phase-desc{font-size:0.8rem;color:#888;margin-bottom:12px;line-height:1.4}
+        .ex-row{background:#1a1a1a;border:1px solid #222;border-radius:8px;padding:12px;margin-bottom:8px}
+        .ex-name{font-weight:800;color:#fff;font-size:0.95rem}
+        .ex-why{font-size:0.78rem;color:#00e676;margin-top:2px}
+        .ex-detail{font-size:0.82rem;color:#aaa;margin-top:6px;line-height:1.5}
+        .ex-detail strong{color:#fff}
+        .week-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin-top:8px}
+        .week-cell{background:#111;border:1px solid #222;border-radius:6px;padding:8px;font-size:0.78rem;text-align:center}
+        .week-cell .wk{color:#00e676;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px}
+        .week-cell .rx{color:#fff;font-weight:600;margin-top:3px}
+        .week-cell .tempo{color:#666;font-size:0.7rem;margin-top:2px}
+        .red-flag{background:rgba(244,67,54,0.08);border:1px solid #f44336;border-radius:8px;padding:14px;margin-bottom:14px}
+        .red-flag h4{color:#f44336;margin:0 0 6px 0;font-size:0.85rem}
+        .red-flag p{color:#ccc;font-size:0.82rem;margin:0;line-height:1.4}
+        .training-mod{background:rgba(33,150,243,0.06);border:1px solid #1565c0;border-radius:8px;padding:14px;margin-bottom:14px}
+        .training-mod h4{color:#2196f3;margin:0 0 6px 0;font-size:0.85rem}
+        .training-mod p{color:#ccc;font-size:0.82rem;margin:0;line-height:1.4}
+        .history-card{background:#111;border:1px solid #222;border-radius:8px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all 0.2s}
+        .history-card:hover{border-color:#00e676}
+        .screenshot-btn{width:100%;padding:14px;background:#333;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:8px;font-size:0.9rem}
+        .screenshot-btn:hover{background:#444}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    </style>
+</head>
+<body>
+<div class="ip-container">
+    <a href="index.html" class="back-link">← Menu</a>
+    <div class="ip-header">
+        <h1>INJURY PRO<span class="beta">BETA</span></h1>
+        <p>Advanced rehab protocols · Phase-based progression · Training modifications</p>
+    </div>
+
+    <!-- Check for saved protocols -->
+    <div id="historyArea"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div id="questionArea"></div>
+    <div id="reportArea" style="display:none;"></div>
+</div>
+
+<script>
+// ==========================================
+// INJURY PRO ENGINE
+// ==========================================
+const S = { region:'', location:'', severity:'', duration:'', aggravators:[], easers:[], painFree:[], onset:'', swelling:false, clicking:false, numbness:false };
+let totalSteps = 10;
+const QA = document.getElementById('questionArea');
+const RA = document.getElementById('reportArea');
+
+function progress(n){ document.getElementById('progressFill').style.width = Math.min(100,Math.round(n/totalSteps*100))+'%'; }
+
+// ==========================================
+// SAVED PROTOCOL MEMORY
+// ==========================================
+function checkHistory(){
+    const hist = JSON.parse(localStorage.getItem('injuryProHistory')||'[]');
+    const area = document.getElementById('historyArea');
+    if(!hist.length){ area.innerHTML=''; showQ1(); return; }
+    let h = `<div class="card"><div class="phase-label">Saved Protocols</div>
+        <div class="q-sub">You have ${hist.length} saved protocol${hist.length>1?'s':''}. Resume one or start fresh.</div>`;
+    hist.forEach((p,i) => {
+        const date = new Date(p.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        const weeksAgo = Math.floor((Date.now()-p.date)/604800000);
+        const currentPhase = Math.min(p.phases.length, Math.floor(weeksAgo / (p.weeksPerPhase||2)) + 1);
+        h += `<div class="history-card" onclick="resumeProtocol(${i})">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <strong style="color:#fff;">${p.region} — ${p.diagnosis}</strong>
+                    <div style="color:#666;font-size:0.8rem;margin-top:3px;">Started ${date} · ${weeksAgo} week${weeksAgo!==1?'s':''} ago</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="color:#00e676;font-weight:bold;font-size:0.85rem;">Phase ${currentPhase}/${p.phases.length}</div>
+                </div>
+            </div>
+        </div>`;
+    });
+    h += `<button class="next-btn" onclick="document.getElementById('historyArea').innerHTML='';showQ1()" style="background:#333;color:#fff;margin-top:6px;">+ Start New Assessment</button>`;
+    h += `<button class="screenshot-btn" onclick="if(confirm('Clear all saved protocols?')){localStorage.removeItem('injuryProHistory');location.reload();}" style="color:#f44336;border:1px solid #f44336;background:transparent;margin-top:6px;">Clear All History</button>`;
+    h += `</div>`;
+    area.innerHTML = h;
+}
+
+window.resumeProtocol = function(idx){
+    const hist = JSON.parse(localStorage.getItem('injuryProHistory')||'[]');
+    const p = hist[idx];
+    if(!p) return;
+    document.getElementById('historyArea').innerHTML='';
+    QA.style.display='none';
+    RA.style.display='block';
+    progress(totalSteps);
+
+    const weeksAgo = Math.floor((Date.now()-p.date)/604800000);
+    const currentPhaseIdx = Math.min(p.phases.length-1, Math.floor(weeksAgo / (p.weeksPerPhase||2)));
+
+    renderProtocol(p, currentPhaseIdx);
+};
+
+// ==========================================
+// QUESTION FLOW
+// ==========================================
+function showQ1(){
+    progress(1);
+    QA.innerHTML = `<div class="card"><div class="phase-label">Assessment — Step 1</div>
+        <div class="q-title">Where is your injury or pain?</div>
+        <div class="q-sub">Select the primary area that's giving you trouble.</div>
+        <button class="opt-btn" onclick="S.region='Knee';showQ2()">🦵 Knee</button>
+        <button class="opt-btn" onclick="S.region='Low Back';showQ2()">🔙 Low Back</button>
+        <button class="opt-btn" onclick="S.region='Shoulder';showQ2()">💪 Shoulder</button>
+        <button class="opt-btn" onclick="S.region='Hip';showQ2()">🦴 Hip</button>
+        <button class="opt-btn" onclick="S.region='Elbow';showQ2()">🤛 Elbow</button>
+    </div>`;
+}
+
+// Q2: Location-specific sub-area
+const locationMap = {
+    Knee: [
+        {id:'anterior',label:'Front of the knee (below or around the kneecap)'},
+        {id:'lateral',label:'Outside of the knee'},
+        {id:'medial',label:'Inside of the knee'},
+        {id:'posterior',label:'Behind the knee'},
+        {id:'general',label:'General / all over — hard to pinpoint'}
+    ],
+    'Low Back': [
+        {id:'central',label:'Center of the low back (spine area)'},
+        {id:'si_joint',label:'One side, near the dimples above the glutes (SI joint)'},
+        {id:'lateral',label:'Off to one side, in the muscle'},
+        {id:'radiating',label:'It radiates down into my glute or leg'},
+        {id:'general',label:'General low back tightness / stiffness'}
+    ],
+    Shoulder: [
+        {id:'front',label:'Front of the shoulder (near the collarbone)'},
+        {id:'top',label:'Top of the shoulder (AC joint area)'},
+        {id:'side',label:'Side of the shoulder (deltoid area)'},
+        {id:'rear',label:'Back of the shoulder / scapula area'},
+        {id:'deep',label:'Deep inside the joint — hard to locate exactly'}
+    ],
+    Hip: [
+        {id:'front',label:'Front of the hip / groin area'},
+        {id:'side',label:'Side of the hip (outside)'},
+        {id:'rear',label:'Deep in the glute / back of the hip'},
+        {id:'pinch',label:'Pinching sensation when I squat deep'},
+        {id:'general',label:'General hip tightness'}
+    ],
+    Elbow: [
+        {id:'medial',label:'Inside of the elbow (golfer\'s elbow area)'},
+        {id:'lateral',label:'Outside of the elbow (tennis elbow area)'},
+        {id:'posterior',label:'Back of the elbow (tricep tendon)'},
+        {id:'general',label:'General elbow ache'}
+    ]
+};
+
+function showQ2(){
+    progress(2);
+    const locs = locationMap[S.region];
+    QA.innerHTML = `<div class="card"><div class="phase-label">Assessment — Step 2</div>
+        <div class="q-title">Where exactly in your ${S.region.toLowerCase()} is the pain?</div>
+        <div class="q-sub">This helps narrow down the specific tissue involved.</div>
+        ${locs.map(l=>`<button class="opt-btn" onclick="S.location='${l.id}';showQ3()">${l.label}</button>`).join('')}
+    </div>`;
+}
+
+function showQ3(){
+    progress(3);
+    QA.innerHTML = `<div class="card"><div class="phase-label">Assessment — Step 3</div>
+        <div class="q-title">How severe is the pain right now?</div>
+        <div class="q-sub">On your worst day in the last week.</div>
+        <button class="opt-btn" onclick="S.severity='mild';showQ4()"><strong style="color:#4caf50;">Mild</strong> — I notice it but it doesn't stop me from training</button>
+        <button class="opt-btn" onclick="S.severity='moderate';showQ5()"><strong style="color:#ff9800;">Moderate</strong> — I have to modify exercises or reduce weight</button>
+        <button class="opt-btn" onclick="S.severity='severe';showQ5()"><strong style="color:#f44336;">Severe</strong> — It significantly limits what I can do</button>
+    </div>`;
+}
+
+function showQ4(){
+    progress(4);
+    QA.innerHTML = `<div class="card"><div class="phase-label">Assessment — Step 4</div>
+        <div class="q-title">How long have you been dealing with this?</div>
+        <button class="opt-btn" onclick="S.duration='acute';showQ5()">Less than 2 weeks</button>
+        <button class="opt-btn" onclick="S.duration='subacute';showQ5()">2–6 weeks</button>
+        <button class="opt-btn" onclick="S.duration='chronic_short';showQ5()">1–3 months</button>
+        <button class="opt-btn" onclick="S.duration='chronic_long';showQ5()">3+ months</button>
+        <button class="opt-btn" onclick="S.duration='recurring';showQ5()">It comes and goes — recurring for months/years</button>
+    </div>`;
+}
+// If mild, we already asked duration in Q4. If moderate/severe, ask now.
+function showQ5(){
+    progress(5);
+    if(S.severity !== 'mild'){
+        QA.innerHTML = `<div class="card"><div class="phase-label">Assessment — Step 5</div>
+            <div class="q-title">How long have you been dealing with this?</div>
+            <button class="opt-btn" onclick="S.duration='acute';showQ6()">Less than 2 weeks</button>
+            <button class="opt-btn" onclick="S.duration='subacute';showQ6()">2–6 weeks</button>
+            <button class="opt-btn" onclick="S.duration='chronic_short';showQ6()">1–3 months</button>
+            <button class="opt-btn" onclick="S.duration='chronic_long';showQ6()">3+ months</button>
+            <button class="opt-btn" onclick="S.duration='recurring';showQ6()">Recurring for months/years</button>
+        </div>`;
+    } else { showQ6(); }
+}
+
+function showQ6(){
+    progress(6);
+    const aggMap = {
+        Knee:['Squatting','Going downstairs','Running','Sitting too long','Kneeling','Lunges','Leg extensions'],
+        'Low Back':['Deadlifting','Sitting too long','Bending forward','Sneezing/coughing','Standing too long','Twisting','Getting out of bed'],
+        Shoulder:['Bench pressing','Overhead pressing','Reaching behind back','Sleeping on it','Dips','Pull-ups','Lateral raises'],
+        Hip:['Squatting deep','Sumo deadlift','Sitting too long','Getting in/out of car','Lunges','Running','Stretching'],
+        Elbow:['Bench pressing','Curls','Pull-ups','Gripping heavy weight','Tricep extensions','Pushing movements','Pulling movements']
+    };
+    const aggs = aggMap[S.region]||[];
+    QA.innerHTML = `<div class="card"><div class="phase-label">Assessment — Step 6</div>
+        <div class="q-title">What makes it worse?</div>
+        <div class="q-sub">Select all that apply.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;" id="aggBtns">
+            ${aggs.map(a=>`<span class="multi-btn" onclick="this.classList.toggle('sel');toggleArr(S.aggravators,'${a}')">${a}</span>`).join('')}
+        </div>
+        <button class="next-btn" onclick="showQ7()" style="margin-top:14px;">Continue</button>
+    </div>`;
+}
+
+window.toggleArr = function(arr, val){
+    const i = arr.indexOf(val);
+    if(i>=0) arr.splice(i,1); else arr.push(val);
+};
+
+function showQ7(){
+    progress(7);
+    QA.innerHTML = `<div class="card"><div class="phase-label">Assessment — Step 7</div>
+        <div class="q-title">Are any of these present?</div>
+        <div class="q-sub">Check all that apply. These help identify the type of tissue involved.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;" id="symptomBtns">
+            <span class="multi-btn" onclick="this.classList.toggle('sel');S.swelling=!S.swelling">Swelling</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');S.clicking=!S.clicking">Clicking or popping</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');S.numbness=!S.numbness">Numbness or tingling</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');S.locking=!S.locking">Locking or catching</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');S.grinding=!S.grinding">Grinding sensation</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');S.warmup_helps=!S.warmup_helps">Gets better after warming up</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');S.morning_stiff=!S.morning_stiff">Worse in the morning</span>
+        </div>
+        <button class="next-btn" onclick="showQ8()" style="margin-top:14px;">Continue</button>
+    </div>`;
+}
+
+function showQ8(){
+    progress(8);
+    QA.innerHTML = `<div class="card"><div class="phase-label">Assessment — Step 8</div>
+        <div class="q-title">What can you currently do pain-free?</div>
+        <div class="q-sub">This determines your starting point. Select everything you CAN do without pain.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;" id="pfBtns">
+            <span class="multi-btn" onclick="this.classList.toggle('sel');toggleArr(S.painFree,'walking')">Walking</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');toggleArr(S.painFree,'bodyweight_squat')">Bodyweight squat</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');toggleArr(S.painFree,'light_weights')">Light weights (bar only)</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');toggleArr(S.painFree,'moderate_weights')">Moderate weights (50-70%)</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');toggleArr(S.painFree,'isometrics')">Isometric holds</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');toggleArr(S.painFree,'full_rom')">Full range of motion (unloaded)</span>
+            <span class="multi-btn" onclick="this.classList.toggle('sel');toggleArr(S.painFree,'nothing')">Almost nothing — very limited</span>
+        </div>
+        <button class="next-btn" onclick="showQ9()" style="margin-top:14px;">Continue</button>
+    </div>`;
+}
+
+function showQ9(){
+    progress(9);
+    QA.innerHTML = `<div class="card"><div class="phase-label">Assessment — Step 9</div>
+        <div class="q-title">How did this start?</div>
+        <button class="opt-btn" onclick="S.onset='sudden';generateProtocol()">Sudden — happened during a specific lift or movement</button>
+        <button class="opt-btn" onclick="S.onset='gradual';generateProtocol()">Gradual — built up over days or weeks</button>
+        <button class="opt-btn" onclick="S.onset='unknown';generateProtocol()">Not sure — just noticed it one day</button>
+        <button class="opt-btn" onclick="S.onset='recurring';generateProtocol()">It's been on and off for a long time</button>
+    </div>`;
+}
+
+// ==========================================
+// DIAGNOSIS + PROTOCOL ENGINE
+// ==========================================
+function diagnose(){
+    const r = S.region, l = S.location, sev = S.severity;
+    let diagnosis = '', pathology = '', protocolLength = 4, weeksPerPhase = 2;
+
+    // Determine protocol length based on severity + duration
+    if(sev === 'mild'){ protocolLength = 3; weeksPerPhase = 1; }
+    else if(sev === 'moderate'){ protocolLength = 4; weeksPerPhase = 2; }
+    else { protocolLength = 4; weeksPerPhase = 2; }
+    if(S.duration === 'chronic_long' || S.duration === 'recurring'){ protocolLength = 5; weeksPerPhase = 2; }
+
+    // === KNEE ===
+    if(r === 'Knee'){
+        if(l === 'anterior'){
+            pathology = 'Patellar Tendinopathy';
+            diagnosis = 'Pain at the front of the knee, typically just below the kneecap, is most commonly patellar tendinopathy — an overuse injury of the patellar tendon. The tendon has been loaded beyond its capacity to recover, causing structural changes in the tissue. The fix is not rest — it\'s progressive loading at the right intensity to stimulate the tendon to remodel and strengthen.';
+        } else if(l === 'lateral'){
+            pathology = 'IT Band Syndrome / Lateral Knee';
+            diagnosis = 'Pain on the outside of the knee is typically IT band friction syndrome or lateral meniscus irritation. The IT band itself doesn\'t "tighten" — the issue is usually weak hip abductors causing the knee to track inward, creating friction. Foam rolling the IT band is largely ineffective; strengthening the glute medius and controlling knee tracking is the real fix.';
+        } else if(l === 'medial'){
+            pathology = 'MCL / Medial Meniscus Irritation';
+            diagnosis = 'Inside knee pain in lifters is often MCL stress from knee valgus under load, or medial meniscus irritation from deep flexion. If there\'s no acute trauma, this typically responds well to controlled loading and addressing the valgus pattern through hip and VMO strengthening.';
+        } else if(l === 'posterior'){
+            pathology = 'Posterior Knee / Popliteal Irritation';
+            diagnosis = 'Pain behind the knee can be hamstring tendon irritation where it inserts near the knee, popliteal tendon stress, or a Baker\'s cyst from chronic inflammation. Eccentric hamstring work and controlled flexion loading typically resolves this.';
+        } else {
+            pathology = 'General Knee Pain / Patellofemoral Syndrome';
+            diagnosis = 'Diffuse knee pain without a specific location is often patellofemoral syndrome — the kneecap isn\'t tracking well in its groove. This is almost always a quadriceps and hip strength issue. VMO activation, hip external rotation work, and controlled loading through full range of motion are the cornerstones of recovery.';
+        }
+    }
+    // === LOW BACK ===
+    else if(r === 'Low Back'){
+        if(l === 'central'){
+            if(S.numbness || S.radiating){
+                pathology = 'Disc-Related Low Back Pain';
+                diagnosis = 'Central low back pain with radiating symptoms suggests disc involvement — likely a bulge or herniation irritating a nerve root. The McGill approach is the gold standard: remove the aggravating movements (spinal flexion under load), build core stiffness through anti-movement exercises, and gradually reintroduce loading. This is not something to push through.';
+            } else {
+                pathology = 'Non-Specific Mechanical Low Back Pain';
+                diagnosis = 'Central low back pain without radiating symptoms is typically muscular or facet-related. This responds well to progressive loading, core stability work, and maintaining movement variety. The worst thing you can do is stop moving — controlled motion is the treatment.';
+            }
+        } else if(l === 'si_joint'){
+            pathology = 'SI Joint Dysfunction';
+            diagnosis = 'One-sided pain near the dimples above the glutes points to SI joint irritation. This joint can become inflamed from asymmetric loading (shifting to one side during squats or deadlifts), or from too much mobility in the joint. The fix is stabilization — training the muscles around the SI joint to hold it in place, not stretching it further.';
+        } else if(l === 'lateral'){
+            pathology = 'QL / Erector Spasm';
+            diagnosis = 'Unilateral muscular back pain is typically a quadratus lumborum (QL) or erector spinae spasm. This often results from compensatory bracing patterns — one side working harder than the other. Targeted release work, anti-lateral-flexion core training, and addressing the asymmetry in your main lifts will resolve this.';
+        } else if(l === 'radiating'){
+            pathology = 'Radiculopathy / Nerve Irritation';
+            diagnosis = 'Pain that radiates down the leg indicates nerve root involvement — likely from a disc issue compressing a nerve. This requires a careful, conservative approach: nerve glides, McGill core stability, zero spinal flexion under load, and gradual reintroduction. If numbness or weakness persists, see a professional.';
+        } else {
+            pathology = 'General Low Back Stiffness';
+            diagnosis = 'General low back tightness without sharp pain is typically from insufficient core endurance and/or excessive time in one position. Progressive core stability work, hip mobility, and consistent moderate-load training is the fix.';
+        }
+    }
+    // === SHOULDER ===
+    else if(r === 'Shoulder'){
+        if(l === 'front'){
+            pathology = 'Anterior Shoulder / Bicep Tendon';
+            diagnosis = 'Front shoulder pain is commonly biceps tendon irritation or anterior impingement. The long head of the biceps runs through a groove at the front of the shoulder and can become inflamed from heavy pressing with poor scapular control. The fix is scapular stability, rear delt strengthening, and temporarily reducing pressing volume.';
+        } else if(l === 'top'){
+            pathology = 'AC Joint Irritation';
+            diagnosis = 'Pain at the top of the shoulder, near where the collarbone meets the shoulder blade, is typically AC joint irritation. This is common in heavy bench pressers and overhead athletes. The joint itself can\'t be strengthened, but the surrounding muscles can be trained to reduce stress on it. Avoid cross-body movements and direct overhead work until the pain subsides.';
+        } else if(l === 'side'){
+            pathology = 'Subacromial Impingement';
+            diagnosis = 'Pain on the side of the shoulder, especially when raising the arm, suggests subacromial impingement — the rotator cuff tendons are getting pinched under the acromion. This is a space problem: the subacromial space has narrowed due to inflammation, poor posture, or weak rotator cuff muscles. Strengthening the external rotators and scapular stabilizers opens this space back up.';
+        } else if(l === 'rear'){
+            pathology = 'Posterior Shoulder / Scapular Dysfunction';
+            diagnosis = 'Pain in the back of the shoulder or around the scapula typically indicates posterior capsule tightness, infraspinatus strain, or scapular dyskinesis. The scapula isn\'t moving properly on the ribcage, creating mechanical problems downstream. Scapular control exercises and posterior capsule mobility work are the foundation.';
+        } else {
+            pathology = 'Deep Shoulder / Rotator Cuff';
+            diagnosis = 'Deep, hard-to-locate shoulder pain often indicates rotator cuff tendinopathy — specifically the supraspinatus or infraspinatus. These muscles stabilize the humeral head in the socket and can become overloaded from heavy pressing without adequate posterior chain work. Progressive external rotation strengthening and scapular stability are the primary interventions.';
+        }
+    }
+    // === HIP ===
+    else if(r === 'Hip'){
+        if(l === 'front'){
+            pathology = 'Hip Flexor Tendinopathy / FAI';
+            diagnosis = 'Front hip pain or groin pinching is commonly hip flexor (iliopsoas) tendinopathy or femoroacetabular impingement (FAI). In lifters, this is often aggravated by deep squats, sumo pulls, or excessive hip flexor volume. The fix is isometric loading of the hip flexors, avoiding end-range aggravation, and gradually restoring strength through the full range.';
+        } else if(l === 'side'){
+            pathology = 'Glute Med Tendinopathy / Trochanteric Bursitis';
+            diagnosis = 'Side hip pain is typically greater trochanteric bursitis or gluteus medius tendinopathy. The glute med tendon attaches at the bony prominence on the side of your hip and can become irritated from sustained compression (crossing legs, sleeping on that side) or from weak hip abductors. Isometric abduction work and avoiding positions that compress the tendon are key.';
+        } else if(l === 'rear'){
+            pathology = 'Deep Gluteal Syndrome / Piriformis';
+            diagnosis = 'Deep pain in the back of the hip is commonly piriformis syndrome or deep gluteal syndrome — the piriformis or other deep rotators are irritated, potentially compressing the sciatic nerve. This responds to targeted hip rotation work, progressive loading of the external rotators, and avoiding prolonged sitting.';
+        } else if(l === 'pinch'){
+            pathology = 'Hip Impingement (FAI)';
+            diagnosis = 'A pinching sensation at the bottom of a squat strongly suggests femoroacetabular impingement — the femoral head contacts the acetabular rim prematurely. This is partly structural and partly modifiable. You may need to adjust your squat stance (wider, more toe-out), and strengthen the hip in the ranges you CAN access pain-free while gradually expanding that range.';
+        } else {
+            pathology = 'General Hip Tightness';
+            diagnosis = 'General hip tightness without sharp pain is typically from insufficient hip strengthening (not just stretching). Passive flexibility without strength in those ranges creates instability. Progressive loaded hip mobility work — CARs, 90/90 transitions under load, and hip flexor marches — is more effective than static stretching.';
+        }
+    }
+    // === ELBOW ===
+    else if(r === 'Elbow'){
+        if(l === 'medial'){
+            pathology = 'Medial Epicondylitis (Golfer\'s Elbow)';
+            diagnosis = 'Inside elbow pain is medial epicondylitis — inflammation of the forearm flexor tendons where they attach to the inside of the elbow. In lifters, this is almost always from heavy pulling (deadlifts, rows, curls) overloading the wrist flexors. Eccentric wrist flexion work and progressive tendon loading is the evidence-based fix. Rest alone makes it worse long-term.';
+        } else if(l === 'lateral'){
+            pathology = 'Lateral Epicondylitis (Tennis Elbow)';
+            diagnosis = 'Outside elbow pain is lateral epicondylitis — the extensor tendons on the outside of the elbow. In lifters, this is less common than medial but can come from heavy bench pressing, overhead work, or aggressive grip training. Eccentric wrist extension work and Tyler Twist exercises are the gold standard intervention.';
+        } else if(l === 'posterior'){
+            pathology = 'Tricep Tendinopathy / Olecranon Irritation';
+            diagnosis = 'Pain at the back of the elbow is typically tricep tendon irritation at the olecranon insertion, or olecranon bursitis. Heavy lockout work, skull crushers, and high-volume pressing are common culprits. Eccentric tricep loading at controlled tempos and temporarily reducing lockout volume are the fix.';
+        } else {
+            pathology = 'General Elbow Tendinopathy';
+            diagnosis = 'General elbow pain in lifters is almost always tendon-related. Tendons respond to progressive loading, not rest. The key is finding the right dose of loading that stimulates the tendon to adapt without exceeding its current capacity. Isometrics are the starting point, progressing to slow eccentrics, then full range loading.';
+        }
+    }
+
+    return { diagnosis, pathology, protocolLength, weeksPerPhase };
+}
+
+// ==========================================
+// EXERCISE DATABASE PER PATHOLOGY
+// ==========================================
+function getProtocolExercises(pathology){
+    const DB = {
+        'Patellar Tendinopathy': {
+            phases: [
+                { name:'Pain Management + Isometrics', exercises:[
+                    {name:'Isometric Wall Sit (pain-free angle)',sets:'5',reps:'45s hold',tempo:'Hold',why:'Isometric loading at the right angle provides analgesic effect and begins tendon loading without aggravation.',progression:'Start at 45° knee bend. Progress to deeper angles as pain allows.'},
+                    {name:'Terminal Knee Extension (TKE) — Slow',sets:'3',reps:'20 per leg',tempo:'2-0-2',why:'Loads the patellar tendon through a short, controlled range. The band provides variable resistance that peaks at full extension.',progression:'Start with light band. Progress band resistance weekly.'},
+                    {name:'Straight Leg Raise (SLR)',sets:'3',reps:'15 per leg',tempo:'2-1-2',why:'Strengthens the quads without significant knee bend. Maintains muscle activation while respecting the tendon.',progression:'Add ankle weight as strength improves.'},
+                    {name:'Calf Raises (Bilateral)',sets:'3',reps:'15',tempo:'3-1-3',why:'Maintains lower leg blood flow and addresses potential calf tightness contributing to knee load.',progression:'Progress to single leg.'}
+                ]},
+                { name:'Eccentric Loading', exercises:[
+                    {name:'Spanish Squat (Eccentric Focus)',sets:'3',reps:'12',tempo:'5-1-2',why:'The band behind the knees shifts load directly onto the patellar tendon while decompressing the joint. The slow eccentric overloads the tendon in the lengthening phase, stimulating collagen remodeling.',progression:'Increase depth and band tension weekly.'},
+                    {name:'Single Leg Knee Extension (Slow Eccentric)',sets:'3',reps:'10 per leg',tempo:'5-0-1',why:'Isolated patellar tendon loading. The 5-second eccentric is the key stimulus for tendon remodeling.',progression:'Add weight in 2.5-5lb increments.'},
+                    {name:'Kettlebell Goblet Squat (Controlled)',sets:'3',reps:'10',tempo:'3-2-2',why:'Reintroduces loaded knee flexion in a controlled pattern with a pause at the bottom.',progression:'Increase weight. Progress depth gradually.'},
+                    {name:'Step Downs (Forward)',sets:'3',reps:'10 per leg',tempo:'3-1-1',why:'Eccentric quad loading in a functional single-leg pattern. Controls knee tracking.',progression:'Increase step height from 4" to 8".'}
+                ]},
+                { name:'Strength Rebuilding', exercises:[
+                    {name:'Spanish Squat (Heavy)',sets:'4',reps:'8',tempo:'3-1-2',why:'Increase the load on the tendon now that it has begun to remodel. This is where real strength returns.',progression:'Add weight via dumbbell held at chest.'},
+                    {name:'Bulgarian Split Squat',sets:'3',reps:'8 per leg',tempo:'3-1-2',why:'Unilateral loading that challenges the knee in a lengthened quad position. High patellar tendon demand.',progression:'Add weight progressively.'},
+                    {name:'Leg Press (Moderate Depth)',sets:'3',reps:'10',tempo:'2-1-2',why:'Bilateral quad loading in a stable machine. Begin rebuilding the capacity lost during the acute phase.',progression:'Increase weight 5-10% weekly.'},
+                    {name:'Kneeling Kettlebell Lunge',sets:'3',reps:'10 per leg',tempo:'2-1-2',why:'Loaded hip flexor stretch combined with knee flexion. Addresses the entire anterior chain.',progression:'Add weight. Increase ROM.'}
+                ]},
+                { name:'Return to Sport', exercises:[
+                    {name:'Barbell Squat (Tempo)',sets:'3',reps:'5',tempo:'3-2-1',why:'Reintroduce the competition movement with controlled tempo. The pause ensures you own every position.',progression:'Gradually reduce tempo to competition speed. Increase load weekly.'},
+                    {name:'Spanish Squat (Maintenance)',sets:'2',reps:'15',tempo:'2-0-2',why:'Maintain tendon conditioning. This becomes a permanent warm-up exercise.',progression:'Keep as warm-up. 2-3x per week.'},
+                    {name:'Single Leg Squat to Box',sets:'3',reps:'6 per leg',tempo:'2-1-1',why:'Advanced unilateral strength. Proves the knee can handle single-leg load under control.',progression:'Lower the box height. Add weight.'},
+                    {name:'Depth Jumps (Low Box)',sets:'3',reps:'5',tempo:'Reactive',why:'Reintroduce plyometric loading. The patellar tendon must handle rapid stretch-shortening cycle.',progression:'Only introduce when pain is 0-1/10 during all other exercises.'}
+                ]}
+            ],
+            redFlags:['Knee locking or giving way completely','Significant swelling that doesn\'t reduce within 48 hours','Sharp pain that worsens despite 2+ weeks of protocol compliance','Numbness below the knee'],
+            trainingMods:[
+                'Phase 1-2: Reduce squat depth to parallel or above. Use box squats to control depth. Avoid heavy singles.',
+                'Phase 2-3: Resume full depth at 60-70% max with tempo eccentrics (3-second down). No bouncing out of the hole.',
+                'Phase 3-4: Gradually return to normal loading. Keep Spanish squats as a permanent warm-up before every squat session.',
+                'Avoid: Leg extensions at full speed, jump squats, and plyometrics until Phase 4.'
+            ]
+        },
+        'IT Band Syndrome / Lateral Knee': {
+            phases: [
+                { name:'Hip Activation + Pain Management', exercises:[
+                    {name:'Side-Lying Clamshell (Banded)',sets:'3',reps:'20 per side',tempo:'2-2-2',why:'Activates the glute medius — the muscle most responsible for controlling knee tracking. IT band issues are almost always a hip problem.',progression:'Increase band resistance.'},
+                    {name:'Side Plank (Hip Focus)',sets:'3',reps:'30s per side',tempo:'Hold',why:'Strengthens the lateral hip stabilizers in an anti-lateral-flexion pattern.',progression:'Add hip abduction hold at top.'},
+                    {name:'Isometric Single Leg Stand',sets:'3',reps:'30s per leg',tempo:'Hold',why:'Forces the glute med to stabilize the pelvis. Reveals side-to-side imbalances.',progression:'Close eyes. Add unstable surface.'},
+                    {name:'Foam Roll Quads and Glutes (NOT IT Band)',sets:'1',reps:'2 min per area',tempo:'Slow',why:'Release the muscles that ATTACH to the IT band, not the band itself. The IT band is connective tissue — it doesn\'t relax from rolling.',progression:'Use a lacrosse ball for deeper work.'}
+                ]},
+                { name:'Hip Strengthening', exercises:[
+                    {name:'Banded Lateral Walk',sets:'3',reps:'15 steps each way',tempo:'Controlled',why:'Glute med strengthening under dynamic load. Teaches the hip to stabilize the knee during movement.',progression:'Heavier band. Add squat depth during walks.'},
+                    {name:'Single Leg RDL',sets:'3',reps:'10 per leg',tempo:'3-1-2',why:'Hip hinge stability on one leg. Forces the lateral hip to control pelvic tilt.',progression:'Add dumbbell. Increase weight.'},
+                    {name:'Copenhagen Plank',sets:'3',reps:'15s per side',tempo:'Hold',why:'Adductor strengthening. Often overlooked — weak adductors shift load laterally to the IT band.',progression:'Increase hold time to 30s.'},
+                    {name:'Step Ups (Lateral)',sets:'3',reps:'10 per leg',tempo:'2-1-2',why:'Functional lateral hip loading. The step up forces the glute med to fire concentrically.',progression:'Add weight. Increase box height.'}
+                ]},
+                { name:'Load Integration', exercises:[
+                    {name:'Goblet Squat with Knee Band',sets:'3',reps:'10',tempo:'2-1-2',why:'The band cues the knees to push out, reinforcing the hip abduction pattern that protects the lateral knee.',progression:'Switch to barbell. Maintain band cue.'},
+                    {name:'Single Leg Leg Press',sets:'3',reps:'10 per leg',tempo:'2-1-2',why:'Unilateral quad loading with controlled knee tracking.',progression:'Increase weight progressively.'},
+                    {name:'Banded Monster Walk',sets:'3',reps:'20 steps',tempo:'Controlled',why:'Dynamic hip abduction under walking load. Direct glute med endurance.',progression:'Add squat depth during walk.'},
+                    {name:'Side-Lying Hip Abduction (Weighted)',sets:'3',reps:'12 per side',tempo:'2-2-2',why:'Direct glute med strengthening. The 2-second holds at top force maximal contraction.',progression:'Add ankle weight incrementally.'}
+                ]},
+                { name:'Return to Training', exercises:[
+                    {name:'Barbell Squat with Band Cue',sets:'3',reps:'5',tempo:'2-1-1',why:'Full competition squat with a light band around the knees cuing abduction. Reinforces good tracking.',progression:'Remove band when pattern is automatic.'},
+                    {name:'Banded Lateral Walk (Warm-Up)',sets:'2',reps:'10 each way',tempo:'Controlled',why:'Permanent warm-up exercise. Activates the glute med before every lower body session.',progression:'Maintain as warm-up indefinitely.'},
+                    {name:'Single Leg Box Squat',sets:'3',reps:'6 per leg',tempo:'2-1-1',why:'Proves single-leg stability under load. The ultimate test of lateral knee control.',progression:'Increase weight. Lower box height.'}
+                ]}
+            ],
+            redFlags:['Knee locking or catching','Swelling that doesn\'t resolve','Pain that worsens with every session despite modifications','Sharp pain on the outside of the knee with any knee bending'],
+            trainingMods:[
+                'Phase 1-2: Reduce squat volume by 30%. Avoid deep narrow-stance squats. Use a wider stance to reduce IT band tension.',
+                'Phase 2-3: Add banded squats as a warm-up before every session. Avoid single-leg exercises that cause lateral knee pain.',
+                'Phase 3-4: Resume normal volume. Keep lateral band walks as a permanent warm-up.',
+                'Avoid: Excessive downhill walking/running, crossing legs while sitting, sleeping with knees stacked.'
+            ]
+        }
+    };
+
+    // Simplified protocols for other pathologies — same structure
+    const genericTendon = (name, region) => ({
+        phases: [
+            { name:'Isometric Loading', exercises:[
+                {name:`Isometric Hold (${region}-specific)`,sets:'5',reps:'45s hold',tempo:'Hold',why:`Isometric loading provides pain relief and begins loading the ${region.toLowerCase()} tendon without full range aggravation.`,progression:'Increase hold time to 60s. Add light resistance.'},
+                {name:'Blood Flow Restriction Light Exercise',sets:'3',reps:'30-15-15-15',tempo:'2-0-2',why:'BFR at low loads (20-30% max) stimulates muscle growth and tendon adaptation without heavy mechanical load.',progression:'Slight weight increase weekly.'},
+                {name:`Controlled ROM Exercise (${region})`,sets:'3',reps:'15',tempo:'3-0-2',why:'Partial range movement that stays within pain-free zone. Maintains neural drive to the muscle.',progression:'Gradually increase range of motion.'}
+            ]},
+            { name:'Eccentric Focus', exercises:[
+                {name:`Slow Eccentric ${region} Exercise`,sets:'3',reps:'10',tempo:'5-0-1',why:'5-second eccentrics are the gold standard for tendon remodeling. The slow lengthening stimulates collagen production.',progression:'Add 5-10% load weekly.'},
+                {name:'Tempo Full ROM Exercise',sets:'3',reps:'8',tempo:'3-2-2',why:'Full range with a pause at the most loaded position. Builds strength through the entire range.',progression:'Increase weight. Reduce tempo as strength returns.'},
+                {name:'Isometric at End Range',sets:'3',reps:'20s hold',tempo:'Hold',why:'Strengthens the tendon at its most vulnerable position.',progression:'Increase hold time and load.'}
+            ]},
+            { name:'Progressive Strengthening', exercises:[
+                {name:`Heavy Slow Resistance (${region})`,sets:'4',reps:'6-8',tempo:'3-1-2',why:'The tendon is now ready for heavier loads. Progressive overload drives continued remodeling.',progression:'Standard progressive overload. Add weight weekly.'},
+                {name:'Compound Movement (Modified)',sets:'3',reps:'8',tempo:'2-1-2',why:'Reintroduce compound movements with controlled tempo.',progression:'Increase to competition movement pattern.'},
+                {name:'Unilateral Strength Exercise',sets:'3',reps:'8 per side',tempo:'2-1-2',why:'Corrects any strength asymmetry that developed during the injury.',progression:'Match both sides before returning to bilateral.'}
+            ]},
+            { name:'Return to Training', exercises:[
+                {name:'Competition Movement (Tempo)',sets:'3',reps:'5',tempo:'2-1-1',why:'Full competition movement with slight tempo control. Bridge to normal training.',progression:'Reduce tempo. Increase load to pre-injury levels.'},
+                {name:`${region} Warm-Up Protocol`,sets:'2',reps:'15',tempo:'2-0-2',why:'Permanent warm-up to maintain tendon health and prevent recurrence.',progression:'Keep as warm-up indefinitely.'}
+            ]}
+        ],
+        redFlags:['Pain that increases during or after every session','Significant swelling','Loss of range of motion that worsens over time','Numbness, tingling, or radiating pain'],
+        trainingMods:[
+            `Phase 1-2: Reduce ${region.toLowerCase()}-intensive exercise volume by 40%. Avoid heavy singles. Use tempo eccentrics.`,
+            `Phase 2-3: Gradually restore volume. Keep working weight at 60-75% of pre-injury max.`,
+            `Phase 3-4: Return to normal programming. Maintain warm-up protocol from Phase 1 exercises.`,
+            `Avoid: Ballistic movements, max-effort attempts, and pain-provoking exercises until Phase 4.`
+        ]
+    });
+
+    return DB[pathology] || genericTendon(pathology, S.region);
+}
+
+// ==========================================
+// GENERATE + RENDER PROTOCOL
+// ==========================================
+function generateProtocol(){
+    progress(totalSteps);
+    QA.style.display = 'none';
+    RA.style.display = 'block';
+
+    const { diagnosis, pathology, protocolLength, weeksPerPhase } = diagnose();
+    const protocol = getProtocolExercises(pathology);
+    const numPhases = Math.min(protocol.phases.length, protocolLength);
+    const totalWeeks = numPhases * weeksPerPhase;
+
+    // Save to history
+    const entry = { date:Date.now(), region:S.region, location:S.location, severity:S.severity, duration:S.duration, diagnosis:pathology, phases:protocol.phases.slice(0,numPhases), weeksPerPhase, totalWeeks, state:{...S} };
+    const hist = JSON.parse(localStorage.getItem('injuryProHistory')||'[]');
+    hist.push(entry);
+    localStorage.setItem('injuryProHistory', JSON.stringify(hist));
+
+    renderProtocol(entry, 0);
+}
+
+function renderProtocol(entry, highlightPhase){
+    const totalWeeks = entry.totalWeeks || entry.phases.length * (entry.weeksPerPhase||2);
+    const weeksAgo = Math.floor((Date.now() - entry.date) / 604800000);
+    const currentPhase = Math.min(entry.phases.length-1, Math.floor(weeksAgo / (entry.weeksPerPhase||2)));
+
+    let html = `<div class="card" style="border-color:#00e676;">
+        <div class="phase-label">Diagnosis</div>
+        <div style="font-size:1.3rem;font-weight:900;color:#fff;margin-bottom:6px;">${entry.diagnosis}</div>
+        <div style="font-size:0.85rem;color:#aaa;margin-bottom:12px;">
+            ${entry.region} · ${entry.severity} severity · ${totalWeeks}-week protocol · Started ${new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+        </div>
+        <div style="font-size:0.9rem;color:#ccc;line-height:1.5;">${diagnoseFromEntry(entry)}</div>
+    </div>`;
+
+    // Red flags
+    const proto = getProtocolExercises(entry.diagnosis);
+    if(proto.redFlags){
+        html += `<div class="red-flag"><h4>🚨 Red Flags — See a Professional If:</h4>
+            ${proto.redFlags.map(f=>`<p style="margin-top:6px;">• ${f}</p>`).join('')}
+        </div>`;
+    }
+
+    // Training modifications
+    if(proto.trainingMods){
+        html += `<div class="training-mod"><h4>🏋️ Training Modifications While Rehabbing</h4>
+            ${proto.trainingMods.map(m=>`<p style="margin-top:6px;">• ${m}</p>`).join('')}
+        </div>`;
+    }
+
+    // Phases
+    entry.phases.forEach((phase, pIdx) => {
+        const isCurrent = pIdx === currentPhase;
+        const weekStart = pIdx * (entry.weeksPerPhase||2) + 1;
+        const weekEnd = weekStart + (entry.weeksPerPhase||2) - 1;
+        const borderColor = isCurrent ? '#00e676' : '#222';
+        const badge = isCurrent ? `<span style="background:#00e676;color:#000;padding:2px 8px;border-radius:4px;font-size:0.7rem;font-weight:900;margin-left:8px;">CURRENT</span>` : pIdx < currentPhase ? `<span style="color:#4caf50;font-size:0.75rem;margin-left:8px;">✓ Complete</span>` : '';
+
+        html += `<div class="phase-block" style="border-color:${borderColor};">
+            <div class="phase-title" style="color:${isCurrent?'#00e676':'#fff'};">Phase ${pIdx+1}: ${phase.name} ${badge}</div>
+            <div class="phase-desc">Weeks ${weekStart}–${weekEnd} · ${phase.exercises.length} exercises · ${isCurrent?'You should be here based on your start date':''}${pIdx>currentPhase?'Upcoming':''}</div>`;
+
+        phase.exercises.forEach(ex => {
+            html += `<div class="ex-row">
+                <div class="ex-name">${ex.name}</div>
+                <div class="ex-why">${ex.why}</div>
+                <div class="ex-detail">
+                    <strong>${ex.sets} × ${ex.reps}</strong> · Tempo: <strong>${ex.tempo}</strong>
+                </div>
+                <div style="font-size:0.78rem;color:#ff9800;margin-top:4px;">📈 Progression: ${ex.progression}</div>
+            </div>`;
+        });
+
+        html += `</div>`;
+    });
+
+    // Screenshot / Print button
+    html += `<button class="screenshot-btn" onclick="printProtocol()">🖨️ Print / Screenshot Protocol</button>`;
+    html += `<button class="next-btn" onclick="location.reload()" style="background:#333;color:#fff;margin-top:8px;">← Back to Injury Pro</button>`;
+
+    RA.innerHTML = html;
+}
+
+function diagnoseFromEntry(entry){
+    const d = diagnose.call ? null : null;
+    // Re-run diagnosis from saved state
+    const oldS = {...S};
+    Object.assign(S, entry.state || {});
+    const result = diagnose();
+    Object.assign(S, oldS);
+    return result.diagnosis;
+}
+
+window.printProtocol = function(){
+    const content = RA.innerHTML;
+    const win = window.open('','_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>${S.region||'Injury'} Rehab Protocol</title>
+        <style>body{font-family:Arial,sans-serif;padding:20px;color:#000;background:#fff;font-size:12px;max-width:800px;margin:0 auto}
+        h1{font-size:18px}h4{margin:10px 0 5px}.phase-block{border:1px solid #ccc;padding:12px;margin:10px 0;border-radius:6px}
+        .ex-row{border-bottom:1px solid #eee;padding:8px 0}.ex-name{font-weight:bold}.ex-why{color:#666;font-size:11px}
+        .phase-title{font-weight:bold;font-size:14px;border-bottom:1px solid #ddd;padding-bottom:4px}
+        .red-flag{border:1px solid #f44;padding:10px;margin:10px 0;border-radius:6px}
+        .training-mod{border:1px solid #2196f3;padding:10px;margin:10px 0;border-radius:6px}
+        .screenshot-btn,.next-btn{display:none}
+        .phase-label{font-weight:bold;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#666}
+        .card{border:1px solid #ccc;padding:12px;margin:10px 0;border-radius:6px}
+        </style></head><body>${content}<div style="text-align:center;color:#999;margin-top:20px;border-top:1px solid #ddd;padding-top:10px;">Andre's Calibrations — Injury Pro Beta · ${new Date().toLocaleDateString()}</div></body></html>`);
+    win.document.close();
+    setTimeout(()=>win.print(),500);
+};
+
+// ==========================================
+// INIT
+// ==========================================
+checkHistory();
+</script>
+</body>
+</html>
