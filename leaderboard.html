@@ -32,6 +32,7 @@
   <div style="text-align:center; padding:20px; background:#222; border-radius:8px; margin-bottom:20px;">
     <h3 style="margin:0; color:#fff;">Top Totals (S+B+D)</h3>
     <p style="color:#888; font-size:0.8rem; margin-top:5px;">Update your maxes to appear here.</p>
+    <p id="lifterCount" style="color:#FFD700; font-size:0.85rem; margin-top:8px; font-weight:bold;"></p>
   </div>
 
   <div id="errorMessage" style="color:red; text-align:center; margin-bottom:10px;"></div>
@@ -71,26 +72,42 @@
         }
 
         let users = [];
-        snap.forEach(doc => users.push(doc.data()));
+        snap.forEach(docSnap => {
+            const data = docSnap.data();
+            // Only include users with a real total
+            if(data.total && data.total > 0) {
+                users.push({ ...data, docId: docSnap.id });
+            }
+        });
         users.sort((a, b) => b.total - a.total);
+
+        if(users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#666;">No lifters with totals yet.<br>Enter your maxes in a program to appear here!</td></tr>';
+            return;
+        }
 
         let html = '';
         users.forEach((d, i) => {
             const rank = i + 1;
-            const name = d.email ? d.email.split('@')[0] : 'Anonymous';
+            // Use name field first, fall back to email prefix, then Anonymous
+            const displayName = d.name || (d.email ? d.email.split('@')[0] : 'Anonymous');
             const stats = `S: ${d.squat||0} | B: ${d.bench||0} | D: ${d.deadlift||0}`;
             const medal = medals[i] || rank;
             const rankColor = rank===1 ? 'color:#FFD700' : rank===2 ? 'color:#aaa' : rank===3 ? 'color:#cd7f32' : 'color:#666';
             html += `<tr>
                 <td style="${rankColor}; font-size:${rank<=3?'1.4rem':'1rem'};">${medal}</td>
                 <td>
-                    <div class="user-email">${name}</div>
+                    <div class="user-email">${displayName}</div>
                     <div class="user-stats">${stats}</div>
                 </td>
                 <td>${d.total} <span style="font-size:0.6rem; color:#666;">${d.unit||'LBS'}</span></td>
             </tr>`;
         });
         tbody.innerHTML = html;
+
+        // Show total count
+        const countEl = document.getElementById('lifterCount');
+        if(countEl) countEl.innerText = `${users.length} lifter${users.length!==1?'s':''} ranked`;
     }, err => {
         console.error(err);
         document.getElementById('errorMessage').innerText = 'Error loading leaderboard: ' + err.message;
