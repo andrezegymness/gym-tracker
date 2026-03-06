@@ -144,6 +144,14 @@
     <h2>Lifter's Toolkit</h2>
     <div class="tools-layout" style="display:grid; gap:15px;">
         <div class="tool-card" style="background:#222; padding:15px;">
+            <h3>Global Settings</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                <input type="text" id="userName" placeholder="First Name" style="text-transform:capitalize;">
+                <input type="number" id="bodyweight" placeholder="Bodyweight (lbs)">
+            </div>
+            <button class="full-btn" onclick="saveBaseSettings()" style="width:100%; margin-top:5px;">Save Settings</button>
+        </div>
+        <div class="tool-card" style="background:#222; padding:15px;">
             <h3>Warm-up Generator</h3>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
                 <input type="number" id="wuTarget" placeholder="Target Weight">
