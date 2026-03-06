@@ -1964,14 +1964,17 @@ async function saveUserData() {
             maxes:{ Squat:s, Bench:b, Deadlift:dl, OHP:o },
             modifiers,
             customLifts, // FIX: custom lifts now persisted to cloud
-            email: currentUserEmail
+            email: currentUserEmail,
+            name: baseUserName || currentUserEmail
         }, {merge:true});
 
         // Also update leaderboard
         const total = s + b + dl;
         if(total > 0) {
+            const displayName = baseUserName || currentUserEmail || "Anonymous";
             await setDoc(doc(db, "leaderboard", currentUserEmail), {
-                email: currentUserEmail, total, squat:s, bench:b, deadlift:dl, unit:'LBS'
+                email: currentUserEmail, name: displayName,
+                total, squat:s, bench:b, deadlift:dl, unit:'LBS'
             });
         }
     } catch(e) { console.error('Save error:', e); }
@@ -1998,6 +2001,15 @@ async function loadUserData(email) {
             }
             generateProgram();
             saveLocalInputs();
+            // Restore name if saved
+            if(d.name) {
+                baseUserName = d.name;
+                localStorage.setItem('baseUserName', baseUserName);
+                const nameField = document.getElementById('userName');
+                if(nameField) nameField.value = baseUserName;
+                updateBrandName();
+            }
+            if(!baseUserName) showNamePrompt();
             toast(`Welcome back! Data loaded ✓`);
         }
     } catch(e) { console.error('Load error:', e); }
@@ -2173,6 +2185,77 @@ window.openPlateLoader = function(w) {
 window.adjustWeight = window.adjustWeight; // already defined above
 
 // ==========================================
+// NAME PROMPT + BRAND NAME — BASE MAP
+// ==========================================
+let baseUserName = localStorage.getItem('baseUserName') || '';
+
+function showNamePrompt() {
+    if(baseUserName) return;
+    const existing = document.getElementById('namePromptModal');
+    if(existing) return;
+    const modal = document.createElement('div');
+    modal.id = 'namePromptModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+    <div style="background:var(--surface,#1e1e1e);border:1px solid var(--border,#333);border-radius:14px;padding:30px;width:90%;max-width:400px;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:10px;">👋</div>
+        <h2 style="color:#fff;margin:0 0 8px 0;">Welcome to Andre's Calibrations</h2>
+        <p style="color:var(--text-muted,#aaa);font-size:0.85rem;margin-bottom:20px;">Enter your first name to personalize your program.</p>
+        <input type="text" id="namePromptInput" placeholder="First Name"
+            style="width:100%;padding:14px;background:var(--surface2,#222);color:#fff;border:1px solid var(--border,#444);border-radius:8px;font-size:1.1rem;text-align:center;text-transform:capitalize;font-family:inherit;margin-bottom:14px;"
+            onkeydown="if(event.key==='Enter')submitNamePrompt()">
+        <button onclick="submitNamePrompt()"
+            style="width:100%;padding:14px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-weight:900;font-size:1rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;">
+            Let's Go
+        </button>
+    </div>`;
+    document.body.appendChild(modal);
+    setTimeout(() => document.getElementById('namePromptInput').focus(), 100);
+}
+
+window.submitNamePrompt = function() {
+    const input = document.getElementById('namePromptInput');
+    const name = input ? input.value.trim() : '';
+    if(!name) { input.style.borderColor = '#f44336'; return; }
+    baseUserName = name;
+    localStorage.setItem('baseUserName', name);
+    const nameField = document.getElementById('userName');
+    if(nameField) nameField.value = name;
+    updateBrandName();
+    saveUserData();
+    const modal = document.getElementById('namePromptModal');
+    if(modal) modal.remove();
+    toast(`Welcome, ${name}! 💪`);
+};
+
+function updateBrandName() {
+    const brand = document.querySelector('.brand');
+    if(!brand) return;
+    if(baseUserName) {
+        brand.innerText = `${baseUserName.toUpperCase()}'S BASE MAP LINEAR`;
+    } else {
+        brand.innerText = 'BASE MAP LINEAR';
+    }
+}
+
+window.saveBaseSettings = function() {
+    const nameField = document.getElementById('userName');
+    if(nameField && nameField.value.trim()) {
+        baseUserName = nameField.value.trim();
+        localStorage.setItem('baseUserName', baseUserName);
+    }
+    const bwField = document.getElementById('bodyweight');
+    if(bwField && bwField.value) {
+        localStorage.setItem('baseBW', bwField.value);
+        saveBodyweightEntry(bwField.value);
+    }
+    updateBrandName();
+    saveUserData();
+    generateProgram();
+    toast('Settings saved');
+};
+
+// ==========================================
 // EXPOSE GLOBALS
 // ==========================================
 window.runRandomizer = runRandomizer;
@@ -2205,6 +2288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCustomLifts();
     initLibraryMenu();
     injectRestTimer();
+    updateBrandName();
 
     // Inject theme toggle + PDF export + BW chart into header actions
     const actions = document.querySelector('.header-actions');
