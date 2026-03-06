@@ -306,29 +306,67 @@ function toggleTheme() {
 }
 
 // ==========================================
-// REST TIMER — NEW FEATURE
+// REST TIMER — DRAGGABLE + MINIMIZABLE
 // ==========================================
 let restTimerInterval = null;
 let restTimerSeconds = 0;
 let restTimerRunning = false;
+let restTimerMinimized = false;
 
 function injectRestTimer() {
     if (document.getElementById('restTimerBar')) return;
     const bar = document.createElement('div');
     bar.id = 'restTimerBar';
-    bar.style.cssText = `position:fixed;top:60px;right:15px;z-index:8000;background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.5);min-width:200px;`;
+    bar.style.cssText = `position:fixed;top:60px;right:15px;z-index:8000;background:var(--surface,#1e1e1e);border:1px solid var(--border,#333);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.5);min-width:200px;cursor:grab;user-select:none;touch-action:none;`;
     bar.innerHTML = `
-        <span style="font-size:20px;">⏱</span>
+        <span id="restTimerDragHandle" style="font-size:20px;cursor:grab;">⏱</span>
         <span id="restTimerDisplay" style="font-size:1.4em;font-weight:900;color:#2196f3;min-width:50px;">0:00</span>
-        <div style="display:flex;gap:6px;">
+        <div id="restTimerBtns" style="display:flex;gap:6px;">
             <button onclick="startRestTimer(90)" style="background:#2196f3;color:#fff;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;font-weight:bold;">90s</button>
             <button onclick="startRestTimer(180)" style="background:#ff9800;color:#fff;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;font-weight:bold;">3m</button>
             <button onclick="startRestTimer(300)" style="background:#9c27b0;color:#fff;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;font-weight:bold;">5m</button>
             <button onclick="stopRestTimer()" style="background:#555;color:#fff;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;">✕</button>
         </div>
+        <button onclick="toggleTimerMinimize()" id="timerMinBtn" style="background:none;border:none;color:var(--text-muted,#aaa);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">−</button>
     `;
     document.body.appendChild(bar);
+
+    // Drag logic
+    let isDragging = false, startX, startY, origX, origY;
+    function onDown(e) {
+        if(e.target.tagName === 'BUTTON') return;
+        isDragging = true;
+        bar.style.cursor = 'grabbing';
+        const touch = e.touches ? e.touches[0] : e;
+        startX = touch.clientX; startY = touch.clientY;
+        const rect = bar.getBoundingClientRect();
+        origX = rect.left; origY = rect.top;
+        e.preventDefault();
+    }
+    function onMove(e) {
+        if(!isDragging) return;
+        const touch = e.touches ? e.touches[0] : e;
+        const dx = touch.clientX - startX, dy = touch.clientY - startY;
+        bar.style.left = (origX + dx) + 'px';
+        bar.style.top = (origY + dy) + 'px';
+        bar.style.right = 'auto';
+    }
+    function onUp() { isDragging = false; bar.style.cursor = 'grab'; }
+    bar.addEventListener('mousedown', onDown);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    bar.addEventListener('touchstart', onDown, {passive:false});
+    document.addEventListener('touchmove', onMove, {passive:false});
+    document.addEventListener('touchend', onUp);
 }
+
+window.toggleTimerMinimize = function() {
+    restTimerMinimized = !restTimerMinimized;
+    const btns = document.getElementById('restTimerBtns');
+    const minBtn = document.getElementById('timerMinBtn');
+    if(btns) btns.style.display = restTimerMinimized ? 'none' : 'flex';
+    if(minBtn) minBtn.innerText = restTimerMinimized ? '+' : '−';
+};
 
 window.startRestTimer = function(seconds) {
     if (restTimerInterval) clearInterval(restTimerInterval);
@@ -1015,6 +1053,349 @@ Missed Lift Diagnostic Tool`;
 };
 
 // ==========================================
+// DOTS CALCULATOR — MALE/FEMALE + CLICKABLE
+// ==========================================
+let userSex = localStorage.getItem('userSex') || 'male';
+
+function calculateDots(total, bw, sex) {
+    if(!bw||!total) return '-';
+    let w=parseFloat(bw)/2.20462, t=parseFloat(total)/2.20462;
+    sex = sex || userSex || 'male';
+    let den;
+    if(sex === 'female') {
+        den = -0.0000010706*Math.pow(w,4)+0.0005158568*Math.pow(w,3)-0.1126655495*Math.pow(w,2)+13.6175032*w-57.96288;
+    } else {
+        den = -0.000001093*Math.pow(w,4)+0.0007391293*Math.pow(w,3)-0.1918751679*Math.pow(w,2)+24.0900756*w-307.75076;
+    }
+    return (t*(500/den)).toFixed(2);
+}
+
+window.openDotsCalc = function() {
+    const existing = document.getElementById('dotsCalcModal');
+    if(existing) existing.remove();
+    const sMax = parseFloat(document.getElementById('squatInput').value)||0;
+    const bMax = parseFloat(document.getElementById('benchInput').value)||0;
+    const dMax = parseFloat(document.getElementById('deadliftInput').value)||0;
+    const total = sMax+bMax+dMax;
+    const bw = localStorage.getItem('baseBW') || '';
+    const sex = userSex;
+    const modal = document.createElement('div');
+    modal.id = 'dotsCalcModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:center;justify-content:center;';
+    modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
+    modal.innerHTML = `<div style="background:var(--surface,#1e1e1e);border:1px solid var(--border,#333);border-radius:14px;padding:24px;width:90%;max-width:380px;color:var(--text,#fff);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;color:#FFD700;">DOTS Calculator</h3>
+            <button onclick="document.getElementById('dotsCalcModal').remove()" style="background:none;border:none;color:var(--text,#fff);font-size:22px;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:grid;gap:12px;">
+            <div>
+                <label style="font-size:0.7em;color:var(--text-muted,#888);display:block;margin-bottom:4px;">Total (S+B+D)</label>
+                <input type="number" id="dotsTotal" value="${total}" style="width:100%;background:var(--surface2,#222);color:var(--text,#fff);border:1px solid var(--border,#444);padding:10px;border-radius:6px;" oninput="recalcDots()">
+            </div>
+            <div>
+                <label style="font-size:0.7em;color:var(--text-muted,#888);display:block;margin-bottom:4px;">Bodyweight (lbs)</label>
+                <input type="number" id="dotsBW" value="${bw}" placeholder="Enter bodyweight" style="width:100%;background:var(--surface2,#222);color:var(--text,#fff);border:1px solid var(--border,#444);padding:10px;border-radius:6px;" oninput="recalcDots()">
+            </div>
+            <div>
+                <label style="font-size:0.7em;color:var(--text-muted,#888);display:block;margin-bottom:4px;">Sex</label>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="setDotsSex('male')" id="dotsSexM" style="flex:1;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer;border:2px solid ${sex==='male'?'#2196f3':'var(--border,#444)'};background:${sex==='male'?'rgba(33,150,243,0.15)':'var(--surface2,#222)'};color:var(--text,#fff);">Male</button>
+                    <button onclick="setDotsSex('female')" id="dotsSexF" style="flex:1;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer;border:2px solid ${sex==='female'?'#e91e63':'var(--border,#444)'};background:${sex==='female'?'rgba(233,30,99,0.15)':'var(--surface2,#222)'};color:var(--text,#fff);">Female</button>
+                </div>
+            </div>
+            <div style="text-align:center;padding:16px;background:var(--surface2,#222);border-radius:8px;border:1px solid #FFD700;">
+                <div style="font-size:0.7em;color:#FFD700;text-transform:uppercase;letter-spacing:1px;">DOTS Score</div>
+                <div id="dotsValue" style="font-size:2.5em;font-weight:900;color:#FFD700;margin-top:4px;">${calculateDots(total,bw,sex)}</div>
+            </div>
+        </div>
+    </div>`;
+    document.body.appendChild(modal);
+};
+
+window.setDotsSex = function(sex) {
+    userSex = sex;
+    localStorage.setItem('userSex', sex);
+    const mBtn = document.getElementById('dotsSexM');
+    const fBtn = document.getElementById('dotsSexF');
+    if(mBtn) { mBtn.style.borderColor = sex==='male' ? '#2196f3' : 'var(--border,#444)'; mBtn.style.background = sex==='male' ? 'rgba(33,150,243,0.15)' : 'var(--surface2,#222)'; }
+    if(fBtn) { fBtn.style.borderColor = sex==='female' ? '#e91e63' : 'var(--border,#444)'; fBtn.style.background = sex==='female' ? 'rgba(233,30,99,0.15)' : 'var(--surface2,#222)'; }
+    recalcDots();
+};
+
+window.recalcDots = function() {
+    const t = parseFloat(document.getElementById('dotsTotal').value)||0;
+    const b = parseFloat(document.getElementById('dotsBW').value)||0;
+    const el = document.getElementById('dotsValue');
+    if(el) el.innerText = calculateDots(t,b,userSex);
+};
+
+// ==========================================
+// AUTO ACCESSORIES CALCULATOR — NEW FEATURE
+// Same decision tree as Andre Map
+// ==========================================
+const accDecisionTree = {
+    squat: {
+        q1: { text:"Where does the bar slow down or stop?", options:[
+            {label:"In the hole — I get stuck at the bottom", id:"hole"},
+            {label:"Midway up — past the hole but before lockout", id:"mid"},
+            {label:"At lockout — can't finish standing up", id:"lockout"},
+            {label:"On the walkout or unrack — feels too heavy before I even squat", id:"walkout"}
+        ]},
+        hole: { q2: { text:"When you get stuck in the hole, what happens?", options:[
+            {label:"My back rounds and I fold forward", id:"hole_fold"},
+            {label:"My hips shoot up but the bar stays low", id:"hole_hips"},
+            {label:"I just can't reverse direction — I sink and it dies", id:"hole_dead"}
+        ]},
+            hole_fold: { name:"Upper Back / Brace Weakness", accessories:[
+                {n:"SSB Squat",s:"squat",pctByWeek:[0.65,0.70,0.73,0.68],repsByWeek:["3x6","3x5","3x4","2x3"]},
+                {n:"Front Squat",s:"squat",pctByWeek:[0.55,0.60,0.63,0.58],repsByWeek:["3x6","3x5","3x4","2x3"]},
+                {n:"Weighted Planks",s:"squat",pctByWeek:[0,0,0,0],repsByWeek:["3x45s","3x50s","3x55s","3x45s"]}
+            ]},
+            hole_hips: { name:"Quad Weakness", accessories:[
+                {n:"Pause Squat (3s)",s:"squat",pctByWeek:[0.62,0.67,0.70,0.65],repsByWeek:["3x4","3x3","3x3","2x2"]},
+                {n:"Belt Squat",s:"squat",pctByWeek:[0.55,0.60,0.63,0.58],repsByWeek:["3x10","3x8","3x6","3x5"]},
+                {n:"Leg Press",s:"squat",pctByWeek:[1.20,1.30,1.40,1.20],repsByWeek:["4x10","4x8","3x8","3x6"]}
+            ]},
+            hole_dead: { name:"Reversal Strength", accessories:[
+                {n:"Pin Squat (Low)",s:"squat",pctByWeek:[0.60,0.65,0.70,0.65],repsByWeek:["3x3","3x3","3x2","2x2"]},
+                {n:"1.5 Rep Squat",s:"squat",pctByWeek:[0.55,0.58,0.60,0.55],repsByWeek:["3x5","3x4","3x3","2x3"]},
+                {n:"Box Squat",s:"squat",pctByWeek:[0.65,0.70,0.73,0.68],repsByWeek:["4x3","3x3","3x2","2x2"]}
+            ]}
+        },
+        mid: { name:"Midrange Grind", accessories:[
+            {n:"Tempo Squat (5-3-0)",s:"squat",pctByWeek:[0.55,0.58,0.60,0.55],repsByWeek:["3x5","3x4","3x3","2x3"]},
+            {n:"Anderson Squat",s:"squat",pctByWeek:[0.70,0.75,0.80,0.73],repsByWeek:["3x3","3x2","2x2","2x1"]},
+            {n:"Pause Squat (3s)",s:"squat",pctByWeek:[0.62,0.67,0.70,0.65],repsByWeek:["3x4","3x3","3x3","2x2"]}
+        ]},
+        lockout: { name:"Lockout Weakness", accessories:[
+            {n:"Anderson Squat",s:"squat",pctByWeek:[0.75,0.80,0.85,0.78],repsByWeek:["3x3","3x2","2x2","2x1"]},
+            {n:"Heavy Walkout",s:"squat",pctByWeek:[1.05,1.08,1.10,1.05],repsByWeek:["3x15s","3x15s","2x15s","2x10s"]}
+        ]},
+        walkout: { name:"CNS / Confidence Issue", accessories:[
+            {n:"Heavy Walkout",s:"squat",pctByWeek:[1.05,1.08,1.10,1.05],repsByWeek:["3x15s","3x15s","2x15s","2x10s"]},
+            {n:"Supramax Eccentric",s:"squat",pctByWeek:[1.0,1.03,1.05,1.0],repsByWeek:["3x1","2x1","2x1","2x1"]}
+        ]}
+    },
+    bench: {
+        q1: { text:"Where does the bar slow down or stop?", options:[
+            {label:"Off the chest — can't reverse it after the pause", id:"chest"},
+            {label:"Midrange — gets past the chest but stalls halfway up", id:"mid"},
+            {label:"At lockout — almost there but can't finish", id:"lockout"},
+            {label:"Unrack feels shaky — unstable before I even start", id:"unrack"}
+        ]},
+        chest: { q2: { text:"When it stalls off the chest, what do you feel?", options:[
+            {label:"The bar sinks into me — I lose tightness", id:"chest_sink"},
+            {label:"I can push but there's no speed — it's just slow", id:"chest_slow"},
+            {label:"My shoulders feel weak — like they can't initiate", id:"chest_shoulders"}
+        ]},
+            chest_sink: { name:"Arch / Tightness Issue", accessories:[
+                {n:"Long Pause Bench",s:"bench",pctByWeek:[0.65,0.70,0.73,0.68],repsByWeek:["4x3","3x3","3x2","2x2"]},
+                {n:"Larsen Press",s:"bench",pctByWeek:[0.60,0.65,0.68,0.63],repsByWeek:["3x6","3x5","3x4","2x3"]},
+                {n:"Spoto Press",s:"bench",pctByWeek:[0.62,0.67,0.70,0.65],repsByWeek:["3x5","3x4","3x3","2x3"]}
+            ]},
+            chest_slow: { name:"Starting Strength / Speed", accessories:[
+                {n:"Dead Press",s:"bench",pctByWeek:[0.65,0.70,0.75,0.70],repsByWeek:["5x1","4x1","3x1","3x1"]},
+                {n:"Long Pause Bench",s:"bench",pctByWeek:[0.65,0.70,0.73,0.68],repsByWeek:["4x3","3x3","3x2","2x2"]},
+                {n:"Weighted Dips",s:"bench",pctByWeek:[0.20,0.23,0.25,0.20],repsByWeek:["3x8","3x6","3x5","2x5"]}
+            ]},
+            chest_shoulders: { name:"Anterior Delt Weakness", accessories:[
+                {n:"Incline Barbell Bench (Smart)",s:"bench",pctByWeek:[0.60,0.65,0.68,0.63],repsByWeek:["3x8","3x6","3x5","3x4"]},
+                {n:"Seated DB Press",s:"ohp",pctByWeek:[0.30,0.33,0.35,0.30],repsByWeek:["3x10","3x8","3x6","2x6"]}
+            ]}
+        },
+        mid: { name:"Midrange Sticking Point", accessories:[
+            {n:"Spoto Press",s:"bench",pctByWeek:[0.65,0.70,0.73,0.68],repsByWeek:["3x5","3x4","3x3","2x3"]},
+            {n:"Floor Press",s:"bench",pctByWeek:[0.70,0.75,0.78,0.73],repsByWeek:["3x5","3x4","3x3","2x3"]},
+            {n:"Close Grip Bench",s:"bench",pctByWeek:[0.65,0.68,0.72,0.67],repsByWeek:["3x8","3x6","3x5","2x5"]}
+        ]},
+        lockout: { name:"Tricep / Lockout Weakness", accessories:[
+            {n:"Floor Press",s:"bench",pctByWeek:[0.72,0.77,0.80,0.75],repsByWeek:["3x5","3x4","3x3","2x3"]},
+            {n:"Close Grip Bench",s:"bench",pctByWeek:[0.68,0.72,0.75,0.70],repsByWeek:["3x8","3x6","3x5","2x5"]},
+            {n:"Pin Lockouts",s:"bench",pctByWeek:[0.90,0.95,1.00,0.90],repsByWeek:["3x5","3x3","2x3","2x2"]}
+        ]},
+        unrack: { name:"Stability / Lat Engagement", accessories:[
+            {n:"Bamboo Bar",s:"bench",pctByWeek:[0.40,0.43,0.45,0.40],repsByWeek:["3x15","3x12","3x10","2x10"]},
+            {n:"Larsen Press",s:"bench",pctByWeek:[0.60,0.65,0.68,0.63],repsByWeek:["3x6","3x5","3x4","2x3"]},
+            {n:"Heavy Hold",s:"bench",pctByWeek:[1.05,1.10,1.15,1.05],repsByWeek:["3x15s","3x15s","2x15s","2x10s"]}
+        ]}
+    },
+    deadlift: {
+        q1: { text:"Where does the bar slow down or stop?", options:[
+            {label:"Off the floor — it barely moves or breaks really slowly", id:"floor"},
+            {label:"Around the knees — it clears the floor but stalls at knee height", id:"knees"},
+            {label:"At lockout — I can't finish the hip extension", id:"lockout"},
+            {label:"Grip fails before the lift does", id:"grip"}
+        ]},
+        floor: { q2: { text:"When it's slow off the floor, what happens to your body?", options:[
+            {label:"My back rounds immediately — I can't keep position", id:"floor_round"},
+            {label:"My hips shoot up and it turns into a stiff-leg pull", id:"floor_hips"},
+            {label:"I just can't break it — it feels glued to the floor", id:"floor_stuck"}
+        ]},
+            floor_round: { name:"Upper Back / Lat Weakness", accessories:[
+                {n:"Paused DL",s:"deadlift",pctByWeek:[0.60,0.65,0.70,0.65],repsByWeek:["3x3","3x3","3x2","2x2"]},
+                {n:"Seal Row",s:"deadlift",pctByWeek:[0.35,0.38,0.40,0.35],repsByWeek:["4x10","4x8","3x8","3x6"]},
+                {n:"Pendlay Row",s:"deadlift",pctByWeek:[0.50,0.55,0.58,0.53],repsByWeek:["4x6","4x5","3x5","3x3"]}
+            ]},
+            floor_hips: { name:"Quad Weakness off Floor", accessories:[
+                {n:"Deficit Deadlift",s:"deadlift",pctByWeek:[0.60,0.65,0.68,0.63],repsByWeek:["3x5","3x4","3x3","2x3"]},
+                {n:"Front Squat",s:"squat",pctByWeek:[0.55,0.60,0.63,0.58],repsByWeek:["3x6","3x5","3x4","2x3"]},
+                {n:"Leg Press",s:"squat",pctByWeek:[1.20,1.30,1.40,1.20],repsByWeek:["4x10","4x8","3x8","3x6"]}
+            ]},
+            floor_stuck: { name:"Raw Floor Strength", accessories:[
+                {n:"Deficit Deadlift",s:"deadlift",pctByWeek:[0.60,0.65,0.68,0.63],repsByWeek:["3x5","3x4","3x3","2x3"]},
+                {n:"Halting DL",s:"deadlift",pctByWeek:[0.60,0.65,0.68,0.63],repsByWeek:["3x5","3x4","3x3","2x3"]},
+                {n:"Paused DL",s:"deadlift",pctByWeek:[0.60,0.65,0.70,0.65],repsByWeek:["3x3","3x3","3x2","2x2"]}
+            ]}
+        },
+        knees: { name:"Knee Pass / Positional Weakness", accessories:[
+            {n:"Paused DL",s:"deadlift",pctByWeek:[0.62,0.67,0.72,0.67],repsByWeek:["3x3","3x3","3x2","2x2"]},
+            {n:"Halting DL",s:"deadlift",pctByWeek:[0.62,0.67,0.70,0.65],repsByWeek:["3x5","3x4","3x3","2x3"]},
+            {n:"Pendlay Row",s:"deadlift",pctByWeek:[0.50,0.55,0.58,0.53],repsByWeek:["4x6","4x5","3x5","3x3"]}
+        ]},
+        lockout: { name:"Hip Extension / Glute Weakness", accessories:[
+            {n:"Block Pulls (Smart)",s:"deadlift",pctByWeek:[0.75,0.80,0.85,0.78],repsByWeek:["3x4","3x3","2x3","2x1"]},
+            {n:"Hip Thrust",s:"deadlift",pctByWeek:[0.45,0.50,0.53,0.48],repsByWeek:["4x10","4x8","3x8","3x6"]},
+            {n:"Banded Deadlift",s:"deadlift",pctByWeek:[0.45,0.48,0.50,0.45],repsByWeek:["5x2","5x2","4x2","3x2"]}
+        ]},
+        grip: { name:"Grip Strength Deficit", accessories:[
+            {n:"Rack Pull Hold",s:"deadlift",pctByWeek:[1.00,1.05,1.10,1.00],repsByWeek:["3x10s","3x12s","3x15s","2x10s"]},
+            {n:"Farmer's Walks",s:"deadlift",pctByWeek:[0.35,0.38,0.40,0.35],repsByWeek:["3x30s","3x35s","3x40s","2x30s"]},
+            {n:"Tempo Deadlift",s:"deadlift",pctByWeek:[0.55,0.58,0.60,0.55],repsByWeek:["3x3","3x3","3x2","2x2"]}
+        ]}
+    }
+};
+
+const accDayPlacement = { squat:2, bench:1, deadlift:5, ohp:4 };
+
+window.openAutoAccessories = function() {
+    const existing = document.getElementById('autoAccModal');
+    if(existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'autoAccModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9500;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0;';
+    modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
+    modal.innerHTML = `
+    <div id="autoAccInner" style="background:#111;border:1px solid var(--border,#333);border-radius:14px;padding:24px;width:95%;max-width:550px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <h2 style="margin:0;color:#4caf50;font-size:1.3em;">🔧 Weak Point Rx</h2>
+            <button onclick="document.getElementById('autoAccModal').remove()" style="background:none;border:none;color:var(--text,#fff);font-size:24px;cursor:pointer;">✕</button>
+        </div>
+        <p style="color:var(--text-muted,#aaa);font-size:0.85em;margin-bottom:18px;">Tell me what's giving you trouble and I'll prescribe the right accessories, auto-loaded into your program with periodized weights.</p>
+        <div style="margin-bottom:18px;">
+            <div style="font-size:0.75em;color:var(--text-muted,#888);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:bold;">Which lift needs work?</div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="startAccTree('squat')" style="flex:1;padding:14px;border-radius:8px;border:2px solid #4caf50;background:rgba(76,175,80,0.1);color:#4caf50;font-weight:900;font-size:1em;cursor:pointer;">Squat</button>
+                <button onclick="startAccTree('bench')" style="flex:1;padding:14px;border-radius:8px;border:2px solid #2196f3;background:rgba(33,150,243,0.1);color:#2196f3;font-weight:900;font-size:1em;cursor:pointer;">Bench</button>
+                <button onclick="startAccTree('deadlift')" style="flex:1;padding:14px;border-radius:8px;border:2px solid #9c27b0;background:rgba(156,39,176,0.1);color:#9c27b0;font-weight:900;font-size:1em;cursor:pointer;">Deadlift</button>
+            </div>
+        </div>
+        <div id="accTreeFlow"></div>
+    </div>`;
+    document.body.appendChild(modal);
+};
+
+let accTreeState = { lift: null, path: [] };
+
+window.startAccTree = function(lift) {
+    accTreeState = { lift, path: [] };
+    renderAccQuestion(accDecisionTree[lift].q1, lift);
+};
+
+function renderAccQuestion(q) {
+    const flow = document.getElementById('accTreeFlow');
+    flow.innerHTML = `
+        <div style="background:#1a1a1a;border:1px solid var(--border,#333);border-radius:10px;padding:16px;">
+            <div style="font-size:1em;font-weight:700;color:var(--text,#fff);margin-bottom:14px;line-height:1.4;">${q.text}</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                ${q.options.map(o => `
+                    <button onclick="handleAccAnswer('${accTreeState.lift}','${o.id}')"
+                        style="text-align:left;padding:14px;background:var(--surface2,#222);border:1px solid var(--border,#333);border-radius:8px;color:var(--text,#fff);cursor:pointer;font-size:0.9em;transition:all 0.2s;line-height:1.3;"
+                        onmouseover="this.style.borderColor='#4caf50'" onmouseout="this.style.borderColor='var(--border,#333)'">${o.label}</button>
+                `).join('')}
+            </div>
+        </div>`;
+}
+
+window.handleAccAnswer = function(lift, answerId) {
+    accTreeState.path.push(answerId);
+    const tree = accDecisionTree[lift];
+    let node;
+    if(tree[answerId]) node = tree[answerId];
+    else { for(const key of Object.keys(tree)) { if(typeof tree[key]==='object'&&tree[key][answerId]) { node=tree[key][answerId]; break; } } }
+    if(!node) { toast('Something went wrong','error'); return; }
+    if(node.q2) { renderAccQuestion(node.q2); return; }
+    if(node.accessories || node.name) renderAccPrescription(node, lift);
+};
+
+function renderAccPrescription(node, lift) {
+    const flow = document.getElementById('accTreeFlow');
+    const sMax = parseFloat(document.getElementById('squatInput').value)||0;
+    const bMax = parseFloat(document.getElementById('benchInput').value)||0;
+    const dMax = parseFloat(document.getElementById('deadliftInput').value)||0;
+    const oMax = parseFloat(document.getElementById('ohpInput').value)||0;
+    const liftColors = {squat:'#4caf50',bench:'#2196f3',deadlift:'#9c27b0'};
+    const color = liftColors[lift]||'#4caf50';
+    const numWeeks = node.accessories[0].pctByWeek.length;
+
+    let accHtml = node.accessories.map((acc, idx) => {
+        const accMax = acc.s==='squat'?sMax:acc.s==='bench'?bMax:acc.s==='deadlift'?dMax:oMax;
+        const weekPreviews = acc.pctByWeek.map((pct,w) => {
+            if(pct===0) return `<span style="color:#555;">W${w+1}: OFF</span>`;
+            const load = accMax>0 ? Math.round((accMax*pct)/5)*5+' lbs' : Math.round(pct*100)+'%';
+            return `<span style="color:${w>=numWeeks-1?'#4caf50':w>=numWeeks-2?'#ff9800':'var(--text,#fff)'};">W${w+1}: ${acc.repsByWeek[w]} @ ${load}</span>`;
+        }).join('<br>');
+        return `<div style="background:var(--surface2,#222);border:1px solid var(--border,#333);border-radius:8px;padding:14px;${idx?'margin-top:8px;':''}">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:900;color:var(--text,#fff);">${acc.n}</span>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                    <input type="checkbox" checked data-acc-idx="${idx}" class="acc-toggle-cb" style="accent-color:${color};width:18px;height:18px;">
+                    <span style="color:var(--text-muted,#888);font-size:0.75em;">Add</span>
+                </label>
+            </div>
+            <div style="margin-top:8px;font-size:0.8em;line-height:1.8;color:var(--text-muted,#aaa);">${weekPreviews}</div>
+        </div>`;
+    }).join('');
+
+    flow.innerHTML = `<div>
+        <div style="background:rgba(76,175,80,0.08);border:2px solid ${color};border-radius:10px;padding:16px;margin-bottom:14px;">
+            <div style="font-size:0.75em;color:${color};text-transform:uppercase;letter-spacing:1px;font-weight:bold;">Diagnosis</div>
+            <div style="font-size:1.2em;font-weight:900;color:var(--text,#fff);margin-top:4px;">${node.name}</div>
+        </div>
+        ${accHtml}
+        <button onclick="applyAccPrescription('${lift}')" style="width:100%;padding:14px;background:${color};color:#fff;border:none;border-radius:8px;font-weight:900;font-size:1em;cursor:pointer;margin-top:16px;text-transform:uppercase;">Add to Program</button>
+        <button onclick="startAccTree('${lift}')" style="width:100%;padding:10px;background:none;border:1px solid var(--border,#333);color:var(--text-muted,#aaa);border-radius:8px;cursor:pointer;margin-top:8px;font-size:0.85em;">← Start Over</button>
+    </div>`;
+    flow.dataset.prescription = JSON.stringify(node.accessories);
+}
+
+window.applyAccPrescription = function(lift) {
+    const flow = document.getElementById('accTreeFlow');
+    const accessories = JSON.parse(flow.dataset.prescription||'[]');
+    const checkboxes = flow.querySelectorAll('.acc-toggle-cb');
+    let added = 0;
+    checkboxes.forEach((cb, idx) => {
+        if(!cb.checked) return;
+        const acc = accessories[idx];
+        if(!acc) return;
+        const dayIdx = accDayPlacement[acc.s]||2;
+        customLifts.push({
+            n: acc.n+' 🔧', t:acc.n, p:acc.pctByWeek[0], r:acc.repsByWeek[0],
+            s:acc.s, dayIndex:dayIdx, isAutoAcc:true,
+            pctByWeek:acc.pctByWeek, repsByWeek:acc.repsByWeek
+        });
+        added++;
+    });
+    if(added>0) {
+        saveCustomLifts();
+        saveUserData();
+        generateProgram();
+        toast(`🔧 ${added} accessor${added===1?'y':'ies'} added!`);
+    }
+    document.getElementById('autoAccModal').remove();
+};
+
+// ==========================================
 // PDF EXPORT — NEW FEATURE
 // Uses browser print for clean PDF output
 // ==========================================
@@ -1190,7 +1571,17 @@ function generateProgram() {
       // FIX: use resolveSmartLift() — single source of truth
       customLifts.forEach((cl, originalIndex) => {
           if (cl.dayIndex === dIdx) {
-              const { pct: dynPct, reps: dynReps } = resolveSmartLift(cl, w);
+              let dynPct, dynReps;
+              if(cl.isAutoAcc && cl.pctByWeek) {
+                  const wIdx = Math.min(w, cl.pctByWeek.length - 1);
+                  dynPct = cl.pctByWeek[wIdx] || 0;
+                  dynReps = cl.repsByWeek ? cl.repsByWeek[wIdx] : cl.r;
+                  if(dynReps === 'OFF' || dynPct === 0) return;
+              } else {
+                  const resolved = resolveSmartLift(cl, w);
+                  dynPct = resolved.pct;
+                  dynReps = resolved.reps;
+              }
               if (dynPct > 0) {
                   activeLifts.push({ n: cl.n, t: cl.s, isCustom: true, p: dynPct, r: dynReps, dbIndex: originalIndex });
               }
