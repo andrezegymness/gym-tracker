@@ -1300,8 +1300,11 @@ async function saveToCloud() {
         await setDoc(doc(db,"users",user.uid), payload, {merge:true});
         const total = (state.maxes.Squat||0)+(state.maxes.Bench||0)+(state.maxes.Deadlift||0);
         if(total > 0) {
+            const displayName = state.settings.userName || user.displayName || user.email || "Anonymous";
             await setDoc(doc(db,"leaderboard",user.uid), {
-                email: user.email||"Anonymous", total,
+                email: user.email||"Anonymous",
+                name: displayName,
+                total,
                 squat:state.maxes.Squat||0, bench:state.maxes.Bench||0,
                 deadlift:state.maxes.Deadlift||0, unit:state.unit
             });
@@ -1336,6 +1339,11 @@ async function loadFromCloud(uid) {
             if(inputs.OHP)      inputs.OHP.value      = state.maxes.OHP||'';
             if(state.settings.bw && document.getElementById('bodyweight'))
                 document.getElementById('bodyweight').value = state.settings.bw;
+            if(state.settings.userName) {
+                const nameField = document.getElementById('userName');
+                if(nameField) nameField.value = state.settings.userName;
+                updateBrandName();
+            }
             render();
             toast('Data synced ✓');
         }
@@ -1739,18 +1747,79 @@ window.displayAccDetails = function() {
 window.openTools = function() {
     document.getElementById('toolsModal').style.display='flex';
     if(state.settings.bw) document.getElementById('bodyweight').value=state.settings.bw;
+    if(state.settings.userName) {
+        const nameField = document.getElementById('userName');
+        if(nameField) nameField.value = state.settings.userName;
+    }
 };
 
 window.openAuthModal = function() { document.getElementById('authModal').style.display='flex'; };
 window.closeModal = function(id) { document.getElementById(id).style.display='none'; };
 window.saveSettings = function() {
+    const nameField = document.getElementById('userName');
+    if(nameField && nameField.value.trim()) state.settings.userName = nameField.value.trim();
     state.settings.bw = document.getElementById('bodyweight').value;
     if(state.settings.bw) saveBodyweightEntry(state.settings.bw);
+    updateBrandName();
     saveToCloud();
     render();
     toast('Settings saved');
 };
 window.copyData = function() { toast('Data backed up to cloud ✓'); };
+
+// ==========================================
+// NAME PROMPT — ONE-TIME FIRST NAME ENTRY
+// ==========================================
+function showNamePrompt() {
+    // Don't show if name already set
+    if(state.settings.userName) return;
+    const existing = document.getElementById('namePromptModal');
+    if(existing) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'namePromptModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+    <div style="background:var(--surface,#1e1e1e);border:1px solid var(--border,#333);border-radius:14px;padding:30px;width:90%;max-width:400px;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:10px;">👋</div>
+        <h2 style="color:#fff;margin:0 0 8px 0;">Welcome to Andre's Calibrations</h2>
+        <p style="color:var(--text-muted,#aaa);font-size:0.85rem;margin-bottom:20px;">Enter your first name to personalize your program.</p>
+        <input type="text" id="namePromptInput" placeholder="First Name" 
+            style="width:100%;padding:14px;background:var(--surface2,#222);color:#fff;border:1px solid var(--border,#444);border-radius:8px;font-size:1.1rem;text-align:center;text-transform:capitalize;font-family:inherit;margin-bottom:14px;"
+            onkeydown="if(event.key==='Enter')submitNamePrompt()">
+        <button onclick="submitNamePrompt()" 
+            style="width:100%;padding:14px;background:#d32f2f;color:#fff;border:none;border-radius:8px;font-weight:900;font-size:1rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;">
+            Let's Go
+        </button>
+    </div>`;
+    document.body.appendChild(modal);
+    setTimeout(() => document.getElementById('namePromptInput').focus(), 100);
+}
+
+window.submitNamePrompt = function() {
+    const input = document.getElementById('namePromptInput');
+    const name = input ? input.value.trim() : '';
+    if(!name) { input.style.borderColor = '#f44336'; return; }
+    state.settings.userName = name;
+    const nameField = document.getElementById('userName');
+    if(nameField) nameField.value = name;
+    updateBrandName();
+    saveToCloud();
+    const modal = document.getElementById('namePromptModal');
+    if(modal) modal.remove();
+    toast(`Welcome, ${name}! 💪`);
+};
+
+function updateBrandName() {
+    const brand = document.querySelector('.brand');
+    if(!brand) return;
+    const name = state.settings.userName;
+    if(name) {
+        brand.innerText = `${name.toUpperCase()}'S ANDRE MAP WAVE`;
+    } else {
+        brand.innerText = 'ANDRE MAP WAVE';
+    }
+}
 window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
 
 // ==========================================
@@ -1828,7 +1897,10 @@ function init() {
 
     onAuthStateChanged(auth, user => {
         if(user) {
-            loadFromCloud(user.uid);
+            loadFromCloud(user.uid).then(() => {
+                // Show name prompt if user hasn't set one yet
+                if(!state.settings.userName) showNamePrompt();
+            });
             const btn = document.getElementById('login-btn');
             if(btn) {
                 btn.innerText = 'Log Out';
