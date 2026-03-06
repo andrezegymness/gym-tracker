@@ -1953,30 +1953,36 @@ window.adjustWeight = function(liftName, originalLoad) {
 // ==========================================
 async function saveUserData() {
     if(!currentUserEmail) return;
+    const user = auth.currentUser;
+    if(!user) return;
+
     const s = parseFloat(document.getElementById('squatInput').value)||0;
     const b = parseFloat(document.getElementById('benchInput').value)||0;
     const dl = parseFloat(document.getElementById('deadliftInput').value)||0;
     const o = parseFloat(document.getElementById('ohpInput').value)||0;
+
+    // Save user data — use uid (not email) for consistency with Andre Map
     try {
-        await setDoc(doc(db, "users", currentUserEmail), {
+        await setDoc(doc(db, "users", user.uid), {
             s, b, d:dl, o,
             squat:s, bench:b, deadlift:dl, ohp:o,
             maxes:{ Squat:s, Bench:b, Deadlift:dl, OHP:o },
             modifiers,
-            customLifts, // FIX: custom lifts now persisted to cloud
+            customLifts,
             email: currentUserEmail,
-            name: baseUserName || currentUserEmail
+            name: baseUserName || currentUserEmail,
+            program: 'base'
         }, {merge:true});
+    } catch(e) { console.error('User data save error:', e); }
 
-        // Also update leaderboard — use uid for consistency with Andre Map
-        const total = s + b + dl;
-        if(total > 0) {
-            const user = auth.currentUser;
-            const leaderboardId = user ? user.uid : currentUserEmail;
+    // Save leaderboard — separate try/catch so it always attempts
+    const total = s + b + dl;
+    if(total > 0) {
+        try {
             const displayName = baseUserName || currentUserEmail || "Anonymous";
             const mode = document.getElementById('dashMode');
             const modeName = mode ? mode.options[mode.selectedIndex].text : 'Standard';
-            await setDoc(doc(db, "leaderboard", leaderboardId), {
+            await setDoc(doc(db, "leaderboard", user.uid), {
                 email: currentUserEmail, name: displayName,
                 total, squat:s, bench:b, deadlift:dl, unit:'LBS',
                 program: 'Base Map Linear',
@@ -1984,14 +1990,28 @@ async function saveUserData() {
                 mode: modeName,
                 updatedAt: Date.now()
             });
-        }
-    } catch(e) { console.error('Save error:', e); }
+        } catch(e) { console.error('Leaderboard save error:', e); }
+    }
 }
 
 async function loadUserData(email) {
     try {
-        const snap = await getDoc(doc(db, "users", email));
-        if(snap.exists()) {
+        const user = auth.currentUser;
+        // Try uid first (new format), fall back to email (old format)
+        let snap = null;
+        if(user) {
+            snap = await getDoc(doc(db, "users", user.uid));
+        }
+        // If no data under uid, try email key for backwards compatibility
+        if((!snap || !snap.exists()) && email) {
+            snap = await getDoc(doc(db, "users", email));
+            // If found under email, migrate to uid
+            if(snap && snap.exists() && user) {
+                const oldData = snap.data();
+                await setDoc(doc(db, "users", user.uid), oldData, {merge:true});
+            }
+        }
+        if(snap && snap.exists()) {
             const d = snap.data();
             let s = d.s||d.squat||(d.maxes?d.maxes.Squat:0)||0;
             let b = d.b||d.bench||(d.maxes?d.maxes.Bench:0)||0;
