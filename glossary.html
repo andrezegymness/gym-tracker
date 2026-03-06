@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Glossary — Andre's Calibrations</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background:#0a0a0a; color:#e0e0e0; font-family:'Roboto',sans-serif; margin:0; padding:10px; min-height:100vh; }
+        .glossary-container { max-width:700px; margin:0 auto; padding-bottom:80px; }
+        .glossary-header { text-align:center; padding:20px 0; border-bottom:2px solid #bb86fc; margin-bottom:30px; }
+        .glossary-header h1 { color:#bb86fc; font-size:1.8rem; font-weight:900; letter-spacing:2px; margin:0; }
+        .glossary-header p { color:#888; font-size:0.85rem; margin-top:8px; }
+        .back-link { color:#bb86fc; text-decoration:none; font-weight:bold; font-size:0.8rem; display:inline-block; margin-bottom:10px; }
+        .phase-card { background:#141414; border:1px solid #222; border-radius:12px; padding:20px; margin-bottom:20px; }
+        .phase-label { font-size:0.7rem; color:#bb86fc; text-transform:uppercase; letter-spacing:2px; font-weight:bold; margin-bottom:12px; }
+        .q-title { font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:14px; line-height:1.4; }
+        .q-subtitle { font-size:0.8rem; color:#666; margin-bottom:14px; line-height:1.4; }
+        .opt-btn { display:block; width:100%; text-align:left; padding:14px 16px; margin-bottom:8px; background:#1a1a1a; border:1px solid #333; border-radius:8px; color:#e0e0e0; cursor:pointer; font-size:0.9rem; transition:all 0.2s; line-height:1.3; font-family:inherit; }
+        .opt-btn:hover { border-color:#bb86fc; background:rgba(187,134,252,0.06); }
+        .opt-btn.selected { border-color:#bb86fc; background:rgba(187,134,252,0.12); color:#fff; }
+        .opt-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .opt-grid .opt-btn { text-align:center; }
+        .multi-btn { display:inline-block; padding:10px 16px; margin:4px; background:#1a1a1a; border:1px solid #333; border-radius:8px; color:#aaa; cursor:pointer; font-size:0.85rem; transition:all 0.2s; }
+        .multi-btn.selected { border-color:#bb86fc; background:rgba(187,134,252,0.12); color:#fff; }
+        .multi-btn:hover { border-color:#555; }
+        .input-field { width:100%; background:#1a1a1a; border:1px solid #333; color:#fff; padding:12px; border-radius:8px; font-size:1rem; box-sizing:border-box; font-family:inherit; }
+        .input-field:focus { outline:none; border-color:#bb86fc; }
+        .next-btn { width:100%; padding:16px; background:#bb86fc; color:#000; border:none; border-radius:10px; font-weight:900; font-size:1rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; margin-top:10px; transition:all 0.2s; }
+        .next-btn:hover { background:#ce9cff; }
+        .next-btn:disabled { background:#333; color:#666; cursor:not-allowed; }
+        .progress-bar { height:4px; background:#222; border-radius:2px; margin-bottom:20px; overflow:hidden; }
+        .progress-fill { height:100%; background:linear-gradient(90deg,#bb86fc,#e91e63); transition:width 0.5s ease; border-radius:2px; }
+        .severity-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #222; }
+        .severity-row:last-child { border:none; }
+        .severity-label { color:#fff; font-weight:600; font-size:0.9rem; }
+        .severity-btns { display:flex; gap:4px; }
+        .sev-btn { padding:6px 10px; border:1px solid #333; background:#1a1a1a; color:#888; border-radius:5px; cursor:pointer; font-size:0.75rem; transition:all 0.15s; }
+        .sev-btn.s1 { } .sev-btn.s2 { } .sev-btn.s3 { } .sev-btn.s4 { }
+        .sev-btn.active.s1 { background:#2e7d32; border-color:#4caf50; color:#fff; }
+        .sev-btn.active.s2 { background:#f57f17; border-color:#ffb300; color:#fff; }
+        .sev-btn.active.s3 { background:#e65100; border-color:#ff9800; color:#fff; }
+        .sev-btn.active.s4 { background:#b71c1c; border-color:#f44336; color:#fff; }
+        /* Report styles */
+        .report-section { background:#141414; border:1px solid #222; border-radius:12px; padding:20px; margin-bottom:16px; }
+        .report-section h3 { color:#bb86fc; font-size:1rem; margin:0 0 12px 0; text-transform:uppercase; letter-spacing:1px; }
+        .diagnosis-card { background:#1a1a1a; border-left:4px solid #bb86fc; padding:14px; border-radius:0 8px 8px 0; margin-bottom:10px; }
+        .cue-item { padding:8px 12px; background:#1a1a1a; border-radius:6px; margin-bottom:6px; font-size:0.9rem; line-height:1.4; }
+        .cue-item strong { color:#bb86fc; }
+        .mobility-item { padding:10px 12px; background:#1a1a1a; border:1px solid #222; border-radius:8px; margin-bottom:8px; }
+        .mobility-item .name { font-weight:700; color:#fff; }
+        .mobility-item .rx { color:#4caf50; font-size:0.85rem; }
+        .mobility-item .why { color:#888; font-size:0.8rem; margin-top:4px; }
+        .acc-preview { background:#1a1a1a; border:1px solid #222; border-radius:8px; padding:12px; margin-bottom:8px; }
+        .acc-preview .acc-name { font-weight:900; color:#fff; }
+        .acc-preview .acc-target { color:#bb86fc; font-size:0.8rem; }
+        .acc-preview .week-row { font-size:0.8rem; color:#888; margin-top:6px; line-height:1.6; }
+        .leverage-box { text-align:center; padding:20px; background:linear-gradient(135deg,rgba(187,134,252,0.08),rgba(233,30,99,0.05)); border:1px solid #bb86fc; border-radius:12px; margin-bottom:16px; }
+        .leverage-box .type { font-size:1.4rem; font-weight:900; color:#bb86fc; }
+        .leverage-box .desc { color:#aaa; font-size:0.85rem; margin-top:8px; line-height:1.4; }
+        .inject-btn { width:100%; padding:14px; border:none; border-radius:8px; font-weight:900; font-size:1rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; margin-top:8px; transition:all 0.2s; }
+        .inject-andre { background:#d32f2f; color:#fff; } .inject-andre:hover { background:#f44336; }
+        .inject-base { background:#1565c0; color:#fff; } .inject-base:hover { background:#2196f3; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation:fadeIn 0.4s ease; }
+    </style>
+</head>
+<body>
+<div class="glossary-container">
+    <a href="index.html" class="back-link">← Menu</a>
+    <div class="glossary-header">
+        <h1>MASTER GLOSSARY</h1>
+        <p>Full diagnostic · Biomechanics · Injury mapping · Leverage analysis · Personalized programming</p>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div id="questionArea"></div>
+    <div id="reportArea" style="display:none;"></div>
+</div>
+
+<script>
+// ==========================================
+// MASTER GLOSSARY ENGINE
+// ==========================================
+
+// ---------- STATE ----------
+const S = {
+    step: 0,
+    sex: '', height: '', weight: 0, trainingAge: '', compStatus: '',
+    injuries: [], injurySeverity: {}, injuryDuration: {},
+    lifts: [],
+    liftData: {},  // per-lift answers
+    maxes: { squat:0, bench:0, deadlift:0 }
+};
+
+const totalSteps = 18; // approximate max
+
+function progress(step) {
+    const pct = Math.min(100, Math.round((step / totalSteps) * 100));
+    document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ---------- RENDER HELPERS ----------
+const QA = document.getElementById('questionArea');
+
+function card(phase, html) {
+    return `<div class="phase-card fade-in"><div class="phase-label">${phase}</div>${html}</div>`;
+}
+
+function singleSelect(options, callback, grid) {
+    const cls = grid ? 'opt-grid' : '';
+    return `<div class="${cls}">${options.map((o,i) =>
+        `<button class="opt-btn" onclick="(${callback})('${o.id||o}')">${o.label||o}</button>`
+    ).join('')}</div>`;
+}
+
+// ---------- PHASE 1: PROFILE ----------
+function showQ1() {
+    S.step = 1; progress(1);
+    QA.innerHTML = card('Phase 1 — Athlete Profile', `
+        <div class="q-title">What is your biological sex?</div>
+        <div class="q-subtitle">This affects leverage analysis and formula calculations.</div>
+        <div class="opt-grid">
+            <button class="opt-btn" onclick="S.sex='male';showQ2()">Male</button>
+            <button class="opt-btn" onclick="S.sex='female';showQ2()">Female</button>
+        </div>
+    `);
+}
+
+function showQ2() {
+    S.step = 2; progress(2);
+    QA.innerHTML = card('Phase 1 — Athlete Profile', `
+        <div class="q-title">What is your height?</div>
+        <div class="q-subtitle">Used to estimate your leverage profile and limb proportions.</div>
+        ${singleSelect([
+            {id:'under54',label:"Under 5'4\" (163cm)"},
+            {id:'54-57',label:"5'4\" – 5'7\" (163-170cm)"},
+            {id:'58-510',label:"5'8\" – 5'10\" (173-178cm)"},
+            {id:'511-61',label:"5'11\" – 6'1\" (180-185cm)"},
+            {id:'62plus',label:"6'2\"+ (188cm+)"}
+        ], "h=>{S.height=h;showQ3()}")}
+    `);
+}
+
+function showQ3() {
+    S.step = 3; progress(3);
+    QA.innerHTML = card('Phase 1 — Athlete Profile', `
+        <div class="q-title">What is your bodyweight?</div>
+        <div class="q-subtitle">Used for leverage estimation and load calculations.</div>
+        <input type="number" class="input-field" id="bwInput" placeholder="Bodyweight in lbs" style="margin-bottom:12px;">
+        <button class="next-btn" onclick="const v=parseFloat(document.getElementById('bwInput').value);if(v>0){S.weight=v;showQ4();}">Continue</button>
+    `);
+}
+
+function showQ4() {
+    S.step = 4; progress(4);
+    QA.innerHTML = card('Phase 1 — Athlete Profile', `
+        <div class="q-title">How long have you been seriously training the powerlifts?</div>
+        ${singleSelect([
+            {id:'<1',label:'Under 1 year'},
+            {id:'1-3',label:'1–3 years'},
+            {id:'3-5',label:'3–5 years'},
+            {id:'5-10',label:'5–10 years'},
+            {id:'10+',label:'10+ years'}
+        ], "a=>{S.trainingAge=a;showQ5()}")}
+    `);
+}
+
+function showQ5() {
+    S.step = 5; progress(5);
+    QA.innerHTML = card('Phase 1 — Athlete Profile', `
+        <div class="q-title">What's your competition status?</div>
+        ${singleSelect([
+            {id:'training',label:'Just training — no meet planned'},
+            {id:'prepping',label:'Prepping for a meet within 12 weeks'},
+            {id:'between',label:'Between meets — off-season'},
+            {id:'first',label:'First meet coming up'}
+        ], "a=>{S.compStatus=a;showQ6()}")}
+    `);
+}
+
+// ---------- PHASE 2: INJURIES ----------
+const bodyParts = ['Knees','Low Back','Upper Back','Shoulders','Hips','Elbows','Wrists','Neck','Ankles'];
+
+function showQ6() {
+    S.step = 6; progress(6);
+    QA.innerHTML = card('Phase 2 — Injury Mapping', `
+        <div class="q-title">Do you have any current injuries or pain points?</div>
+        <div class="q-subtitle">Select all that apply. This filters out exercises that could aggravate these areas.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;" id="injuryBtns">
+            ${bodyParts.map(p => `<span class="multi-btn" onclick="toggleInjury(this,'${p}')">${p}</span>`).join('')}
+        </div>
+        <button class="multi-btn" onclick="S.injuries=[];showQ8_lifts()" style="border-color:#4caf50;color:#4caf50;display:block;width:100%;text-align:center;margin-top:8px;">No injuries — I'm healthy</button>
+        <button class="next-btn" id="injNextBtn" onclick="if(S.injuries.length)showQ7()" disabled style="margin-top:12px;">Continue with selected injuries</button>
+    `);
+}
+
+window.toggleInjury = function(el, part) {
+    el.classList.toggle('selected');
+    if(S.injuries.includes(part)) S.injuries = S.injuries.filter(x=>x!==part);
+    else S.injuries.push(part);
+    document.getElementById('injNextBtn').disabled = S.injuries.length === 0;
+};
+
+function showQ7() {
+    S.step = 7; progress(7);
+    let html = `<div class="q-title">How severe is each injury?</div>
+        <div class="q-subtitle">This determines whether we modify, avoid, or prescribe rehab for each area.</div>`;
+    S.injuries.forEach(part => {
+        html += `<div class="severity-row">
+            <span class="severity-label">${part}</span>
+            <div class="severity-btns">
+                <button class="sev-btn s1" onclick="setSeverity('${part}',1,this)">Tight/Stiff</button>
+                <button class="sev-btn s2" onclick="setSeverity('${part}',2,this)">Nagging</button>
+                <button class="sev-btn s3" onclick="setSeverity('${part}',3,this)">Limiting</button>
+                <button class="sev-btn s4" onclick="setSeverity('${part}',4,this)">Acute</button>
+            </div>
+        </div>`;
+    });
+    html += `<button class="next-btn" id="sevNextBtn" onclick="checkSeverityDone()" disabled>Continue</button>`;
+    QA.innerHTML = card('Phase 2 — Injury Mapping', html);
+}
+
+window.setSeverity = function(part, level, el) {
+    S.injurySeverity[part] = level;
+    el.parentElement.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    const allSet = S.injuries.every(p => S.injurySeverity[p]);
+    document.getElementById('sevNextBtn').disabled = !allSet;
+};
+
+window.checkSeverityDone = function() {
+    showQ7b();
+};
+
+function showQ7b() {
+    S.step = 7.5; progress(7.5);
+    let html = `<div class="q-title">How long have you been dealing with each injury?</div>`;
+    S.injuries.forEach(part => {
+        html += `<div style="margin-bottom:12px;">
+            <div style="font-weight:600;color:#fff;margin-bottom:6px;">${part}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                <button class="sev-btn" onclick="setDuration('${part}','<2w',this)">< 2 weeks</button>
+                <button class="sev-btn" onclick="setDuration('${part}','2-6w',this)">2–6 weeks</button>
+                <button class="sev-btn" onclick="setDuration('${part}','1-3m',this)">1–3 months</button>
+                <button class="sev-btn" onclick="setDuration('${part}','3m+',this)">3+ months</button>
+                <button class="sev-btn" onclick="setDuration('${part}','chronic',this)">Chronic</button>
+            </div>
+        </div>`;
+    });
+    html += `<button class="next-btn" id="durNextBtn" onclick="showQ8_lifts()" disabled>Continue</button>`;
+    QA.innerHTML = card('Phase 2 — Injury Mapping', html);
+}
+
+window.setDuration = function(part, dur, el) {
+    S.injuryDuration[part] = dur;
+    el.parentElement.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    const allSet = S.injuries.every(p => S.injuryDuration[p]);
+    document.getElementById('durNextBtn').disabled = !allSet;
+};
+
+// ---------- PHASE 3: LIFT SELECTION ----------
+function showQ8_lifts() {
+    S.step = 8; progress(8);
+    QA.innerHTML = card('Phase 3 — Lift Selection', `
+        <div class="q-title">Which lift(s) do you want to analyze?</div>
+        <div class="q-subtitle">Select all that need work. We'll run a deep dive on each one.</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+            <span class="multi-btn" onclick="toggleLift(this,'squat')" style="flex:1;text-align:center;padding:16px;font-weight:900;font-size:1.1em;">Squat</span>
+            <span class="multi-btn" onclick="toggleLift(this,'bench')" style="flex:1;text-align:center;padding:16px;font-weight:900;font-size:1.1em;">Bench</span>
+            <span class="multi-btn" onclick="toggleLift(this,'deadlift')" style="flex:1;text-align:center;padding:16px;font-weight:900;font-size:1.1em;">Deadlift</span>
+        </div>
+        <div class="q-title" style="font-size:0.85rem;margin-top:16px;">Enter your current maxes (for load calculations)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+            <div><label style="font-size:0.7rem;color:#888;">Squat</label><input type="number" class="input-field" id="maxSq" placeholder="0"></div>
+            <div><label style="font-size:0.7rem;color:#888;">Bench</label><input type="number" class="input-field" id="maxBn" placeholder="0"></div>
+            <div><label style="font-size:0.7rem;color:#888;">Deadlift</label><input type="number" class="input-field" id="maxDl" placeholder="0"></div>
+        </div>
+        <button class="next-btn" id="liftNextBtn" onclick="startLiftDives()" disabled>Begin Deep Dive</button>
+    `);
+}
+
+window.toggleLift = function(el, lift) {
+    el.classList.toggle('selected');
+    if(S.lifts.includes(lift)) S.lifts = S.lifts.filter(x=>x!==lift);
+    else S.lifts.push(lift);
+    document.getElementById('liftNextBtn').disabled = S.lifts.length === 0;
+};
+
+let currentLiftIdx = 0;
+
+function startLiftDives() {
+    S.maxes.squat = parseFloat(document.getElementById('maxSq').value)||0;
+    S.maxes.bench = parseFloat(document.getElementById('maxBn').value)||0;
+    S.maxes.deadlift = parseFloat(document.getElementById('maxDl').value)||0;
+    currentLiftIdx = 0;
+    runLiftDive(S.lifts[0]);
+}
+
+// ---------- PHASE 3: LIFT DEEP DIVES ----------
+
+// ====== SQUAT ======
+const squatQuestions = {
+    stance: { text:"What's your squat stance?", opts:[
+        {id:'narrow',label:'Narrow (shoulder width or less)'},
+        {id:'medium',label:'Medium (slightly outside shoulders)'},
+        {id:'wide',label:'Wide (well outside shoulders)'}
+    ]},
+    barPos: { text:"Where do you carry the bar?", opts:[
+        {id:'high',label:'High bar (on traps)'},
+        {id:'low',label:'Low bar (on rear delts)'},
+        {id:'varies',label:'I switch between them'}
+    ]},
+    failPoint: { text:"Where does the bar slow down or stop?", opts:[
+        {id:'hole',label:'In the hole — I get stuck at the bottom'},
+        {id:'mid',label:'Midway up — past the hole but before lockout'},
+        {id:'lockout',label:'At lockout — can\'t finish standing up'},
+        {id:'walkout',label:'Walkout/unrack — feels too heavy before I squat'},
+        {id:'depth',label:'I struggle to hit proper depth'}
+    ]},
+    bodyAction: { text:"When the squat gets hard, what does your body do?", multi:true, opts:[
+        {id:'fold',label:'I fold forward / chest drops'},
+        {id:'hips_shoot',label:'Hips shoot up but bar stays low'},
+        {id:'butt_wink',label:'My low back rounds at the bottom (butt wink)'},
+        {id:'knee_cave',label:'Knees cave inward'},
+        {id:'heels_rise',label:'Heels come off the floor'},
+        {id:'shift',label:'I shift to one side'},
+        {id:'brace_loss',label:'I lose my brace / air'}
+    ]},
+    feeling: { text:"Where do you feel the squat working the most?", opts:[
+        {id:'quads',label:'Mostly in my quads'},
+        {id:'glutes',label:'Mostly in my glutes'},
+        {id:'back',label:'Mostly in my back'},
+        {id:'adductors',label:'Inner thighs / adductors'},
+        {id:'even',label:'Pretty even distribution'}
+    ]},
+    trend: { text:"In the last 6 months, has your squat...", opts:[
+        {id:'up',label:'Going up steadily'},
+        {id:'stalled',label:'Completely stalled'},
+        {id:'down',label:'Gone backwards'},
+        {id:'fluctuates',label:'Fluctuates a lot session to session'}
+    ]}
+};
+
+// ====== BENCH ======
+const benchQuestions = {
+    grip: { text:"What's your bench grip width?", opts:[
+        {id:'close',label:'Close grip (pinkies inside rings)'},
+        {id:'medium',label:'Medium (index on rings)'},
+        {id:'wide',label:'Wide (close to max legal width)'},
+        {id:'max',label:'Max width (pinkies on rings)'}
+    ]},
+    arch: { text:"How would you describe your arch?", opts:[
+        {id:'flat',label:'Flat / minimal arch'},
+        {id:'moderate',label:'Moderate arch'},
+        {id:'big',label:'Big competition arch'}
+    ]},
+    legDrive: { text:"How is your leg drive?", opts:[
+        {id:'strong',label:'Strong and consistent'},
+        {id:'weak',label:'Weak — I know it needs work'},
+        {id:'none',label:'I don\'t really use leg drive'},
+        {id:'inconsistent',label:'Sometimes it clicks, sometimes it doesn\'t'}
+    ]},
+    failPoint: { text:"Where does the bar slow down or stop?", opts:[
+        {id:'chest',label:'Off the chest — can\'t reverse it after the pause'},
+        {id:'mid',label:'Midrange — stalls about halfway up'},
+        {id:'lockout',label:'At lockout — almost there but can\'t finish'},
+        {id:'unrack',label:'Unrack feels shaky or unstable'}
+    ]},
+    bodyAction: { text:"When the bench gets hard, what happens?", multi:true, opts:[
+        {id:'sink',label:'Bar sinks into chest — I lose tightness'},
+        {id:'slow',label:'It\'s just slow — no pop off the chest'},
+        {id:'shoulders_roll',label:'Shoulders roll forward'},
+        {id:'elbows_flare',label:'Elbows flare out too much'},
+        {id:'bar_drifts',label:'Bar drifts toward my face or belly'},
+        {id:'feet_slip',label:'Feet slip or lose position'},
+        {id:'brace_loss',label:'I lose my arch or tightness mid-rep'}
+    ]},
+    trend: { text:"In the last 6 months, has your bench...", opts:[
+        {id:'up',label:'Going up steadily'},
+        {id:'stalled',label:'Completely stalled'},
+        {id:'down',label:'Gone backwards'},
+        {id:'fluctuates',label:'Fluctuates a lot'}
+    ]}
+};
+
+// ====== DEADLIFT ======
+const deadliftQuestions = {
+    stance: { text:"What's your deadlift stance?", opts:[
+        {id:'conventional',label:'Conventional'},
+        {id:'sumo',label:'Sumo'},
+        {id:'both',label:'I switch between both'}
+    ]},
+    failPoint: { text:"Where does the bar slow down or stop?", opts:[
+        {id:'floor',label:'Off the floor — barely moves or breaks really slowly'},
+        {id:'knees',label:'Around the knees — clears floor but stalls at knee height'},
+        {id:'lockout',label:'At lockout — can\'t finish the hip extension'},
+        {id:'grip',label:'Grip fails before the lift does'}
+    ]},
+    bodyAction: { text:"When the deadlift gets hard, what does your body do?", multi:true, opts:[
+        {id:'back_round',label:'Back rounds immediately'},
+        {id:'hips_shoot',label:'Hips shoot up — turns into a stiff-leg pull'},
+        {id:'bar_drift',label:'Bar drifts forward away from body'},
+        {id:'knee_cave',label:'Knees cave inward (sumo)'},
+        {id:'grip_fail',label:'Grip starts slipping'},
+        {id:'shoulders_round',label:'Shoulders round forward'},
+        {id:'brace_loss',label:'I lose my brace or air'},
+        {id:'hip_shift',label:'Hips shift to one side'}
+    ]},
+    feeling: { text:"Where do you feel the deadlift working the most?", opts:[
+        {id:'back',label:'Mostly in my back'},
+        {id:'legs',label:'Mostly in my legs'},
+        {id:'glutes',label:'Mostly in my glutes'},
+        {id:'even',label:'Pretty even'},
+        {id:'pain',label:'I feel it in a place that hurts'}
+    ]},
+    setup: { text:"How does your setup feel before you pull?", opts:[
+        {id:'solid',label:'Solid and locked in'},
+        {id:'cant_get_tight',label:'I struggle to get tight'},
+        {id:'hip_position',label:'Can\'t get into a good hip position'},
+        {id:'grip_issue',label:'Grip feels weak before I even pull'},
+        {id:'varies',label:'Varies day to day'}
+    ]},
+    barPath: { text:"If you recorded yourself from the side, what would the bar path look like?", opts:[
+        {id:'straight',label:'Straight up, close to body the whole way'},
+        {id:'forward_floor',label:'Drifts forward off the floor, comes back at lockout'},
+        {id:'forward_knees',label:'Stays close off floor but drifts forward at knees'},
+        {id:'not_sure',label:'I\'m not sure / haven\'t filmed myself'}
+    ]},
+    trend: { text:"In the last 6 months, has your deadlift...", opts:[
+        {id:'up',label:'Going up steadily'},
+        {id:'stalled',label:'Completely stalled'},
+        {id:'down',label:'Gone backwards'},
+        {id:'fluctuates',label:'Fluctuates a lot'}
+    ]}
+};
+
+const liftQMap = { squat: squatQuestions, bench: benchQuestions, deadlift: deadliftQuestions };
+const liftColors = { squat:'#4caf50', bench:'#2196f3', deadlift:'#9c27b0' };
+
+let currentQKeys = [];
+let currentQIdx = 0;
+let currentLift = '';
+
+function runLiftDive(lift) {
+    currentLift = lift;
+    S.liftData[lift] = {};
+    const qs = liftQMap[lift];
+    currentQKeys = Object.keys(qs);
+    currentQIdx = 0;
+    showLiftQ();
+}
+
+function showLiftQ() {
+    const lift = currentLift;
+    const qs = liftQMap[lift];
+    const key = currentQKeys[currentQIdx];
+    const q = qs[key];
+    const color = liftColors[lift];
+    const stepNum = 9 + currentLiftIdx * 6 + currentQIdx;
+    S.step = stepNum; progress(stepNum);
+
+    if(q.multi) {
+        // Multi-select question
+        S.liftData[lift][key] = [];
+        QA.innerHTML = card(`Phase 3 — ${lift.charAt(0).toUpperCase()+lift.slice(1)} Deep Dive`, `
+            <div class="q-title">${q.text}</div>
+            <div class="q-subtitle">Select all that apply.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;" id="multiArea">
+                ${q.opts.map(o => `<span class="multi-btn" onclick="toggleMultiQ(this,'${lift}','${key}','${o.id}')">${o.label}</span>`).join('')}
+            </div>
+            <button class="next-btn" onclick="advanceLiftQ()">Continue</button>
+        `);
+    } else {
+        QA.innerHTML = card(`Phase 3 — ${lift.charAt(0).toUpperCase()+lift.slice(1)} Deep Dive`, `
+            <div class="q-title">${q.text}</div>
+            ${q.opts.map(o => `<button class="opt-btn" onclick="S.liftData['${lift}']['${key}']='${o.id}';advanceLiftQ()">${o.label}</button>`).join('')}
+        `);
+    }
+}
+
+window.toggleMultiQ = function(el, lift, key, id) {
+    el.classList.toggle('selected');
+    const arr = S.liftData[lift][key];
+    if(arr.includes(id)) S.liftData[lift][key] = arr.filter(x=>x!==id);
+    else arr.push(id);
+};
+
+function advanceLiftQ() {
+    currentQIdx++;
+    if(currentQIdx >= currentQKeys.length) {
+        // Done with this lift, move to next or generate report
+        currentLiftIdx++;
+        if(currentLiftIdx < S.lifts.length) {
+            runLiftDive(S.lifts[currentLiftIdx]);
+        } else {
+            generateReport();
+        }
+    } else {
+        showLiftQ();
+    }
+}
+
+// ==========================================
+// REPORT GENERATION ENGINE
+// ==========================================
+
+function getLeverageProfile() {
+    const h = S.height;
+    const w = S.weight;
+    const sex = S.sex;
+    let type = '', desc = '';
+
+    if(h === 'under54' || h === '54-57') {
+        if(w > (sex==='male'?180:150)) {
+            type = 'Compact Powerhouse';
+            desc = 'Short limbs relative to a thick torso. Mechanically advantaged on squat and bench — shorter range of motion. Deadlift may require wider stance or sumo to clear the belly. Generally strong leverages for all three lifts.';
+        } else {
+            type = 'Short-Limbed Lifter';
+            desc = 'Shorter overall proportions with good mechanical advantage. Squat and bench typically feel natural. Conventional deadlift may be strong due to reduced bar travel. Watch for depth issues on squat if hip mobility is limited.';
+        }
+    } else if(h === '58-510') {
+        if(w > (sex==='male'?220:165)) {
+            type = 'Balanced Build';
+            desc = 'Medium proportions with solid mass. Generally good leverages across all three lifts. Sticking points are more likely technique or strength-specific rather than leverage-driven.';
+        } else {
+            type = 'Medium-Frame Lifter';
+            desc = 'Average proportions. Versatile across all three lifts. Performance differences between lifts are likely driven by training history and muscle development rather than pure leverages.';
+        }
+    } else if(h === '511-61') {
+        if(w > (sex==='male'?240:180)) {
+            type = 'Long-Torsoed Powerlifter';
+            desc = 'Likely longer torso with proportional limbs. Bench may be a relative strength with good chest mass. Squat depth can be challenging — may benefit from a wider stance. Deadlift leverages are fair; bar path management is critical.';
+        } else {
+            type = 'Tall Intermediate';
+            desc = 'Longer limbs relative to body mass. Greater range of motion on all lifts means more work per rep. Technique precision matters more at these proportions. Deadlift is often the strongest relative lift due to longer arms.';
+        }
+    } else {
+        type = 'Long-Limbed Lifter';
+        desc = 'Significantly longer limbs, especially femurs and arms. Squat requires excellent mobility and positional strength through a greater range of motion. Bench has a long bar path — arch and leg drive become essential. Deadlift may be mechanically advantaged due to long arms reducing range of motion, but keeping the bar close is critical.';
+    }
+
+    return { type, desc };
+}
+
+// ---------- DIAGNOSIS ENGINE ----------
+function diagnoseLift(lift) {
+    const d = S.liftData[lift];
+    if(!d) return null;
+
+    let diagnosis = '';
+    let cues = [];
+    let mobility = [];
+    let accessories = [];
+    const injuries = S.injuries;
+    const severity = S.injurySeverity;
+    const isNovice = S.trainingAge === '<1' || S.trainingAge === '1-3';
+    const isTall = S.height === '511-61' || S.height === '62plus';
+    const isShort = S.height === 'under54' || S.height === '54-57';
+    const isHeavy = S.weight > (S.sex==='male'?220:165);
+
+    // Helper to check if an exercise is contraindicated
+    function safe(bodyRegions) {
+        for(const region of bodyRegions) {
+            if(injuries.includes(region) && severity[region] >= 3) return false;
+        }
+        return true;
+    }
+
+    if(lift === 'squat') {
+        const fp = d.failPoint;
+        const actions = d.bodyAction || [];
+        const feel = d.feeling;
+        const stance = d.stance;
+        const bar = d.barPos;
+
+        if(fp === 'hole') {
+            if(actions.includes('fold')) {
+                diagnosis = 'Your squat fails in the hole because your upper back cannot maintain position under load. The thoracic spine rounds, your chest drops, and the bar shifts forward — increasing the moment arm on your hips and low back. ';
+                if(isTall) diagnosis += 'At your height, this is amplified because the longer torso creates a greater lever arm. ';
+                if(bar === 'low') diagnosis += 'Low bar position demands more upper back rigidity, which is currently your limiter. ';
+                diagnosis += 'The primary deficit is upper back and lat strength combined with bracing endurance.';
+
+                cues = [
+                    {text:'Drive your traps into the bar as you stand up — think "chest up" is a back cue, not a chest cue.', why:'Activates the erectors and traps to fight the forward fold.'},
+                    {text:'Breathe and brace BEFORE you unrack. Hold that brace the entire rep — don\'t rebreathe at the top until the set is done.', why:'Losing intra-abdominal pressure mid-rep is the most common cause of folding.'},
+                    {text:'Push your elbows under the bar (high bar) or squeeze shoulder blades hard (low bar) before you descend.', why:'Sets the upper back shelf before load is applied.'}
+                ];
+
+                if(safe(['Upper Back','Shoulders'])) accessories.push({n:'SSB Squat', s:'squat', pct:[0.60,0.65,0.68,0.63,0.55,0.50], reps:['3x6','3x5','3x4','2x3','2x2','2x5'], why:'Forces upper back to work harder without hand support on the bar.'});
+                if(safe(['Upper Back','Low Back'])) accessories.push({n:'Front Squat', s:'squat', pct:[0.50,0.55,0.58,0.53,0.48,0.45], reps:['3x6','3x5','3x4','2x3','2x2','2x5'], why:'If you fold forward, you drop the bar. Teaches upright torso under load.'});
+                if(safe(['Shoulders','Low Back'])) accessories.push({n:'Pendlay Row', s:'deadlift', pct:[0.45,0.50,0.53,0.48,0.42,0.40], reps:['4x6','4x5','3x5','3x3','2x3','3x6'], why:'Builds the lat and upper back thickness needed to hold position.'});
+                accessories.push({n:'Weighted Planks', s:'squat', pct:[0,0,0,0,0,0], reps:['3x45s','3x50s','3x55s','3x45s','3x30s','3x30s'], why:'Core endurance under load — direct brace training.'});
+
+                mobility = [
+                    {name:'Foam Roller Thoracic Extensions', rx:'2x10 reps', why:'Opens up the thoracic spine to allow a more upright torso position.'},
+                    {name:'Banded Lat Stretch', rx:'2x30s per side', why:'Tight lats can pull the torso forward. This creates space for an upright squat.'},
+                    {name:'Wall Slides', rx:'2x10 slow', why:'Activates lower traps and teaches scapular control under overhead position — carries over to bar position.'}
+                ];
+
+            } else if(actions.includes('hips_shoot')) {
+                diagnosis = 'Your hips shoot up out of the hole but the bar doesn\'t move with them. This means your quads aren\'t producing enough force to extend the knees, so your body compensates by shifting the load to the posterior chain (glutes and back). ';
+                if(stance === 'narrow') diagnosis += 'A narrow stance places more demand on the quads, which may be exacerbating this. ';
+                diagnosis += 'The result is a good-morning pattern where you\'re essentially squatting up with your back instead of your legs.';
+
+                cues = [
+                    {text:'Push your knees forward and out as you drive up — think "spread the floor" with your feet.', why:'Forces the quads to stay engaged rather than letting the hips take over.'},
+                    {text:'On the way down, control the descent for a full 2-count. No dive-bombing.', why:'A controlled eccentric loads the quads. A fast drop lets you bounce off passive structures.'},
+                    {text:'Cue "legs first" on the way up — push the floor away before you think about your hips.', why:'Sequences the lift to use quads before defaulting to hip extension.'}
+                ];
+
+                if(safe(['Knees'])) accessories.push({n:'Pause Squat (3s)', s:'squat', pct:[0.58,0.63,0.66,0.61,0.53,0.48], reps:['3x4','3x3','3x3','2x2','2x2','2x4'], why:'Removes the stretch reflex. Forces pure quad strength out of the hole.'});
+                if(safe(['Knees','Low Back'])) accessories.push({n:'Belt Squat', s:'squat', pct:[0.50,0.55,0.58,0.53,0.45,0.42], reps:['3x10','3x8','3x6','3x5','2x5','3x8'], why:'Loads the quads without spinal compression. Pure leg builder.'});
+                if(safe(['Knees'])) accessories.push({n:'Leg Press', s:'squat', pct:[1.10,1.20,1.30,1.10,0.90,0.80], reps:['4x10','4x8','3x8','3x6','2x6','3x10'], why:'High-volume quad work in a stable, spine-friendly position.'});
+                if(safe(['Knees'])) accessories.push({n:'Leg Extensions', s:'squat', pct:[0.20,0.22,0.25,0.20,0.15,0.15], reps:['3x15','3x12','3x10','2x10','2x8','3x15'], why:'Isolation quad work. VMO strength helps stabilize the knee at depth.'});
+
+                mobility = [
+                    {name:'Couch Stretch', rx:'2x45s per side', why:'Opens the hip flexors to allow proper quad engagement at depth.'},
+                    {name:'Goblet Squat Hold', rx:'3x20s with light weight', why:'Groove the pattern of keeping the torso upright and knees forward.'},
+                    {name:'Banded Terminal Knee Extension', rx:'3x20 per side', why:'Activates the VMO — the quad muscle most responsible for knee stability at depth.'}
+                ];
+
+            } else {
+                diagnosis = 'You get stuck in the hole without a specific directional failure. This indicates a general deficit in reversal strength — the ability to change direction from the eccentric to the concentric under heavy load. ';
+                if(isNovice) diagnosis += 'At your training age, this often improves significantly with pause work and time under tension training. ';
+                diagnosis += 'Building positional strength and confidence at the bottom will address this directly.';
+
+                cues = [
+                    {text:'Own the bottom position. Don\'t rush through it — control down, brief pause, then explode.', why:'Teaching your nervous system that the bottom is a strong position, not a scary one.'},
+                    {text:'Drive your back into the bar as you stand. The bar should feel like it\'s part of your body.', why:'Connects the upper body to the lower body so force transfers efficiently.'}
+                ];
+
+                if(safe(['Knees','Low Back'])) accessories.push({n:'Pin Squat (Low)', s:'squat', pct:[0.55,0.60,0.65,0.60,0.50,0.48], reps:['3x3','3x3','3x2','2x2','2x1','2x3'], why:'Starts from a dead stop at the bottom. Pure concentric strength builder.'});
+                if(safe(['Knees'])) accessories.push({n:'1.5 Rep Squat', s:'squat', pct:[0.50,0.53,0.55,0.50,0.45,0.43], reps:['3x5','3x4','3x3','2x3','2x2','3x5'], why:'Extra time at the sticking point per rep. Builds tolerance to the bottom position.'});
+                if(safe(['Knees','Low Back'])) accessories.push({n:'Box Squat', s:'squat', pct:[0.60,0.65,0.68,0.63,0.55,0.52], reps:['4x3','3x3','3x2','2x2','2x1','3x3'], why:'Teaches you to generate force from a static position. Eliminates the bounce.'});
+
+                mobility = [
+                    {name:'90/90 Hip Stretch', rx:'2x45s per side', why:'Improves hip internal and external rotation — critical for comfortable depth.'},
+                    {name:'Deep Squat Hold with Plate', rx:'3x30s', why:'Spend time in the position you need to be strong in.'}
+                ];
+            }
+
+        } else if(fp === 'mid') {
+            diagnosis = 'Your squat stalls in the midrange — you get out of the hole but can\'t finish. This is typically a posterior chain (glutes/hamstrings) deficit combined with potentially losing brace integrity partway through the lift. ';
+            if(actions.includes('shift')) diagnosis += 'The lateral shift you\'re experiencing suggests an asymmetry between sides that should be addressed with unilateral work. ';
+
+            cues = [
+                {text:'Squeeze your glutes hard at the sticking point — don\'t just push, DRIVE your hips through.', why:'The midrange is where hip extension takes over from knee extension. Glutes must fire.'},
+                {text:'Think about "standing tall" rather than "pushing up." The cue changes the movement pattern.', why:'Shifts focus to full hip extension instead of just pushing against the bar.'}
+            ];
+
+            if(safe(['Low Back'])) accessories.push({n:'Anderson Squat', s:'squat', pct:[0.65,0.70,0.75,0.68,0.58,0.55], reps:['3x3','3x2','2x2','2x1','2x1','2x3'], why:'Start from the exact sticking point. Builds strength exactly where you fail.'});
+            if(safe(['Knees'])) accessories.push({n:'Tempo Squat (5-3-0)', s:'squat', pct:[0.50,0.53,0.55,0.50,0.45,0.43], reps:['3x5','3x4','3x3','2x3','2x2','3x5'], why:'Slow eccentric forces you to control through the midrange. Builds positional awareness.'});
+            if(safe(['Hips','Low Back'])) accessories.push({n:'Hip Thrust', s:'deadlift', pct:[0.40,0.45,0.48,0.43,0.38,0.35], reps:['4x10','4x8','3x8','3x6','2x6','3x10'], why:'Direct glute strength — the muscle responsible for driving through the midrange.'});
+            if(actions.includes('shift')) accessories.push({n:'Split Squat', s:'squat', pct:[0.20,0.22,0.25,0.20,0.18,0.15], reps:['3x10','3x8','3x8','2x6','2x6','3x10'], why:'Corrects side-to-side asymmetry by forcing each leg to work independently.'});
+
+            mobility = [
+                {name:'Pigeon Stretch', rx:'2x45s per side', why:'Opens glutes to allow full hip extension through the midrange.'},
+                {name:'Banded Hip Distraction', rx:'2x30s per side', why:'Creates space in the hip joint for better glute recruitment.'}
+            ];
+
+        } else if(fp === 'lockout') {
+            diagnosis = 'You fail at lockout — you grind past the hole and midrange but can\'t finish standing up. This is typically a glute and/or low back endurance issue. By the time you reach lockout, your posterior chain is gassed from fighting the earlier phases.';
+
+            cues = [
+                {text:'Drive your hips through at the top. Think about humping the bar.', why:'Direct glute squeeze cue to finish hip extension.'},
+                {text:'Lock your knees THEN your hips. Sequence the lockout.', why:'Many lifters try to lock everything at once and end up in no-man\'s-land.'}
+            ];
+
+            if(safe(['Low Back'])) accessories.push({n:'Anderson Squat', s:'squat', pct:[0.70,0.75,0.80,0.73,0.60,0.58], reps:['3x3','3x2','2x2','2x1','2x1','2x3'], why:'Build top-end strength specifically.'});
+            accessories.push({n:'Heavy Walkout', s:'squat', pct:[1.03,1.06,1.08,1.03,0,0], reps:['3x15s','3x15s','2x15s','2x10s','OFF','OFF'], why:'CNS priming. Teaches your body that heavy weight at the top is normal.'});
+            if(safe(['Hips','Low Back'])) accessories.push({n:'Hip Thrust', s:'deadlift', pct:[0.45,0.50,0.53,0.48,0.40,0.38], reps:['4x10','4x8','3x8','3x6','2x6','3x10'], why:'Builds lockout-specific glute power.'});
+
+            mobility = [
+                {name:'Standing Hip Flexor Stretch', rx:'2x30s per side', why:'Tight hip flexors inhibit glute activation at lockout. Release them to unlock glute power.'}
+            ];
+
+        } else if(fp === 'walkout') {
+            diagnosis = 'The bar feels too heavy before you even squat. This is a CNS confidence and upper back stability issue. Your body is perceiving the load as threatening before the lift even begins.';
+
+            cues = [
+                {text:'Unrack with authority. Drive your traps into the bar and STAND UP with the weight. Two steps back, no more.', why:'A tentative unrack starts the lift in a defensive state. Be aggressive.'},
+                {text:'Take a breath and brace BEFORE you unrack. You should feel like a pressurized tank before the bar leaves the hooks.', why:'Pre-bracing sets your core before the load hits.'}
+            ];
+
+            accessories.push({n:'Heavy Walkout', s:'squat', pct:[1.05,1.08,1.10,1.05,0,0], reps:['3x15s','3x15s','2x15s','2x10s','OFF','OFF'], why:'Desensitize the CNS to supra-maximal loads. Makes your working weight feel lighter.'});
+            if(safe(['Low Back','Knees'])) accessories.push({n:'Supramax Eccentric', s:'squat', pct:[0.98,1.02,1.05,0.98,0,0], reps:['3x1','2x1','2x1','2x1','OFF','OFF'], why:'Controlled lowering with more than your max. Teaches your body to handle heavy loads.'});
+
+            mobility = [
+                {name:'Thoracic Foam Rolling', rx:'2 min', why:'An immobile upper back makes the bar feel heavier because it can\'t distribute the load.'},
+                {name:'Band Pull-Aparts', rx:'3x15', why:'Activates the upper back shelf muscles before you get under the bar.'}
+            ];
+
+        } else if(fp === 'depth') {
+            diagnosis = 'You struggle to hit proper squat depth. This is almost always a mobility issue — limited ankle dorsiflexion, hip flexion, or both. ';
+            if(isTall) diagnosis += 'At your height, hitting depth requires more hip and ankle range of motion than shorter lifters. ';
+            if(stance === 'narrow') diagnosis += 'A narrow stance requires more ankle mobility. Consider widening slightly. ';
+
+            cues = [
+                {text:'Push your knees out over your pinky toe as you descend. Create space for your hips.', why:'External rotation opens the hip joint to allow deeper flexion.'},
+                {text:'Try heels-elevated squats (plates under heels or squat shoes) to compensate for ankle mobility.', why:'Effectively adds ankle dorsiflexion, allowing a more upright torso and deeper position.'}
+            ];
+
+            if(safe(['Knees','Ankles'])) accessories.push({n:'Heels Elevated Squat', s:'squat', pct:[0.55,0.60,0.63,0.58,0.50,0.48], reps:['3x8','3x6','3x5','2x5','2x3','3x6'], why:'Shifts demand to quads while compensating for ankle limitation.'});
+            if(safe(['Hips'])) accessories.push({n:'Goblet Squat', s:'squat', pct:[0.20,0.22,0.25,0.20,0.18,0.15], reps:['3x10','3x10','3x8','2x8','2x6','3x10'], why:'Light load, groove the depth pattern. Use as warm-up before every squat session.'});
+
+            mobility = [
+                {name:'Banded Ankle Distraction', rx:'2x45s per side', why:'Improves ankle dorsiflexion — the #1 limiter for squat depth.'},
+                {name:'Deep Squat Hold', rx:'3x30s', why:'Simply spend time at the bottom. Your body adapts to positions you practice.'},
+                {name:'90/90 Hip Stretch', rx:'2x45s per side', why:'Opens both internal and external rotation of the hip.'},
+                {name:'Adductor Rock-Backs', rx:'2x10 per side', why:'Opens the groin to allow knees to track wider at depth.'}
+            ];
+        }
+
+    } else if(lift === 'bench') {
+        const fp = d.failPoint;
+        const actions = d.bodyAction || [];
+        const grip = d.grip;
+        const arch = d.arch;
+        const legDrive = d.legDrive;
+
+        if(fp === 'chest') {
+            if(actions.includes('sink')) {
+                diagnosis = 'The bar sinks into your chest and you lose tightness. This is an arch and upper back stability issue — your shelf collapses under load. ';
+                if(arch === 'flat') diagnosis += 'A flat bench setup compounds this because there\'s no arch to create a springboard effect. ';
+                if(legDrive === 'weak' || legDrive === 'none') diagnosis += 'Weak leg drive means you\'re not creating a solid base to press from. ';
+
+                cues = [
+                    {text:'Pull the bar TO your chest — don\'t let it fall. Row it down with your lats.', why:'Active eccentric keeps upper back tight. Passive lowering loses position.'},
+                    {text:'Squeeze your shoulder blades together AND down before you unrack. Maintain this the entire set.', why:'Creates the shelf that prevents sinking.'},
+                    {text:'Drive your feet into the floor as the bar touches your chest. Leg drive starts at the bottom, not the top.', why:'Creates a chain of tension from feet through legs into the torso.'}
+                ];
+
+                if(safe(['Shoulders'])) accessories.push({n:'Long Pause Bench (3-5s)', s:'bench', pct:[0.60,0.65,0.68,0.63,0.55,0.52], reps:['4x3','3x3','3x2','2x2','2x1','3x3'], why:'Forces you to maintain tightness under static load. If you sink, the pause gets harder.'});
+                if(safe(['Shoulders'])) accessories.push({n:'Larsen Press', s:'bench', pct:[0.55,0.60,0.63,0.58,0.50,0.48], reps:['3x6','3x5','3x4','2x3','2x2','3x5'], why:'Removes leg drive entirely. Isolates upper back and chest strength for the press.'});
+                if(safe(['Shoulders','Elbows'])) accessories.push({n:'Spoto Press', s:'bench', pct:[0.58,0.63,0.66,0.61,0.53,0.50], reps:['3x5','3x4','3x3','2x3','2x2','3x4'], why:'Stop 1-2 inches off chest. Builds strength in the exact position where you lose tightness.'});
+
+                mobility = [
+                    {name:'Band Pull-Aparts', rx:'3x20', why:'Activates rear delts and rhomboids — the muscles that hold your shoulder blades together.'},
+                    {name:'Foam Roller Thoracic Extension', rx:'2x10', why:'Opens up the upper back to allow a better arch position.'}
+                ];
+
+            } else if(actions.includes('slow')) {
+                diagnosis = 'You can maintain position but there\'s no speed off the chest. The bar just crawls. This is a starting strength deficit — your chest and anterior deltoids aren\'t producing enough force to accelerate the bar through the initial phase of the press.';
+
+                cues = [
+                    {text:'Think "FAST" on every rep. Even warm-ups should move with intent. Speed is a skill.', why:'Rate of force development is trainable. Every rep at competition speed builds this quality.'},
+                    {text:'As the bar touches, think about throwing it to the ceiling. Violent intent.', why:'Aggressive mental cue increases motor unit recruitment at the reversal point.'}
+                ];
+
+                if(safe(['Shoulders'])) accessories.push({n:'Dead Press', s:'bench', pct:[0.60,0.65,0.70,0.65,0.55,0.52], reps:['5x1','4x1','3x1','3x1','2x1','3x1'], why:'Press from dead stop on pins at chest height. Pure concentric power with zero momentum.'});
+                if(safe(['Shoulders','Elbows'])) accessories.push({n:'Weighted Dips', s:'bench', pct:[0.18,0.20,0.23,0.18,0.15,0.13], reps:['3x8','3x6','3x5','2x5','2x3','3x8'], why:'Builds pressing mass and starting strength through a full range of motion.'});
+                if(safe(['Shoulders'])) accessories.push({n:'Long Pause Bench', s:'bench', pct:[0.60,0.65,0.68,0.63,0.55,0.52], reps:['4x3','3x3','3x2','2x2','2x1','3x3'], why:'Eliminates the stretch reflex. Forces pure chest strength to initiate the press.'});
+
+                mobility = [
+                    {name:'Pec Doorway Stretch', rx:'2x30s per side', why:'A tight pec limits the stretch reflex at the bottom. More range = more elastic energy.'},
+                    {name:'Shoulder CARs', rx:'2x5 per arm', why:'Ensures full shoulder range of motion for an optimal bar path.'}
+                ];
+
+            } else {
+                diagnosis = 'You fail off the chest with shoulder weakness — the anterior deltoids can\'t initiate the press. ';
+                if(grip === 'wide' || grip === 'max') diagnosis += 'A wider grip places more demand on the shoulders relative to the triceps. ';
+
+                cues = [
+                    {text:'Tuck your elbows slightly more at the bottom. A 45-75 degree angle protects the shoulders and improves force production.', why:'Excessive flare at the bottom puts the shoulder in a mechanically weak position.'},
+                    {text:'Touch the bar lower on your chest (at or below the nipple line). Higher touch points stress the shoulders more.', why:'A lower touch point creates a straighter bar path and better leverage for the deltoids.'}
+                ];
+
+                if(safe(['Shoulders'])) accessories.push({n:'Incline Barbell Bench', s:'bench', pct:[0.55,0.60,0.63,0.58,0.50,0.48], reps:['3x8','3x6','3x5','3x4','2x3','3x6'], why:'Direct anterior delt builder in a pressing pattern.'});
+                if(safe(['Shoulders'])) accessories.push({n:'Seated DB Press', s:'ohp', pct:[0.25,0.28,0.30,0.25,0.20,0.18], reps:['3x10','3x8','3x6','2x6','2x5','3x10'], why:'Unilateral overhead pressing to build shoulder mass and stability.'});
+
+                mobility = [
+                    {name:'Shoulder CARs', rx:'2x5 per arm', why:'Full range shoulder mobility maintains healthy pressing mechanics.'},
+                    {name:'Band Dislocations', rx:'2x15', why:'Warms up the shoulder capsule and improves overhead range.'}
+                ];
+            }
+
+        } else if(fp === 'mid') {
+            diagnosis = 'You stall in the midrange — the transition zone where the chest hands off to the triceps. This is typically a tricep and/or technique issue. ';
+            if(grip === 'wide' || grip === 'max') diagnosis += 'A wider grip makes the midrange harder because the triceps are at a mechanical disadvantage at wider elbow angles. ';
+
+            cues = [
+                {text:'Think about "bending the bar" as you press — this activates the triceps through the sticking point.', why:'Engages the triceps earlier in the press to help through the transition zone.'},
+                {text:'Keep driving your feet into the floor through the midrange. Don\'t let leg drive die after the initial push.', why:'Continuous leg drive maintains full-body tension through the sticking point.'}
+            ];
+
+            if(safe(['Elbows','Shoulders'])) accessories.push({n:'Floor Press', s:'bench', pct:[0.65,0.70,0.73,0.68,0.58,0.55], reps:['3x5','3x4','3x3','2x3','2x2','3x4'], why:'Eliminates the bottom portion. Starts at the exact sticking point. Pure midrange builder.'});
+            if(safe(['Elbows'])) accessories.push({n:'Close Grip Bench', s:'bench', pct:[0.60,0.63,0.67,0.62,0.53,0.50], reps:['3x8','3x6','3x5','2x5','2x3','3x6'], why:'Shifts emphasis to the triceps. The closer grip makes the midrange the hardest part.'});
+            if(safe(['Elbows'])) accessories.push({n:'Spoto Press', s:'bench', pct:[0.60,0.65,0.68,0.63,0.55,0.52], reps:['3x5','3x4','3x3','2x3','2x2','3x4'], why:'Pausing just above the chest builds strength through the exact transition zone.'});
+
+            mobility = [
+                {name:'Tricep Foam Roll', rx:'1 min per arm', why:'Releases tricep tightness that can limit elbow extension.'},
+                {name:'Wrist Extensions', rx:'2x15', why:'Healthy wrists allow better force transfer through the bar at lockout.'}
+            ];
+
+        } else if(fp === 'lockout') {
+            diagnosis = 'You fail at lockout — the triceps can\'t finish the lift. This is a pure tricep strength issue, and potentially an elbow positioning problem if the bar is drifting.';
+
+            cues = [
+                {text:'Think about "pushing yourself away from the bar" at lockout rather than pushing the bar up.', why:'Changes the force vector to favor tricep extension.'},
+                {text:'Lock your elbows HARD at the top. Don\'t just get close to lockout — snap it aggressively.', why:'The last 2 inches are where most lifters get soft. Be violent with the lockout.'}
+            ];
+
+            if(safe(['Elbows'])) accessories.push({n:'Floor Press', s:'bench', pct:[0.68,0.73,0.76,0.71,0.60,0.58], reps:['3x5','3x4','3x3','2x3','2x2','3x4'], why:'Isolates the top half of the press. Pure lockout builder.'});
+            if(safe(['Elbows'])) accessories.push({n:'Close Grip Bench', s:'bench', pct:[0.63,0.67,0.70,0.65,0.55,0.53], reps:['3x8','3x6','3x5','2x5','2x3','3x6'], why:'Maximum tricep activation in a competition-like pattern.'});
+            if(safe(['Elbows','Shoulders'])) accessories.push({n:'Pin Lockouts', s:'bench', pct:[0.85,0.90,0.95,0.85,0,0], reps:['3x5','3x3','2x3','2x2','OFF','OFF'], why:'Supramaximal lockout work from pins. Builds the last 4 inches.'});
+
+            mobility = [
+                {name:'Banded Elbow Extensions', rx:'2x20', why:'Warm up the tricep tendon and elbow joint before heavy lockout work.'}
+            ];
+
+        } else if(fp === 'unrack') {
+            diagnosis = 'The unrack feels unstable. This is a lat engagement and shoulder stability issue. If you can\'t lock in the unrack, the entire lift starts from a compromised position.';
+
+            cues = [
+                {text:'Squeeze the bar as hard as you can before you unrack. White-knuckle grip.', why:'Irradiation — gripping hard activates the entire arm and shoulder girdle.'},
+                {text:'Pull the bar out of the hooks with your lats — don\'t press it out. Row it to the start position.', why:'Lat-driven unrack keeps the shoulders packed and the upper back tight.'}
+            ];
+
+            if(safe(['Shoulders'])) accessories.push({n:'Bamboo Bar Bench', s:'bench', pct:[0.35,0.38,0.40,0.35,0.30,0.28], reps:['3x15','3x12','3x10','2x10','2x8','3x12'], why:'Chaotic loading forces every stabilizer in the shoulder to fire. Builds bulletproof stability.'});
+            if(safe(['Shoulders'])) accessories.push({n:'Heavy Hold', s:'bench', pct:[1.02,1.06,1.10,1.02,0,0], reps:['3x15s','3x15s','2x15s','2x10s','OFF','OFF'], why:'Hold supramaximal weight at lockout. Makes your working weight feel lighter in the hands.'});
+
+            mobility = [
+                {name:'Lat Activation (Straight Arm Pulldown)', rx:'2x15 light', why:'Pre-activates the lats before you get on the bench.'},
+                {name:'Band Pull-Aparts', rx:'3x15', why:'Fires up the rear delts and rhomboids for a stable shelf.'}
+            ];
+        }
+
+    } else if(lift === 'deadlift') {
+        const fp = d.failPoint;
+        const actions = d.bodyAction || [];
+        const stance = d.stance;
+        const feel = d.feeling;
+        const setup = d.setup;
+        const barPath = d.barPath;
+
+        if(fp === 'floor') {
+            if(actions.includes('back_round')) {
+                diagnosis = 'Your back rounds immediately off the floor. This means your lats and upper back can\'t maintain position against the load as it leaves the ground. ';
+                if(isTall) diagnosis += 'At your height, the distance from your hips to the bar is greater, creating a longer moment arm that demands more from your back. ';
+                if(stance === 'conventional') diagnosis += 'Conventional pulling places more demand on the back than sumo. ';
+                if(barPath === 'forward_floor') diagnosis += 'The bar drifting forward confirms the lats aren\'t pulling it back into the body. ';
+
+                cues = [
+                    {text:'Before you pull, think about "protecting your armpits" — squeeze something in each armpit. This engages the lats.', why:'The lats are the primary muscle keeping the bar close and the back flat off the floor.'},
+                    {text:'Push the floor away with your legs for the first 3 inches. Don\'t think about pulling — think about a leg press.', why:'Loading the quads off the floor prevents the hips from shooting up and rounding the back.'},
+                    {text:'Take the slack out of the bar before you pull. You should hear the plates click before the bar moves.', why:'Slack-pulling sets the lats and creates tension before the load hits. Starting from slack = instant rounding.'}
+                ];
+
+                if(safe(['Low Back','Upper Back'])) accessories.push({n:'Paused Deadlift (2s at shin)', s:'deadlift', pct:[0.55,0.60,0.65,0.60,0.50,0.48], reps:['3x3','3x3','3x2','2x2','2x1','2x3'], why:'If your back rounds, you can\'t hold the pause. Forces position integrity.'});
+                if(safe(['Upper Back','Shoulders'])) accessories.push({n:'Seal Row', s:'deadlift', pct:[0.30,0.33,0.35,0.30,0.25,0.23], reps:['4x10','4x8','3x8','3x6','2x6','3x10'], why:'Builds the lat and mid-back thickness needed to hold position under load.'});
+                if(safe(['Upper Back'])) accessories.push({n:'Pendlay Row', s:'deadlift', pct:[0.45,0.50,0.53,0.48,0.42,0.40], reps:['4x6','4x5','3x5','3x3','2x3','3x6'], why:'Explosive horizontal pulling. Directly strengthens the muscles fighting back rounding.'});
+                if(safe(['Low Back'])) accessories.push({n:'Snatch Grip RDL', s:'deadlift', pct:[0.40,0.43,0.45,0,0,0.35], reps:['3x8','3x6','2x6','OFF','OFF','3x8'], why:'Wide grip forces the upper back to work overtime. Builds isometric back strength.'});
+
+                mobility = [
+                    {name:'Cat-Cow', rx:'2x10 slow', why:'Warms up spinal flexion/extension and teaches you where neutral is.'},
+                    {name:'Banded Lat Stretch', rx:'2x30s per side', why:'Tight lats paradoxically limit lat engagement. Stretch them to activate them.'},
+                    {name:'Dead Bug', rx:'2x10 per side', why:'Core activation in a supine position. Teaches bracing while moving limbs.'}
+                ];
+
+            } else if(actions.includes('hips_shoot')) {
+                diagnosis = 'Your hips shoot up off the floor, turning the lift into a stiff-leg pull. Your quads aren\'t contributing enough to the initial drive. ';
+                if(stance === 'conventional') diagnosis += 'In conventional, the quads are responsible for the first 4-6 inches. If they don\'t fire, the hips rise to shift the load to the back and hamstrings. ';
+                if(feel === 'back') diagnosis += 'The fact that you feel it mostly in your back confirms the posterior chain is doing the quads\' job. ';
+
+                cues = [
+                    {text:'Push the floor away with your LEGS for the first 6 inches. Pretend the deadlift starts as a leg press.', why:'Re-sequences the pull to use quads first, keeping the back angle constant.'},
+                    {text:'Keep your chest up and shoulders over the bar until the bar passes your knees.', why:'If shoulders move back too early, hips must rise. Shoulders stay put until the bar clears the knees.'},
+                    {text:'Wedge your hips to the bar before you pull. Drop your hips until you feel your quads engage, then go.', why:'Starting with higher hips guarantees a stiff-leg pattern. Get the hips low enough to load the quads.'}
+                ];
+
+                if(safe(['Knees','Low Back'])) accessories.push({n:'Deficit Deadlift', s:'deadlift', pct:[0.55,0.60,0.63,0.58,0.50,0.48], reps:['3x5','3x4','3x3','2x3','2x2','3x5'], why:'Standing on 1-2 inch deficit forces you to use your quads more aggressively off the floor.'});
+                if(safe(['Knees'])) accessories.push({n:'Front Squat', s:'squat', pct:[0.50,0.55,0.58,0.53,0.45,0.43], reps:['3x6','3x5','3x4','2x3','2x2','2x5'], why:'Builds the quad strength that\'s missing from your pull. Direct carryover to floor speed.'});
+                if(safe(['Knees'])) accessories.push({n:'Leg Press', s:'squat', pct:[1.10,1.20,1.30,1.10,0.90,0.80], reps:['4x10','4x8','3x8','3x6','2x6','3x10'], why:'High-volume quad work without spinal loading.'});
+
+                mobility = [
+                    {name:'Hip Flexor Stretch (Half-Kneeling)', rx:'2x30s per side', why:'Tight hip flexors prevent proper hip hinge setup, forcing a higher hip start.'},
+                    {name:'Goblet Squat Hold', rx:'3x20s', why:'Groove the low-hip, knees-forward position that carries over to the deadlift start.'}
+                ];
+
+            } else {
+                diagnosis = 'You can\'t break the bar off the floor. This is a raw strength deficit in the starting position. ';
+                if(stance === 'sumo') diagnosis += 'Sumo is generally harder off the floor due to the wider stance limiting quad contribution at the start. ';
+
+                cues = [
+                    {text:'Build tension against the bar for 1-2 full seconds before you initiate the pull. Don\'t just rip it.', why:'Pre-tension engages every muscle in the chain before the bar moves.'},
+                    {text:'Think about "spreading the floor apart" with your feet as you push.', why:'Activates the glutes and adductors to contribute to the initial break off the floor.'}
+                ];
+
+                if(safe(['Low Back'])) accessories.push({n:'Deficit Deadlift', s:'deadlift', pct:[0.55,0.60,0.63,0.58,0.50,0.48], reps:['3x5','3x4','3x3','2x3','2x2','3x5'], why:'Increases range of motion off the floor. If you can pull from a deficit, the regular floor is easy.'});
+                if(safe(['Low Back'])) accessories.push({n:'Halting Deadlift', s:'deadlift', pct:[0.55,0.60,0.63,0.58,0.50,0.48], reps:['3x5','3x4','3x3','2x3','2x2','3x5'], why:'Pull to mid-shin and hold 2 seconds. Builds starting position strength without full-range fatigue.'});
+                if(safe(['Low Back'])) accessories.push({n:'Paused Deadlift', s:'deadlift', pct:[0.55,0.60,0.65,0.60,0.50,0.48], reps:['3x3','3x3','3x2','2x2','2x1','2x3'], why:'Pause at 1 inch off floor. You must maintain perfect position or the lift dies.'});
+
+                mobility = [
+                    {name:'Deep Squat Hold', rx:'3x30s', why:'If you can\'t get into position, you can\'t pull effectively. This opens everything.'},
+                    {name:'Banded Hip Distraction', rx:'2x30s per side', why:'Creates space in the hip joint for a better starting position.'}
+                ];
+            }
+
+        } else if(fp === 'knees') {
+            diagnosis = 'The bar stalls at knee height. ';
+            if(stance === 'conventional') {
+                diagnosis += 'In conventional, the knee pass is where the quads finish their job and the glutes/back take over. If this transition is weak, the bar dies. ';
+                if(barPath === 'forward_knees') diagnosis += 'The bar drifting forward at the knees confirms the lats are losing tension, increasing the moment arm on your back. ';
+            } else {
+                diagnosis += 'In sumo, stalling at the knees is often a hip adductor and glute issue — the muscles responsible for pulling your hips to the bar aren\'t strong enough. ';
+            }
+
+            cues = [
+                {text:'Drive your hips TO the bar once it passes your knees. Don\'t wait — be aggressive with the hip extension.', why:'The knee pass is where hip drive must kick in. Delayed hip drive = stalling.'},
+                {text:'Keep squeezing your lats the ENTIRE pull. Don\'t let the bar get away from you at any point.', why:'Bar drift at the knees turns a deadlift into a good morning. Lats keep it close.'}
+            ];
+
+            if(safe(['Low Back'])) accessories.push({n:'Paused Deadlift (at knee)', s:'deadlift', pct:[0.58,0.63,0.68,0.63,0.53,0.50], reps:['3x3','3x3','3x2','2x2','2x1','2x3'], why:'Pause at the exact sticking point. Builds strength precisely where you fail.'});
+            if(safe(['Low Back'])) accessories.push({n:'Halting Deadlift', s:'deadlift', pct:[0.58,0.63,0.66,0.61,0.53,0.50], reps:['3x5','3x4','3x3','2x3','2x2','3x5'], why:'Pull to just below the knee and lower. Time under tension through the weak zone.'});
+            if(safe(['Upper Back','Shoulders'])) accessories.push({n:'Pendlay Row', s:'deadlift', pct:[0.45,0.50,0.53,0.48,0.42,0.40], reps:['4x6','4x5','3x5','3x3','2x3','3x6'], why:'If the bar drifts at the knees, your back isn\'t strong enough. Row heavy.'});
+            if(stance === 'sumo' && safe(['Hips'])) accessories.push({n:'Hip Thrust', s:'deadlift', pct:[0.40,0.45,0.48,0.43,0.38,0.35], reps:['4x10','4x8','3x8','3x6','2x6','3x10'], why:'Sumo knee-pass weakness often means weak hip extension. Thrust builds this.'});
+
+            mobility = [
+                {name:'Banded Hip Distraction', rx:'2x30s per side', why:'Opens the hip joint for better glute engagement through the knee pass.'},
+                {name:'Pigeon Stretch', rx:'2x30s per side', why:'Releases the glutes so they can fire more effectively during hip extension.'}
+            ];
+
+        } else if(fp === 'lockout') {
+            diagnosis = 'You can\'t finish the lockout. This is a glute and hip extension strength deficit. ';
+            if(actions.includes('shoulders_round')) diagnosis += 'Your shoulders are rounding forward at the top, which means your upper back is fatigued by the time you reach lockout. ';
+            if(stance === 'sumo') diagnosis += 'Sumo lockout requires aggressive hip adduction AND extension simultaneously. ';
+
+            cues = [
+                {text:'At the top, think about "humping the bar." Squeeze your glutes as hard as possible and drive your hips THROUGH.', why:'The lockout is pure hip extension. Glutes must fire maximally.'},
+                {text:'Pull your shoulders back at the top. Don\'t just stand up — finish with your chest proud and shoulders behind the bar.', why:'Upper back retraction completes the lockout and prevents the "almost there" stall.'}
+            ];
+
+            if(safe(['Low Back'])) accessories.push({n:'Block Pulls (3-4 inch)', s:'deadlift', pct:[0.70,0.75,0.80,0.73,0.63,0.58], reps:['3x4','3x3','2x3','2x1','2x1','2x4'], why:'Overloads the lockout specifically. Handle weights heavier than your max from the floor.'});
+            if(safe(['Hips','Low Back'])) accessories.push({n:'Hip Thrust', s:'deadlift', pct:[0.45,0.50,0.53,0.48,0.40,0.38], reps:['4x10','4x8','3x8','3x6','2x6','3x10'], why:'Direct glute builder. The lockout is entirely hip extension.'});
+            if(safe(['Low Back'])) accessories.push({n:'Banded Deadlift', s:'deadlift', pct:[0.40,0.43,0.45,0.40,0.35,0.33], reps:['5x2','5x2','4x2','3x2','2x2','4x2'], why:'Band tension increases at lockout, forcing you to accelerate through the sticking point.'});
+
+            mobility = [
+                {name:'Standing Hip Flexor Stretch', rx:'2x30s per side', why:'Tight hip flexors actively resist hip extension at lockout. Release them.'},
+                {name:'Glute Activation (Clamshells)', rx:'2x15 per side', why:'Wake up the glutes before pulling. Many lifters\' glutes are inhibited.'}
+            ];
+
+        } else if(fp === 'grip') {
+            diagnosis = 'Your grip fails before your body does. This means your actual pulling strength exceeds your grip capacity. ';
+            if(S.weight > (S.sex==='male'?220:165)) diagnosis += 'At your bodyweight, the loads you\'re handling are significant and grip becomes a real limiter for many lifters. ';
+
+            cues = [
+                {text:'Squeeze the bar in your fingers, not your palm. Hook grip or mixed grip — commit to one and train it.', why:'Finger grip is mechanically stronger than palm grip. The bar should sit at the base of the fingers.'},
+                {text:'Use chalk aggressively. Apply it to the bar, not just your hands. Reapply between every heavy set.', why:'Friction is free grip strength.'}
+            ];
+
+            accessories.push({n:'Rack Pull Hold', s:'deadlift', pct:[0.95,1.00,1.05,0.95,0.85,0.80], reps:['3x10s','3x12s','3x15s','2x10s','2x8s','3x10s'], why:'Hold heavy weight at lockout for time. The most direct grip builder.'});
+            accessories.push({n:'Farmer\'s Walks', s:'deadlift', pct:[0.30,0.33,0.35,0.30,0.25,0.23], reps:['3x30s','3x35s','3x40s','2x30s','2x25s','3x30s'], why:'Grip endurance under movement. Translates to holding heavy pulls.'});
+            if(safe(['Low Back'])) accessories.push({n:'Tempo Deadlift (5s eccentric)', s:'deadlift', pct:[0.50,0.53,0.55,0.50,0.45,0.43], reps:['3x3','3x3','3x2','2x2','2x1','3x3'], why:'Slow eccentrics force extended grip time per rep.'});
+
+            mobility = [
+                {name:'Wrist Flexor/Extensor Stretch', rx:'2x20s each', why:'Healthy forearms grip better. Don\'t neglect the wrists.'},
+                {name:'Finger Extensions (with band)', rx:'2x20', why:'Balances the gripping muscles with their antagonists. Prevents elbow tendinopathy.'}
+            ];
+        }
+    }
+
+    return { diagnosis, cues, mobility, accessories };
+}
+
+// ==========================================
+// REPORT RENDERING
+// ==========================================
+function generateReport() {
+    S.step = totalSteps; progress(totalSteps);
+    document.getElementById('questionArea').style.display = 'none';
+    const RA = document.getElementById('reportArea');
+    RA.style.display = 'block';
+
+    const leverage = getLeverageProfile();
+    const total = S.maxes.squat + S.maxes.bench + S.maxes.deadlift;
+    const today = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+
+    let html = `<div class="fade-in">`;
+
+    // Header
+    html += `<div class="report-section" style="border-color:#bb86fc;">
+        <h3>Assessment Report</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.85rem;">
+            <div>Sex: <strong>${S.sex}</strong></div>
+            <div>Height: <strong>${S.height.replace('under54',"Under 5'4\"").replace('54-57',"5'4\"-5'7\"").replace('58-510',"5'8\"-5'10\"").replace('511-61',"5'11\"-6'1\"").replace('62plus',"6'2\"+")}</strong></div>
+            <div>Bodyweight: <strong>${S.weight} lbs</strong></div>
+            <div>Training Age: <strong>${S.trainingAge} years</strong></div>
+            <div>Total: <strong>${total} lbs</strong></div>
+            <div>Date: <strong>${today}</strong></div>
+        </div>
+    </div>`;
+
+    // Leverage Profile
+    html += `<div class="leverage-box">
+        <div class="type">${leverage.type}</div>
+        <div class="desc">${leverage.desc}</div>
+    </div>`;
+
+    // Injuries
+    if(S.injuries.length) {
+        html += `<div class="report-section"><h3>Injury Profile</h3>`;
+        S.injuries.forEach(p => {
+            const sev = S.injurySeverity[p];
+            const dur = S.injuryDuration[p];
+            const sevLabel = {1:'Tight/Stiff',2:'Nagging',3:'Limiting',4:'Acute'}[sev];
+            const sevColor = {1:'#4caf50',2:'#ffb300',3:'#ff9800',4:'#f44336'}[sev];
+            html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #222;">
+                <span style="font-weight:600;">${p}</span>
+                <span><span style="color:${sevColor};font-weight:bold;">${sevLabel}</span> · ${dur}</span>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    // Per-lift diagnosis
+    let allAccessories = {};
+    S.lifts.forEach(lift => {
+        const result = diagnoseLift(lift);
+        if(!result) return;
+        const color = liftColors[lift];
+        allAccessories[lift] = result.accessories;
+
+        html += `<div class="report-section" style="border-left:4px solid ${color};">
+            <h3 style="color:${color};">${lift.charAt(0).toUpperCase()+lift.slice(1)} Analysis</h3>
+            <div class="diagnosis-card"><p style="line-height:1.6;margin:0;">${result.diagnosis}</p></div>`;
+
+        // Cues
+        if(result.cues.length) {
+            html += `<div style="margin-top:14px;"><div style="font-size:0.75rem;color:${color};text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin-bottom:8px;">Coaching Cues</div>`;
+            result.cues.forEach(c => {
+                html += `<div class="cue-item"><strong>→ ${c.text}</strong><div style="color:#888;font-size:0.8rem;margin-top:4px;">${c.why}</div></div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Mobility
+        if(result.mobility.length) {
+            html += `<div style="margin-top:14px;"><div style="font-size:0.75rem;color:#4caf50;text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin-bottom:8px;">Mobility Rx (Pre-Training)</div>`;
+            result.mobility.forEach(m => {
+                html += `<div class="mobility-item"><div class="name">${m.name} <span class="rx">${m.rx}</span></div><div class="why">${m.why}</div></div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Accessories
+        if(result.accessories.length) {
+            html += `<div style="margin-top:14px;"><div style="font-size:0.75rem;color:#FFD700;text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin-bottom:8px;">Accessory Prescription</div>`;
+            result.accessories.forEach((acc,idx) => {
+                const accMax = S.maxes[acc.s] || S.maxes[lift] || 0;
+                const weekPreviews = acc.pct.map((p,w) => {
+                    if(p===0) return `<span style="color:#555;">W${w+1}: OFF</span>`;
+                    const load = accMax > 0 ? Math.round((accMax*p)/5)*5+' lbs' : Math.round(p*100)+'%';
+                    return `W${w+1}: ${acc.reps[w]} @ ${load}`;
+                }).join(' · ');
+                html += `<div class="acc-preview">
+                    <div class="acc-name">${acc.n}</div>
+                    <div class="acc-target">${acc.why}</div>
+                    <div class="week-row">${weekPreviews}</div>
+                    <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;">
+                        <input type="checkbox" checked class="report-acc-cb" data-lift="${lift}" data-idx="${idx}" style="accent-color:${color};width:16px;height:16px;">
+                        <span style="color:#888;font-size:0.8rem;">Include in program</span>
+                    </label>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        html += `</div>`;
+    });
+
+    // Program injection
+    html += `<div class="report-section" style="border-color:#FFD700;">
+        <h3 style="color:#FFD700;">Add to Program</h3>
+        <p style="color:#aaa;font-size:0.85rem;margin-bottom:14px;">Selected accessories will be injected into your program with periodized weights across all weeks.</p>
+        <button class="inject-btn inject-andre" onclick="injectToProgram('andre')">Add to Andre Map Wave</button>
+        <button class="inject-btn inject-base" onclick="injectToProgram('base')">Add to Base Map Linear</button>
+        <button class="next-btn" style="background:#333;color:#aaa;margin-top:8px;" onclick="saveAssessment()">💾 Save Assessment for Later Comparison</button>
+    </div>`;
+
+    html += `</div>`;
+    RA.innerHTML = html;
+
+    // Store accessories for injection
+    window._glossaryAccessories = allAccessories;
+}
+
+// ---------- PROGRAM INJECTION ----------
+const dayPlacement = {
+    squat: { andre: 2, base: 2 },      // Wednesday
+    bench: { andre: 1, base: 1 },       // Tuesday
+    deadlift: { andre: 5, base: 5 },    // Saturday
+    ohp: { andre: 4, base: 4 }          // Friday
+};
+
+window.injectToProgram = function(program) {
+    const allAcc = window._glossaryAccessories || {};
+    const checkboxes = document.querySelectorAll('.report-acc-cb');
+    let liftAccMap = {};
+
+    // Collect checked accessories
+    checkboxes.forEach(cb => {
+        if(!cb.checked) return;
+        const lift = cb.dataset.lift;
+        const idx = parseInt(cb.dataset.idx);
+        if(!liftAccMap[lift]) liftAccMap[lift] = [];
+        if(allAcc[lift] && allAcc[lift][idx]) liftAccMap[lift].push(allAcc[lift][idx]);
+    });
+
+    const storageKey = program === 'andre' ? 'andreMapCustomLifts' : 'baseMapCustomLifts';
+    let existing = [];
+    try { existing = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch(e) {}
+
+    let added = 0;
+    Object.entries(liftAccMap).forEach(([lift, accs]) => {
+        accs.forEach(acc => {
+            const dayIdx = dayPlacement[acc.s] ? dayPlacement[acc.s][program] : 2;
+            const isAndre = program === 'andre';
+            const numWeeks = isAndre ? 6 : 4;
+            existing.push({
+                n: acc.n + ' 🔧',
+                t: acc.n,
+                p: acc.pct[0],
+                r: acc.reps[0],
+                s: acc.s,
+                dayIndex: dayIdx,
+                isAutoAcc: true,
+                pctByWeek: acc.pct.slice(0, numWeeks),
+                repsByWeek: acc.reps.slice(0, numWeeks)
+            });
+            added++;
+        });
+    });
+
+    localStorage.setItem(storageKey, JSON.stringify(existing));
+
+    // Show confirmation
+    const btn = document.querySelector(program === 'andre' ? '.inject-andre' : '.inject-base');
+    if(btn) {
+        btn.innerText = `✅ ${added} accessories added to ${program === 'andre' ? 'Andre Map Wave' : 'Base Map Linear'}!`;
+        btn.style.background = '#2e7d32';
+        btn.disabled = true;
+    }
+};
+
+// ---------- SAVE & COMPARE ----------
+window.saveAssessment = function() {
+    const history = JSON.parse(localStorage.getItem('glossaryHistory') || '[]');
+    const entry = {
+        date: new Date().toISOString(),
+        profile: { sex: S.sex, height: S.height, weight: S.weight, trainingAge: S.trainingAge },
+        injuries: S.injuries.map(p => ({ part: p, severity: S.injurySeverity[p], duration: S.injuryDuration[p] })),
+        lifts: S.lifts,
+        liftData: S.liftData,
+        maxes: S.maxes,
+        leverage: getLeverageProfile()
+    };
+    history.push(entry);
+    localStorage.setItem('glossaryHistory', JSON.stringify(history));
+
+    const btn = document.querySelector('[onclick="saveAssessment()"]');
+    if(btn) {
+        btn.innerText = `✅ Saved! (${history.length} assessment${history.length>1?'s':''} on file)`;
+        btn.style.background = '#2e7d32';
+        btn.style.color = '#fff';
+        btn.disabled = true;
+    }
+};
+
+// ---------- KICK OFF ----------
+showQ1();
+</script>
+</body>
+</html>
