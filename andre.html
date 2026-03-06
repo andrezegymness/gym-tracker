@@ -121,7 +121,7 @@
     <span class="close-modal" onclick="closeModal('toolsModal')">&times;</span>
     <h2>Lifter's Toolkit</h2>
     <div class="tools-layout">
-        <div class="tool-card"><h3>Global Settings</h3><div class="inputs-grid" style="grid-template-columns:1fr 1fr;"><input type="number" id="bodyweight" placeholder="Bodyweight" onchange="saveSettings()"><button class="full-btn" onclick="copyData()">Backup Data</button></div></div>
+        <div class="tool-card"><h3>Global Settings</h3><div class="inputs-grid" style="grid-template-columns:1fr 1fr;"><input type="text" id="userName" placeholder="First Name" onchange="saveSettings()" style="text-transform:capitalize;"><input type="number" id="bodyweight" placeholder="Bodyweight" onchange="saveSettings()"></div><button class="full-btn" onclick="copyData()">Backup Data</button></div>
         
         <div class="tool-card">
             <h3>Warm-up Generator</h3>
