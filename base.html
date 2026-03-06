@@ -17,8 +17,10 @@
       </div>
       <div class="header-stats">
          <div class="stat-box"><span class="stat-label">TOTAL</span><span class="stat-val" id="currentTotal">0</span></div>
+         <div class="stat-box" onclick="openDotsCalc()" style="cursor:pointer;" title="Click to open DOTS calculator"><span class="stat-label">DOTS</span><span class="stat-val" id="currentDots">-</span></div>
          </div>
       <div class="header-actions">
+        <button class="action-btn" id="autoAccBtn" onclick="openAutoAccessories()" style="background:#2e7d32;color:#fff;border-color:#4caf50;">🔧 Weak Point Rx</button>
         <button class="action-btn" id="missedLiftBtn" onclick="openMissedLiftDiag()" style="background:#d32f2f;color:#fff;border-color:#f44336;">❌ Missed Lift</button>
         <button class="action-btn" id="login-btn" onclick="document.getElementById('authModal').style.display='flex'">Login</button>
         <button class="action-btn" onclick="document.getElementById('toolsModal').style.display='flex'">Tools</button>
