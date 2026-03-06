@@ -1306,7 +1306,10 @@ async function saveToCloud() {
                 name: displayName,
                 total,
                 squat:state.maxes.Squat||0, bench:state.maxes.Bench||0,
-                deadlift:state.maxes.Deadlift||0, unit:state.unit
+                deadlift:state.maxes.Deadlift||0, unit:state.unit,
+                program: 'Andre Map Wave',
+                week: state.activeWeek,
+                updatedAt: Date.now()
             });
         }
     } catch(e) { console.error('Cloud save error:',e); }
