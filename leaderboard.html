@@ -94,11 +94,36 @@
             const stats = `S: ${d.squat||0} | B: ${d.bench||0} | D: ${d.deadlift||0}`;
             const medal = medals[i] || rank;
             const rankColor = rank===1 ? 'color:#FFD700' : rank===2 ? 'color:#aaa' : rank===3 ? 'color:#cd7f32' : 'color:#666';
+
+            // Program and week info
+            let programBadge = '';
+            if(d.program) {
+                const isAndre = d.program.includes('Andre');
+                const badgeColor = isAndre ? '#d32f2f' : '#1565c0';
+                const shortName = isAndre ? 'ANDRE WAVE' : 'BASE LINEAR';
+                const weekLabel = d.week ? `Wk ${d.week}` : '';
+                const modeLabel = d.mode && !isAndre ? ` · ${d.mode}` : '';
+                programBadge = `<span style="display:inline-block;background:${badgeColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.65rem;font-weight:bold;margin-top:4px;letter-spacing:0.5px;">${shortName}${weekLabel ? ' · '+weekLabel : ''}${modeLabel}</span>`;
+            }
+
+            // Last updated
+            let lastUpdated = '';
+            if(d.updatedAt) {
+                const ago = Date.now() - d.updatedAt;
+                const days = Math.floor(ago / 86400000);
+                if(days === 0) lastUpdated = 'today';
+                else if(days === 1) lastUpdated = 'yesterday';
+                else if(days < 7) lastUpdated = `${days}d ago`;
+                else if(days < 30) lastUpdated = `${Math.floor(days/7)}w ago`;
+                else lastUpdated = `${Math.floor(days/30)}mo ago`;
+            }
+
             html += `<tr>
                 <td style="${rankColor}; font-size:${rank<=3?'1.4rem':'1rem'};">${medal}</td>
                 <td>
                     <div class="user-email">${displayName}</div>
                     <div class="user-stats">${stats}</div>
+                    <div>${programBadge}${lastUpdated ? `<span style="color:#444;font-size:0.65rem;margin-left:8px;">Updated ${lastUpdated}</span>` : ''}</div>
                 </td>
                 <td>${d.total} <span style="font-size:0.6rem; color:#666;">${d.unit||'LBS'}</span></td>
             </tr>`;
