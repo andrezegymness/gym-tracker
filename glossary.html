@@ -137,21 +137,28 @@ function clearBaselineProfile() {
 
 // ---------- NAVIGATION HISTORY (Back Button Support) ----------
 const navHistory = [];
+let isGoingBack = false;
 
 function pushNav(fn) {
+    // Don't push if we're navigating back (the function is already in the stack)
+    if (isGoingBack) return;
+    // Don't push duplicate of same function consecutively
+    if (navHistory.length > 0 && navHistory[navHistory.length - 1] === fn) return;
     navHistory.push(fn);
 }
 
 function goBack() {
     if (navHistory.length > 1) {
-        navHistory.pop(); // remove current
+        navHistory.pop(); // remove current screen
         const prev = navHistory[navHistory.length - 1]; // get previous
-        prev(); // re-render it
+        isGoingBack = true;
+        prev(); // re-render it (pushNav will be skipped due to flag)
+        isGoingBack = false;
     }
 }
 
 function backButton(extraStyle) {
-    if (navHistory.length <= 1) return '';
+    // Always show back button if there's history (check after push)
     return `<button class="back-btn-inline" onclick="goBack()" style="${extraStyle||''}">← Back</button>`;
 }
 
