@@ -6,31 +6,56 @@
     <title>Andre's Calibrations</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body { display:flex; align-items:center; justify-content:center; min-height:100vh; text-align:center; background:#0d0d0d; }
+        body { display:flex; align-items:center; justify-content:center; min-height:100vh; text-align:center; background:#000; }
         .gatekeeper { max-width:600px; width:100%; padding:20px; }
-        .logo-text { font-size:2rem; color:#fff; margin-bottom:10px; font-weight:900; letter-spacing:2px; }
-        .logo-sub { font-size:0.85rem; color:#555; margin-bottom:40px; letter-spacing:1px; }
-        .gate-btn {
-            display:block; width:100%; padding:22px;
-            margin:12px 0; background:#1a1a1a; color:#fff;
-            text-decoration:none; border:2px solid #333;
-            border-radius:12px; font-size:1.3rem; font-weight:900;
-            transition:all 0.25s; text-transform:uppercase; letter-spacing:1px;
+        .logo-text {
+            font-size:1.8rem; color:#fff; margin-bottom:6px; font-weight:900;
+            letter-spacing:1px;
+            background: linear-gradient(135deg, #fff 0%, #98989d 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .gate-btn:hover { background:#222; transform:scale(1.02); }
-        .gate-btn.red  { border-color:#d32f2f; }
-        .gate-btn.red:hover  { border-color:#f44336; box-shadow:0 0 20px rgba(244,67,54,0.2); }
-        .gate-btn.blue { border-color:#1565c0; color:#2196f3; }
-        .gate-btn.blue:hover { border-color:#2196f3; box-shadow:0 0 20px rgba(33,150,243,0.2); }
-        .gate-btn.gold { border-color:#b8860b; color:#FFD700; }
-        .gate-btn.gold:hover { border-color:#FFD700; background:rgba(255,215,0,0.05); box-shadow:0 0 20px rgba(255,215,0,0.15); }
-        .gate-btn.green { border-color:#2a4a2a; color:#4caf50; }
-        .gate-btn.green:hover { border-color:#4caf50; background:rgba(76,175,80,0.05); box-shadow:0 0 20px rgba(76,175,80,0.2); }
-        .gate-btn .sub { display:block; font-size:0.65rem; font-weight:400; color:#888; margin-top:4px; letter-spacing:0.5px; }
+        .logo-sub { font-size:0.75rem; color:#48484a; margin-bottom:36px; letter-spacing:2px; font-weight:600; text-transform:uppercase; }
+        .gate-btn {
+            display:block; width:100%; padding:20px 22px;
+            margin:10px 0; background:#1c1c1e; color:#fff;
+            text-decoration:none; border:0.5px solid #38383a;
+            border-radius:16px; font-size:1.15rem; font-weight:800;
+            transition:all 0.3s cubic-bezier(0.28,0.11,0.32,1);
+            text-transform:uppercase; letter-spacing:0.5px;
+            text-align:left; position:relative; overflow:hidden;
+        }
+        .gate-btn::after {
+            content:'›'; position:absolute; right:20px; top:50%; transform:translateY(-50%);
+            font-size:1.5rem; color:#48484a; font-weight:300; transition:all 0.3s;
+        }
+        .gate-btn:hover { background:#2c2c2e; transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,0.4); }
+        .gate-btn:hover::after { right:16px; color:#98989d; }
+        .gate-btn:active { transform:scale(0.98); }
+        .gate-btn.red  { border-color:rgba(255,69,58,0.3); }
+        .gate-btn.red:hover  { border-color:rgba(255,69,58,0.5); box-shadow:0 8px 30px rgba(255,69,58,0.1); }
+        .gate-btn.blue { border-color:rgba(10,132,255,0.3); color:#0a84ff; }
+        .gate-btn.blue:hover { border-color:rgba(10,132,255,0.5); box-shadow:0 8px 30px rgba(10,132,255,0.1); }
+        .gate-btn.gold { border-color:rgba(255,214,10,0.25); color:#ffd60a; }
+        .gate-btn.gold:hover { border-color:rgba(255,214,10,0.45); box-shadow:0 8px 30px rgba(255,214,10,0.08); }
+        .gate-btn.green { border-color:rgba(48,209,88,0.25); color:#30d158; }
+        .gate-btn.green:hover { border-color:rgba(48,209,88,0.45); box-shadow:0 8px 30px rgba(48,209,88,0.08); }
+        .gate-btn .sub {
+            display:block; font-size:0.62rem; font-weight:400; color:#636366;
+            margin-top:5px; letter-spacing:0.3px; text-transform:none;
+            max-width:calc(100% - 30px);
+        }
+        .gate-btn { opacity:0; animation: cardEnter 0.5s cubic-bezier(0.28,0.11,0.32,1) forwards; }
+        .gate-btn:nth-child(1) { animation-delay:0.05s; }
+        .gate-btn:nth-child(2) { animation-delay:0.1s; }
+        .gate-btn:nth-child(3) { animation-delay:0.15s; }
+        .gate-btn:nth-child(4) { animation-delay:0.2s; }
+        .gate-btn:nth-child(5) { animation-delay:0.25s; }
+        .gate-btn:nth-child(6) { animation-delay:0.3s; }
+        .gate-btn:nth-child(7) { animation-delay:0.35s; }
+        @keyframes cardEnter { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
     </style>
     <script>
-        // Auto-redirect to last visited program on fresh visit
-        // Stays on menu if user clicked Menu (referrer is same host)
         window.addEventListener("DOMContentLoaded", () => {
             const lastPage = localStorage.getItem("last_program_page");
             const fromSameSite = document.referrer && document.referrer.includes(window.location.host);
@@ -43,7 +68,7 @@
 <body>
     <div class="gatekeeper">
         <div class="logo-text">ANDRE'S CALIBRATIONS</div>
-        <div class="logo-sub">SELECT YOUR PROGRAM</div>
+        <div class="logo-sub">Select Your Program</div>
 
         <a href="andre.html" class="gate-btn red"
            onclick="localStorage.setItem('last_program_page','andre.html')">
@@ -68,26 +93,20 @@
         </a>
 
         <a href="warmup.html" class="gate-btn"
-           style="border-color:#2a1f00; color:#ff9800;"
-           onmouseover="this.style.borderColor='#ff9800';this.style.boxShadow='0 0 20px rgba(255,152,0,0.2)'"
-           onmouseout="this.style.borderColor='#2a1f00';this.style.boxShadow=''">
+           style="border-color:rgba(255,159,10,0.25); color:#ff9f0a;">
             Warm-Up Calculator
             <span class="sub">Plate Loader · Top Set Reps · Belt Cues · LBS &amp; KG</span>
         </a>
 
         <a href="glossary.html" class="gate-btn"
-           style="border-color:#1a0a2e; color:#bb86fc;"
-           onmouseover="this.style.borderColor='#bb86fc';this.style.boxShadow='0 0 20px rgba(187,134,252,0.25)'"
-           onmouseout="this.style.borderColor='#1a0a2e';this.style.boxShadow=''">
+           style="border-color:rgba(191,90,242,0.25); color:#bf5af2;">
             Master Glossary
             <span class="sub">Full Diagnostic · Biomechanics · Injury Rx · Leverage Analysis · Auto-Program</span>
         </a>
 
         <a href="injury.html" class="gate-btn"
-           style="border-color:#1a2e1a; color:#00e676;"
-           onmouseover="this.style.borderColor='#00e676';this.style.boxShadow='0 0 20px rgba(0,230,118,0.25)'"
-           onmouseout="this.style.borderColor='#1a2e1a';this.style.boxShadow=''">
-            Injury Pro <span style="font-size:0.6em;background:#00e676;color:#000;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;">BETA</span>
+           style="border-color:rgba(48,209,88,0.25); color:#30d158;">
+            Injury Pro <span style="font-size:0.55em;background:#30d158;color:#000;padding:1px 7px;border-radius:4px;margin-left:6px;vertical-align:middle;font-weight:700;">BETA</span>
             <span class="sub">Phase-Based Rehab · Periodized Recovery · Training Mods · Progress Memory</span>
         </a>
     </div>
