@@ -5,7 +5,7 @@
 //           Network-first for Firebase/API calls
 // ==========================================
 
-const CACHE_NAME = 'andres-calibrations-v1';
+const CACHE_NAME = 'andres-calibrations-v2';
 
 // All app files to cache for offline use
 const APP_SHELL = [
@@ -21,6 +21,7 @@ const APP_SHELL = [
     './style.css',
     './script_andre.js',
     './script_base.js',
+    './pwa.js',
     './manifest.json',
     // Google Fonts (cached on first load)
     'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap',
