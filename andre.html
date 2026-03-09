@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Andre Map Wave</title>
     <link rel="stylesheet" href="style.css">
@@ -152,5 +156,6 @@
 <div id="authModal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal('authModal')">&times;</span><h3 id="authModalTitle">Login</h3><div style="display:flex; flex-direction:column; gap:10px;"><input type="email" id="emailInput" placeholder="Email"><input type="password" id="passInput" placeholder="Password (min 6 chars)"><button class="full-btn" id="emailLoginBtn">Log In</button><button class="full-btn" id="emailSignupBtn" style="display:none; background:#4caf50;">Create Account</button><button class="full-btn" id="googleLoginBtn" style="background:#4285F4;">Continue with Google</button><p style="text-align:center; color:#666; font-size:12px; margin:0;">Don't have an account? <span style="color:#2196f3;cursor:pointer;text-decoration:underline;" id="authToggleHint">Sign up</span></p></div></div></div>
 
 <script type="module" src="script_andre.js"></script>
+<script src="pwa.js"></script>
 </body>
 </html>
