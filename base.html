@@ -75,7 +75,7 @@
 
       <div class="dash-group">
           <label style="color:#aaa; font-size:12px;">Customize</label>
-          <button class="dash-btn" onclick="document.getElementById('libraryModal').style.display='flex'" style="background:#2196f3; color:#fff; border:none; padding:5px 10px; font-weight:bold; cursor:pointer;">+ Add Workout</button>
+          <button class="dash-btn" onclick="if(typeof requireAuth!=='undefined'&&!requireAuth('Sign in to generate personalized workouts.'))return;document.getElementById('libraryModal').style.display='flex'" style="background:#2196f3; color:#fff; border:none; padding:5px 10px; font-weight:bold; cursor:pointer;">+ Add Workout</button>
       </div>
 
       <div class="dash-group">
