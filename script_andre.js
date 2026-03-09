@@ -461,6 +461,294 @@ function buildRPEPicker(liftId) {
 }
 
 // ==========================================
+// RPE AUTO-REGULATION ENGINE
+// Modes: OFF, set-to-set, session-to-session
+// Stored in localStorage so it persists
+// ==========================================
+const AUTOREG_KEY = 'rpeAutoRegMode';
+
+function getAutoRegMode() {
+    return localStorage.getItem(AUTOREG_KEY) || 'off';
+}
+
+window.setAutoRegMode = function(mode) {
+    localStorage.setItem(AUTOREG_KEY, mode);
+    // Update toggle UI
+    document.querySelectorAll('.autoreg-opt').forEach(btn => {
+        btn.style.background = btn.dataset.mode === mode ? '#0a84ff' : '#2c2c2e';
+        btn.style.color = btn.dataset.mode === mode ? '#fff' : '#98989d';
+        btn.style.borderColor = btn.dataset.mode === mode ? '#0a84ff' : '#38383a';
+    });
+    const label = {off:'OFF',set:'Set-to-Set',session:'Session-to-Session'}[mode];
+    toast(`Auto-Regulation: ${label}`, 'info');
+    render();
+};
+
+// Calculate RPE-based weight adjustment
+// Returns a multiplier (e.g. 0.95 = drop 5%)
+function getAutoRegAdjustment(liftName, liftType, weekNum, dayName) {
+    const mode = getAutoRegMode();
+    if (mode === 'off') return 1.0;
+
+    const log = getRPELog();
+    const today = new Date().toLocaleDateString('en-US');
+
+    if (mode === 'set') {
+        // SET-TO-SET: Check if any lift of same type was logged today with high RPE
+        // This simulates "you already did a tough set, drop the next one"
+        if (!log[today]) return 1.0;
+        const todayEntries = log[today];
+        let maxRPE = 0;
+        Object.keys(todayEntries).forEach(key => {
+            // Match lifts in same day with same base type
+            if (key.includes(liftName.replace(/\W/g,'_')) || key.includes(liftType)) {
+                maxRPE = Math.max(maxRPE, todayEntries[key]);
+            }
+        });
+        if (maxRPE >= 10) return 0.92;  // RPE 10 → drop 8%
+        if (maxRPE >= 9.5) return 0.95; // RPE 9.5 → drop 5%
+        if (maxRPE >= 9) return 0.97;   // RPE 9 → drop 3%
+        return 1.0;
+    }
+
+    if (mode === 'session') {
+        // SESSION-TO-SESSION: Check the PREVIOUS day's RPE for this lift type
+        const dates = Object.keys(log).sort().reverse();
+        for (const date of dates) {
+            if (date === today) continue; // skip today
+            const entries = log[date];
+            let maxRPE = 0;
+            Object.keys(entries).forEach(key => {
+                const keyLower = key.toLowerCase();
+                const typeLower = liftType.toLowerCase();
+                if (keyLower.includes(typeLower) || keyLower.includes(liftName.replace(/\W/g,'_').toLowerCase())) {
+                    maxRPE = Math.max(maxRPE, entries[key]);
+                }
+            });
+            if (maxRPE > 0) {
+                if (maxRPE >= 10) return 0.90;  // RPE 10 last session → drop 10%
+                if (maxRPE >= 9.5) return 0.93; // RPE 9.5 → drop 7%
+                if (maxRPE >= 9) return 0.95;   // RPE 9 → drop 5%
+                if (maxRPE >= 8.5) return 0.98;  // RPE 8.5 → drop 2%
+                return 1.0;
+            }
+        }
+        return 1.0;
+    }
+
+    return 1.0;
+}
+
+// Build the auto-reg toggle UI (injected into header or control panel)
+function buildAutoRegToggle() {
+    const mode = getAutoRegMode();
+    return `
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:0.7rem;color:#98989d;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Auto-Reg</span>
+        <button class="autoreg-opt" data-mode="off" onclick="setAutoRegMode('off')"
+            style="padding:5px 10px;border-radius:8px;border:0.5px solid ${mode==='off'?'#0a84ff':'#38383a'};background:${mode==='off'?'#0a84ff':'#2c2c2e'};color:${mode==='off'?'#fff':'#98989d'};font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">OFF</button>
+        <button class="autoreg-opt" data-mode="set" onclick="setAutoRegMode('set')"
+            style="padding:5px 10px;border-radius:8px;border:0.5px solid ${mode==='set'?'#0a84ff':'#38383a'};background:${mode==='set'?'#0a84ff':'#2c2c2e'};color:${mode==='set'?'#fff':'#98989d'};font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">Set-to-Set</button>
+        <button class="autoreg-opt" data-mode="session" onclick="setAutoRegMode('session')"
+            style="padding:5px 10px;border-radius:8px;border:0.5px solid ${mode==='session'?'#0a84ff':'#38383a'};background:${mode==='session'?'#0a84ff':'#2c2c2e'};color:${mode==='session'?'#fff':'#98989d'};font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">Session</button>
+    </div>`;
+}
+
+// ==========================================
+// MEET DAY WARM-UP ROOM CALCULATOR
+// Full attempt selection + warm-up timing
+// ==========================================
+window.openMeetWarmupRoom = function() {
+    const existing = document.getElementById('meetWarmupModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'meetWarmupModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:9500;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0;';
+    modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
+
+    const lifts = ['Squat','Bench','Deadlift'];
+    let liftTabs = lifts.map((l,i) =>
+        `<button class="meet-lift-tab" data-lift="${l}" onclick="selectMeetLift('${l}')"
+            style="flex:1;padding:12px;border-radius:10px;border:0.5px solid ${i===0?'#0a84ff':'#38383a'};background:${i===0?'rgba(10,132,255,0.15)':'#1c1c1e'};color:${i===0?'#0a84ff':'#98989d'};font-weight:800;font-size:0.95rem;cursor:pointer;font-family:inherit;">${l}</button>`
+    ).join('');
+
+    modal.innerHTML = `
+    <div style="background:#1c1c1e;border:0.5px solid #38383a;border-radius:20px;padding:24px;width:95%;max-width:550px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <h2 style="margin:0;color:#ffd60a;font-size:1.2rem;font-weight:800;">🏆 Meet Day Warm-Up Room</h2>
+            <button onclick="document.getElementById('meetWarmupModal').remove()" style="background:#2c2c2e;border:none;color:#98989d;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;">✕</button>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:18px;">${liftTabs}</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px;">
+            <div>
+                <label style="font-size:0.65rem;color:#636366;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Opener</label>
+                <input type="number" id="meetOpener" placeholder="0" style="width:100%;background:#000;border:0.5px solid #38383a;color:#fff;padding:10px;border-radius:10px;font-size:1rem;font-weight:700;text-align:center;" oninput="calcMeetWarmups()">
+            </div>
+            <div>
+                <label style="font-size:0.65rem;color:#636366;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">2nd Attempt</label>
+                <input type="number" id="meet2nd" placeholder="0" style="width:100%;background:#000;border:0.5px solid #38383a;color:#fff;padding:10px;border-radius:10px;font-size:1rem;font-weight:700;text-align:center;">
+            </div>
+            <div>
+                <label style="font-size:0.65rem;color:#636366;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">3rd (PR)</label>
+                <input type="number" id="meet3rd" placeholder="0" style="width:100%;background:#000;border:0.5px solid #38383a;color:#ffd60a;padding:10px;border-radius:10px;font-size:1rem;font-weight:700;text-align:center;">
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
+            <div>
+                <label style="font-size:0.65rem;color:#636366;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Flight you're in</label>
+                <select id="meetFlight" style="width:100%;background:#000;border:0.5px solid #38383a;color:#fff;padding:10px;border-radius:10px;font-size:0.9rem;" onchange="calcMeetWarmups()">
+                    <option value="A">Flight A</option>
+                    <option value="B">Flight B</option>
+                    <option value="C">Flight C</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:0.65rem;color:#636366;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;">Lifters in flight</label>
+                <input type="number" id="meetLiftersInFlight" value="12" style="width:100%;background:#000;border:0.5px solid #38383a;color:#fff;padding:10px;border-radius:10px;font-size:0.9rem;text-align:center;" oninput="calcMeetWarmups()">
+            </div>
+        </div>
+
+        <button onclick="calcMeetWarmups()" style="width:100%;padding:14px;background:#ffd60a;color:#000;border:none;border-radius:12px;font-weight:800;font-size:0.95rem;cursor:pointer;margin-bottom:16px;">Generate Warm-Up Timeline</button>
+
+        <div id="meetWarmupResult" style="display:none;"></div>
+    </div>`;
+
+    document.body.appendChild(modal);
+
+    // Auto-fill from maxes
+    const defaultLift = 'Squat';
+    const mx = state.maxes[defaultLift] || 0;
+    if (mx > 0) {
+        document.getElementById('meetOpener').value = Math.round((mx * 0.91) / 5) * 5;
+        document.getElementById('meet2nd').value = Math.round((mx * 0.96) / 5) * 5;
+        document.getElementById('meet3rd').value = Math.round((mx * 1.02) / 5) * 5;
+    }
+};
+
+window.selectMeetLift = function(lift) {
+    document.querySelectorAll('.meet-lift-tab').forEach(btn => {
+        const isActive = btn.dataset.lift === lift;
+        btn.style.borderColor = isActive ? '#0a84ff' : '#38383a';
+        btn.style.background = isActive ? 'rgba(10,132,255,0.15)' : '#1c1c1e';
+        btn.style.color = isActive ? '#0a84ff' : '#98989d';
+    });
+    const mx = state.maxes[lift] || 0;
+    if (mx > 0) {
+        document.getElementById('meetOpener').value = Math.round((mx * 0.91) / 5) * 5;
+        document.getElementById('meet2nd').value = Math.round((mx * 0.96) / 5) * 5;
+        document.getElementById('meet3rd').value = Math.round((mx * 1.02) / 5) * 5;
+        calcMeetWarmups();
+    }
+};
+
+window.calcMeetWarmups = function() {
+    const opener = parseFloat(document.getElementById('meetOpener').value) || 0;
+    if (opener <= 0) return;
+
+    const liftersInFlight = parseInt(document.getElementById('meetLiftersInFlight').value) || 12;
+    // Estimate ~1 minute per lifter per attempt
+    const flightTime = liftersInFlight * 1; // minutes per round
+
+    // Warm-up protocol: work backwards from opener
+    const warmups = [
+        { pct: 0.40, reps: 5, label: 'Bar feel', cue: 'Just move. Groove the pattern.' },
+        { pct: 0.50, reps: 5, label: 'Light speed', cue: 'Fast and explosive. Build confidence.' },
+        { pct: 0.65, reps: 3, label: 'Working up', cue: 'Start bracing harder. Belt on if using.' },
+        { pct: 0.75, reps: 2, label: 'Moderate', cue: 'Match competition commands. Full pause.' },
+        { pct: 0.84, reps: 1, label: 'Heavy single', cue: 'BELT ON. Full competition setup.' },
+        { pct: 0.91, reps: 1, label: 'Last warm-up', cue: 'Move fast. This should feel smooth. Stop here.' }
+    ];
+
+    // Calculate weights rounded to 5
+    const warmupSets = warmups.map(w => ({
+        ...w,
+        weight: Math.round((opener * w.pct / 0.91) / 5) * 5 // scale relative to opener
+    }));
+
+    // Timing: work backwards from "on deck" time
+    // Assume you want last warm-up done ~3 attempts before your opener
+    const attemptsBeforeOpener = 3;
+    const minutesBeforeOpener = attemptsBeforeOpener * 1;
+    const restBetweenSets = [2, 2, 3, 3, 4, 5]; // minutes rest after each warm-up
+
+    let timeline = [];
+    let timeOffset = 0;
+    // Total warm-up time
+    for (let i = warmupSets.length - 1; i >= 0; i--) {
+        timeOffset += restBetweenSets[i] || 3;
+    }
+    timeOffset += minutesBeforeOpener;
+
+    let currentOffset = timeOffset;
+    warmupSets.forEach((set, i) => {
+        timeline.push({
+            ...set,
+            minutesBefore: currentOffset,
+        });
+        currentOffset -= (restBetweenSets[i] || 3);
+    });
+
+    // Render
+    const result = document.getElementById('meetWarmupResult');
+    let html = `
+    <div style="background:#000;border:0.5px solid #38383a;border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:0.65rem;color:#ffd60a;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:10px;">Warm-Up Timeline</div>
+        <div style="font-size:0.75rem;color:#636366;margin-bottom:14px;">Start warming up ~${timeOffset} minutes before your opener is called.</div>`;
+
+    timeline.forEach((set, i) => {
+        const isLast = i === timeline.length - 1;
+        html += `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;${i < timeline.length-1 ? 'border-bottom:0.5px solid #1c1c1e;' : ''}">
+            <div style="min-width:40px;text-align:center;">
+                <div style="font-size:0.65rem;color:#636366;">${set.minutesBefore}min</div>
+                <div style="font-size:0.65rem;color:#636366;">before</div>
+            </div>
+            <div style="flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-weight:800;color:#fff;font-size:1rem;">${set.weight} lbs</span>
+                    <span style="color:#0a84ff;font-size:0.85rem;font-weight:600;">x${set.reps}</span>
+                </div>
+                <div style="font-size:0.75rem;color:${isLast ? '#ffd60a' : '#98989d'};margin-top:2px;font-style:italic;">${set.cue}</div>
+            </div>
+            <div style="font-size:0.7rem;color:#48484a;min-width:55px;text-align:right;">${Math.round(set.pct / 0.91 * 100)}% opener</div>
+        </div>`;
+    });
+
+    // Attempts section
+    const second = parseFloat(document.getElementById('meet2nd').value) || 0;
+    const third = parseFloat(document.getElementById('meet3rd').value) || 0;
+
+    html += `</div>
+    <div style="background:#000;border:0.5px solid #38383a;border-radius:14px;padding:16px;">
+        <div style="font-size:0.65rem;color:#ff453a;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:10px;">Competition Attempts</div>
+        <div style="display:flex;gap:10px;">
+            <div style="flex:1;background:#1c1c1e;border-radius:10px;padding:14px;text-align:center;">
+                <div style="font-size:0.65rem;color:#30d158;font-weight:600;margin-bottom:4px;">OPENER</div>
+                <div style="font-size:1.3rem;font-weight:900;color:#fff;">${opener}</div>
+            </div>
+            <div style="flex:1;background:#1c1c1e;border-radius:10px;padding:14px;text-align:center;">
+                <div style="font-size:0.65rem;color:#ff9f0a;font-weight:600;margin-bottom:4px;">2ND</div>
+                <div style="font-size:1.3rem;font-weight:900;color:#fff;">${second || '—'}</div>
+            </div>
+            <div style="flex:1;background:#1c1c1e;border-radius:10px;padding:14px;text-align:center;">
+                <div style="font-size:0.65rem;color:#ffd60a;font-weight:600;margin-bottom:4px;">3RD / PR</div>
+                <div style="font-size:1.3rem;font-weight:900;color:#ffd60a;">${third || '—'}</div>
+            </div>
+        </div>
+        <div style="margin-top:10px;font-size:0.75rem;color:#636366;text-align:center;">
+            Projected Total: <strong style="color:#fff;">${opener + (second||0) + 0}</strong> lbs (with 2nd attempts)
+        </div>
+    </div>`;
+
+    result.innerHTML = html;
+    result.style.display = 'block';
+};
+
+// ==========================================
 // MISSED LIFT DIAGNOSTIC — NEW FEATURE
 // ==========================================
 const missedLiftReasons = [
@@ -1566,12 +1854,21 @@ function render() {
 
             let baseLoad  = (max > 0) ? Math.round((max*adjustedPct)/5)*5 : 0;
             let modifier  = modifiers[m.name] || 1.0;
-            let finalLoad = Math.round((baseLoad*modifier)/5)*5;
+            
+            // RPE Auto-Regulation: apply adjustment if enabled
+            const autoRegMult = getAutoRegAdjustment(m.name, m.type, state.activeWeek, day);
+            let finalLoad = Math.round((baseLoad*modifier*autoRegMult)/5)*5;
             let loadDisplay = "", style = "", warn = "";
+            let autoRegLabel = "";
 
             if(baseLoad > 0) {
+                if(autoRegMult < 1.0) {
+                    style="color:#ff9f0a;font-weight:bold;";
+                    const dropPct = Math.round((1 - autoRegMult) * 100);
+                    autoRegLabel = ` <span style='color:#ff9f0a;font-size:9px;'>↓${dropPct}% RPE</span>`;
+                }
                 if(modifier!==1.0 || overloadPct>0) { style="color:#ff4444;font-weight:bold;"; warn=" ⚠️"; }
-                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span>${warningLabel} <span onclick="adjustWeight('${m.name}',${baseLoad})" style="cursor:pointer;font-size:12px;color:#aaa;margin-left:5px;">✎</span>`;
+                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span>${warningLabel}${autoRegLabel} <span onclick="adjustWeight('${m.name}',${baseLoad})" style="cursor:pointer;font-size:12px;color:#aaa;margin-left:5px;">✎</span>`;
             } else {
                 loadDisplay = Math.round(m.pct*100)+"%";
             }
@@ -1945,8 +2242,40 @@ function init() {
                     location.reload();
                 };
             }
+        } else {
+            // Not logged in — show gentle sign-up prompt after delay
+            const dismissed = sessionStorage.getItem('signupPromptDismissed');
+            if (!dismissed) {
+                setTimeout(() => {
+                    if (auth.currentUser) return;
+                    showSignupPrompt();
+                }, 5000);
+            }
         }
     });
+
+    function showSignupPrompt() {
+        const existing = document.getElementById('signupPromptOverlay');
+        if (existing) return;
+        const overlay = document.createElement('div');
+        overlay.id = 'signupPromptOverlay';
+        overlay.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9700;display:flex;justify-content:center;padding:16px;pointer-events:none;animation:slideUp 0.4s cubic-bezier(0.28,0.11,0.32,1);';
+        overlay.innerHTML = `
+        <div style="pointer-events:auto;background:#1c1c1e;border:0.5px solid #38383a;border-radius:16px;padding:20px 24px;max-width:440px;width:100%;display:flex;align-items:center;gap:16px;box-shadow:0 -4px 30px rgba(0,0,0,0.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
+            <div style="flex-shrink:0;width:44px;height:44px;background:linear-gradient(135deg,#ff453a,#ff9f0a);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">🏋️</div>
+            <div style="flex:1;min-width:0;">
+                <div style="color:#fff;font-weight:700;font-size:0.92rem;margin-bottom:2px;">Save your progress</div>
+                <div style="color:#98989d;font-size:0.78rem;line-height:1.4;">Create a free account to sync your data, track PRs, and appear on the leaderboard.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+                <button onclick="document.getElementById('signupPromptOverlay').remove();sessionStorage.setItem('signupPromptDismissed','1');openAuthModal();"
+                    style="background:#ff453a;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:0.8rem;cursor:pointer;white-space:nowrap;">Sign Up</button>
+                <button onclick="document.getElementById('signupPromptOverlay').remove();sessionStorage.setItem('signupPromptDismissed','1');"
+                    style="background:none;border:none;color:#636366;font-size:0.72rem;cursor:pointer;">Dismiss</button>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+    }
 
     setupAuthButtons();
 
@@ -1991,6 +2320,10 @@ function init() {
         prBtn2.onclick = window.openPRTracker;
         actions.insertBefore(prBtn2, actions.children[3]);
     }
+
+    // Inject Auto-Regulation toggle
+    const autoRegContainer = document.getElementById('autoRegContainer');
+    if (autoRegContainer) autoRegContainer.innerHTML = buildAutoRegToggle();
 
     render();
 }
