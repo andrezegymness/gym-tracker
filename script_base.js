@@ -1435,7 +1435,7 @@ window.exportToPDF = function() {
     const bMax = parseFloat(document.getElementById('benchInput').value) || 0;
     const dMax = parseFloat(document.getElementById('deadliftInput').value) || 0;
     const oMax = parseFloat(document.getElementById('ohpInput').value) || 0;
-    const total = sMax + bMax + dMax + oMax;  // FIX: OHP included
+    const total = sMax + bMax + dMax;
     const mode = document.getElementById('dashMode').value;
 
     const win = window.open('', '_blank');
@@ -1532,7 +1532,7 @@ function generateProgram() {
   const overloadPct = parseFloat(document.getElementById('overloadInput').value) || 0;
 
   const totalEl = document.getElementById('currentTotal');
-  if(totalEl) totalEl.innerText = (sMax + bMax + dMax + oMax);
+  if(totalEl) totalEl.innerText = (sMax + bMax + dMax);
 
   const repsVal = document.getElementById('dashReps').value;
   const reps = parseInt(repsVal);
@@ -2010,7 +2010,7 @@ async function saveUserData() {
     } catch(e) { console.error('[BASE] Users doc FAILED:', e.code, e.message); }
 
     // Save leaderboard — separate try/catch so it always attempts
-    const total = s + b + dl + o;  // FIX: OHP now included in total
+    const total = s + b + dl;
     if(total > 0) {
         try {
             const displayName = baseUserName || currentUserEmail || "Anonymous";
@@ -2408,8 +2408,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show name prompt if user hasn't set one yet
                 if(!baseUserName) showNamePrompt();
             });
+        } else {
+            // Not logged in — show gentle sign-up prompt after delay
+            const dismissed = sessionStorage.getItem('signupPromptDismissed');
+            if (!dismissed) {
+                setTimeout(() => {
+                    if (auth.currentUser) return; // logged in while waiting
+                    showSignupPrompt();
+                }, 5000);
+            }
         }
     });
+
+    function showSignupPrompt() {
+        const existing = document.getElementById('signupPromptOverlay');
+        if (existing) return;
+        const overlay = document.createElement('div');
+        overlay.id = 'signupPromptOverlay';
+        overlay.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9700;display:flex;justify-content:center;padding:16px;pointer-events:none;animation:slideUp 0.4s cubic-bezier(0.28,0.11,0.32,1);';
+        overlay.innerHTML = `
+        <div style="pointer-events:auto;background:#1c1c1e;border:0.5px solid #38383a;border-radius:16px;padding:20px 24px;max-width:440px;width:100%;display:flex;align-items:center;gap:16px;box-shadow:0 -4px 30px rgba(0,0,0,0.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
+            <div style="flex-shrink:0;width:44px;height:44px;background:linear-gradient(135deg,#0a84ff,#30d158);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">💪</div>
+            <div style="flex:1;min-width:0;">
+                <div style="color:#fff;font-weight:700;font-size:0.92rem;margin-bottom:2px;">Save your progress</div>
+                <div style="color:#98989d;font-size:0.78rem;line-height:1.4;">Create a free account to sync your data, track PRs, and appear on the leaderboard.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+                <button onclick="document.getElementById('signupPromptOverlay').remove();sessionStorage.setItem('signupPromptDismissed','1');document.getElementById('authModal').style.display='flex';"
+                    style="background:#0a84ff;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:0.8rem;cursor:pointer;white-space:nowrap;">Sign Up</button>
+                <button onclick="document.getElementById('signupPromptOverlay').remove();sessionStorage.setItem('signupPromptDismissed','1');"
+                    style="background:none;border:none;color:#636366;font-size:0.72rem;cursor:pointer;">Dismiss</button>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+    }
 
     ['squatInput','benchInput','deadliftInput','ohpInput'].forEach(id => {
         const el = document.getElementById(id);
