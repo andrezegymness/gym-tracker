@@ -1799,11 +1799,11 @@ function generateProgram() {
         else if (mode === 'deload') {
             if (w === 0) {
                 fSets = 2; dReps = 5; finalIntens = 0.50;
-                weightDisplay = "Recover";
+                speedNote = "Recovery Week — light & easy";
             }
             if (w === 1) {
                 fSets = 3; dReps = 3; finalIntens = 0.70;
-                weightDisplay = "Prime CNS";
+                speedNote = "Prime CNS — moderate singles feel";
             }
         }
 
