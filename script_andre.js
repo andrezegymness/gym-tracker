@@ -44,6 +44,38 @@ function toast(msg, type = "success") {
 }
 
 // ==========================================
+// AUTH GATE — Require login for generation tools
+// ==========================================
+function requireAuth(action) {
+    const user = auth.currentUser;
+    if (user) return true;
+    const existing = document.getElementById('authGateOverlay');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'authGateOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:9800;display:flex;align-items:center;justify-content:center;';
+    overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+    overlay.innerHTML = `
+    <div style="background:#1c1c1e;border:0.5px solid #38383a;border-radius:20px;padding:32px 28px;width:90%;max-width:380px;text-align:center;">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,#ff453a,#ff9f0a);border-radius:16px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:28px;">🔒</div>
+        <h3 style="color:#fff;font-size:1.15rem;font-weight:700;margin:0 0 8px;">Sign in to continue</h3>
+        <p style="color:#98989d;font-size:0.85rem;margin:0 0 24px;line-height:1.5;">${action || 'Create an account to unlock program generation, cloud sync, and the leaderboard.'}</p>
+        <button onclick="document.getElementById('authGateOverlay').remove();openAuthModal();"
+            style="width:100%;padding:14px;background:#ff453a;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:0.95rem;cursor:pointer;">
+            Sign In or Create Account
+        </button>
+        <button onclick="document.getElementById('authGateOverlay').remove()"
+            style="width:100%;padding:12px;background:none;border:none;color:#98989d;font-size:0.85rem;cursor:pointer;margin-top:8px;">
+            Maybe later
+        </button>
+    </div>`;
+    document.body.appendChild(overlay);
+    return false;
+}
+window.requireAuth = requireAuth;
+window.openAuthModal = function() { document.getElementById('authModal').style.display='flex'; };
+
+// ==========================================
 // THEME TOGGLE — NEW FEATURE
 // ==========================================
 const themes = {
