@@ -788,6 +788,78 @@ function buildRPEPicker(liftId) {
 }
 
 // ==========================================
+// RPE AUTO-REGULATION ENGINE
+// ==========================================
+const AUTOREG_KEY = 'rpeAutoRegMode';
+function getAutoRegMode() { return localStorage.getItem(AUTOREG_KEY) || 'off'; }
+window.setAutoRegMode = function(mode) {
+    localStorage.setItem(AUTOREG_KEY, mode);
+    document.querySelectorAll('.autoreg-opt').forEach(btn => {
+        btn.style.background = btn.dataset.mode === mode ? '#0a84ff' : '#2c2c2e';
+        btn.style.color = btn.dataset.mode === mode ? '#fff' : '#98989d';
+        btn.style.borderColor = btn.dataset.mode === mode ? '#0a84ff' : '#38383a';
+    });
+    toast(`Auto-Regulation: ${{off:'OFF',set:'Set-to-Set',session:'Session-to-Session'}[mode]}`, 'info');
+    generateProgram();
+};
+
+function getAutoRegAdjustment(liftName, liftType) {
+    const mode = getAutoRegMode();
+    if (mode === 'off') return 1.0;
+    const log = getRPELog();
+    const today = new Date().toLocaleDateString('en-US');
+
+    if (mode === 'set') {
+        if (!log[today]) return 1.0;
+        let maxRPE = 0;
+        Object.keys(log[today]).forEach(key => {
+            if (key.includes(liftName.replace(/\W/g,'_')) || key.toLowerCase().includes(liftType)) {
+                maxRPE = Math.max(maxRPE, log[today][key]);
+            }
+        });
+        if (maxRPE >= 10) return 0.92;
+        if (maxRPE >= 9.5) return 0.95;
+        if (maxRPE >= 9) return 0.97;
+        return 1.0;
+    }
+    if (mode === 'session') {
+        const dates = Object.keys(log).sort().reverse();
+        for (const date of dates) {
+            if (date === today) continue;
+            let maxRPE = 0;
+            Object.keys(log[date]).forEach(key => {
+                if (key.toLowerCase().includes(liftType) || key.includes(liftName.replace(/\W/g,'_').toLowerCase())) {
+                    maxRPE = Math.max(maxRPE, log[date][key]);
+                }
+            });
+            if (maxRPE > 0) {
+                if (maxRPE >= 10) return 0.90;
+                if (maxRPE >= 9.5) return 0.93;
+                if (maxRPE >= 9) return 0.95;
+                if (maxRPE >= 8.5) return 0.98;
+                return 1.0;
+            }
+        }
+        return 1.0;
+    }
+    return 1.0;
+}
+
+function buildAutoRegToggle() {
+    const mode = getAutoRegMode();
+    return `
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:0.7rem;color:#98989d;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Auto-Reg</span>
+        <button class="autoreg-opt" data-mode="off" onclick="setAutoRegMode('off')"
+            style="padding:5px 10px;border-radius:8px;border:0.5px solid ${mode==='off'?'#0a84ff':'#38383a'};background:${mode==='off'?'#0a84ff':'#2c2c2e'};color:${mode==='off'?'#fff':'#98989d'};font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">OFF</button>
+        <button class="autoreg-opt" data-mode="set" onclick="setAutoRegMode('set')"
+            style="padding:5px 10px;border-radius:8px;border:0.5px solid ${mode==='set'?'#0a84ff':'#38383a'};background:${mode==='set'?'#0a84ff':'#2c2c2e'};color:${mode==='set'?'#fff':'#98989d'};font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">Set-to-Set</button>
+        <button class="autoreg-opt" data-mode="session" onclick="setAutoRegMode('session')"
+            style="padding:5px 10px;border-radius:8px;border:0.5px solid ${mode==='session'?'#0a84ff':'#38383a'};background:${mode==='session'?'#0a84ff':'#2c2c2e'};color:${mode==='session'?'#fff':'#98989d'};font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">Session</button>
+    </div>`;
+}
+
+// ==========================================
 // MISSED LIFT DIAGNOSTIC — NEW FEATURE
 // ==========================================
 const missedLiftReasons = [
@@ -1836,13 +1908,21 @@ function generateProgram() {
         }
 
         let modifier = modifiers[lift.n] || 1.0;
-        let finalWeight = Math.round((baseWeight*modifier)/5)*5;
+        // RPE Auto-Regulation: apply adjustment if enabled
+        const autoRegMult = getAutoRegAdjustment(lift.n, lift.t);
+        let finalWeight = Math.round((baseWeight*modifier*autoRegMult)/5)*5;
         let style = "color:var(--text,#fff);";
         let warning = "";
+        let autoRegLabel = "";
+        if (autoRegMult < 1.0 && baseWeight > 0) {
+            style = "color:#ff9f0a;font-weight:bold;";
+            const dropPct = Math.round((1 - autoRegMult) * 100);
+            autoRegLabel = ` <span style='color:#ff9f0a;font-size:9px;'>↓${dropPct}% RPE</span>`;
+        }
         if ((modifier!==1.0||overloadPct!==0) && baseWeight>0) { style="color:#ff4444;font-weight:bold;"; warning=" ⚠️"; }
 
         if (baseWeight > 0 && !weightDisplay) {
-            weightDisplay = `<strong style="${style}">${finalWeight} lbs${warning}</strong>`;
+            weightDisplay = `<strong style="${style}">${finalWeight} lbs${warning}</strong>${autoRegLabel}`;
             weightDisplay += ` <span onclick="adjustWeight('${lift.n}',${baseWeight})" style="cursor:pointer;font-size:14px;margin-left:5px;color:#aaa;">✎</span>`;
         } else if(!weightDisplay) {
             weightDisplay = "See Notes";
@@ -2507,6 +2587,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if(bwField) bwField.addEventListener('change', () => {
         if(bwField.value) saveBodyweightEntry(bwField.value);
     });
+
+    // Inject Auto-Regulation toggle
+    const autoRegContainer = document.getElementById('autoRegContainer');
+    if (autoRegContainer) autoRegContainer.innerHTML = buildAutoRegToggle();
 
     generateProgram();
     updateAccOptions();
