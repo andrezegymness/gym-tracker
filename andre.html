@@ -60,7 +60,7 @@
   </section>
 
   <div style="margin: 15px 0; display:flex; gap:10px; justify-content:center;">
-      <button class="action-btn" onclick="document.getElementById('libraryModal').style.display='flex'" style="background:#2196f3; color:#fff; flex:1; padding: 12px; font-weight:bold;">
+      <button class="action-btn" onclick="if(!requireAuth('Sign in to generate your personalized wave program.'))return;document.getElementById('libraryModal').style.display='flex'" style="background:#2196f3; color:#fff; flex:1; padding: 12px; font-weight:bold;">
           + Add Smart Workout
       </button>
       <button class="action-btn" onclick="openOverview()" style="background:#444; color:#fff; flex:1; padding: 12px; font-weight:bold;">
