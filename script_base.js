@@ -2157,11 +2157,43 @@ async function loadUserData(email) {
             }
             if(!baseUserName) showNamePrompt();
             toast(`Welcome back! Data loaded ✓`);
+
+            // Show coach messages if any
+            if(d.adminMessages && d.adminMessages.length > 0) {
+                const lastMsg = d.adminMessages[d.adminMessages.length - 1];
+                const user = auth.currentUser;
+                const shownKey = 'lastCoachMsg_base_' + (user ? user.uid : '');
+                const lastShown = localStorage.getItem(shownKey);
+                if(lastShown !== lastMsg.date + lastMsg.text) {
+                    setTimeout(() => {
+                        showCoachMessage(lastMsg);
+                        localStorage.setItem(shownKey, lastMsg.date + lastMsg.text);
+                    }, 1500);
+                }
+            }
         } else {
             // New user — no data yet, still prompt for name
             if(!baseUserName) showNamePrompt();
         }
     } catch(e) { console.error('Load error:', e); }
+}
+
+function showCoachMessage(msg) {
+    const existing = document.getElementById('coachMsgOverlay');
+    if(existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'coachMsgOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9600;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+    overlay.innerHTML = `
+    <div style="background:#1c1c1e;border:0.5px solid #38383a;border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center;">
+        <div style="width:48px;height:48px;background:linear-gradient(135deg,#0a84ff,#30d158);border-radius:14px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:24px;">📋</div>
+        <div style="font-size:0.65rem;color:#0a84ff;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Coach Note</div>
+        <div style="color:#fff;font-size:1rem;font-weight:600;margin:10px 0;line-height:1.5;">${msg.text}</div>
+        <div style="color:#48484a;font-size:0.75rem;">${msg.date} · ${msg.from || 'Coach'}</div>
+        <button onclick="document.getElementById('coachMsgOverlay').remove()" style="margin-top:18px;background:#0a84ff;color:#fff;border:none;border-radius:10px;padding:10px 28px;font-weight:700;font-size:0.9rem;cursor:pointer;">Got it</button>
+    </div>`;
+    document.body.appendChild(overlay);
 }
 
 function handleLogin() {

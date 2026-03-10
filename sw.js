@@ -21,6 +21,7 @@ const APP_SHELL = [
     './style.css',
     './script_andre.js',
     './script_base.js',
+    './admin.html',
     './pwa.js',
     './manifest.json',
     // Google Fonts (cached on first load)

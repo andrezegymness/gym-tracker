@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Andre's Calibrations</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background:#000; color:#fff; font-family:-apple-system,'SF Pro Display','Inter',sans-serif; margin:0; padding:0; min-height:100vh; }
+        .admin-wrap { max-width:900px; margin:0 auto; padding:20px; }
+        .admin-header { display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:0.5px solid #38383a; margin-bottom:24px; }
+        .admin-header h1 { font-size:1.3rem; font-weight:800; color:#ff453a; margin:0; }
+        .admin-locked { text-align:center; padding:100px 20px; }
+        .admin-locked h2 { color:#ff453a; font-size:1.5rem; font-weight:800; }
+        .admin-locked p { color:#636366; margin-top:8px; }
+
+        .user-card { background:#1c1c1e; border:0.5px solid #38383a; border-radius:14px; padding:18px; margin-bottom:12px; transition:all 0.2s; cursor:pointer; }
+        .user-card:hover { border-color:#636366; }
+        .user-card.expanded { border-color:#0a84ff; }
+        .user-header { display:flex; justify-content:space-between; align-items:center; }
+        .user-name { font-weight:700; font-size:1rem; }
+        .user-email { color:#636366; font-size:0.8rem; }
+        .user-total { font-weight:900; font-size:1.2rem; color:#ffd60a; }
+        .user-program { font-size:0.7rem; padding:3px 8px; border-radius:5px; font-weight:700; display:inline-block; margin-top:4px; }
+        .user-program.andre { background:rgba(255,69,58,0.15); color:#ff453a; }
+        .user-program.base { background:rgba(10,132,255,0.15); color:#0a84ff; }
+
+        .user-details { display:none; margin-top:16px; padding-top:16px; border-top:0.5px solid #2c2c2e; }
+        .user-card.expanded .user-details { display:block; animation:fadeIn 0.3s ease; }
+
+        .edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+        .edit-field label { display:block; font-size:0.65rem; color:#636366; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px; }
+        .edit-field input, .edit-field select, .edit-field textarea { width:100%; background:#000; border:0.5px solid #38383a; color:#fff; padding:10px; border-radius:8px; font-size:0.9rem; font-family:inherit; box-sizing:border-box; }
+        .edit-field textarea { resize:vertical; min-height:60px; }
+        .edit-field input:focus, .edit-field select:focus, .edit-field textarea:focus { outline:none; border-color:#0a84ff; box-shadow:0 0 0 3px rgba(10,132,255,0.15); }
+
+        .admin-btn { padding:10px 18px; border:none; border-radius:10px; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all 0.2s; font-family:inherit; }
+        .admin-btn:active { transform:scale(0.97); }
+        .btn-save { background:#30d158; color:#fff; }
+        .btn-save:hover { background:#34d860; }
+        .btn-msg { background:#0a84ff; color:#fff; }
+        .btn-msg:hover { background:#409cff; }
+        .btn-danger { background:#ff453a; color:#fff; }
+        .btn-danger:hover { background:#ff6961; }
+
+        .acc-assign { background:#000; border:0.5px solid #2c2c2e; border-radius:10px; padding:12px; margin-top:10px; }
+        .acc-assign h4 { color:#bf5af2; font-size:0.8rem; margin:0 0 8px; text-transform:uppercase; letter-spacing:0.8px; }
+
+        .search-bar { width:100%; background:#1c1c1e; border:0.5px solid #38383a; color:#fff; padding:12px 16px; border-radius:12px; font-size:0.95rem; margin-bottom:20px; font-family:inherit; box-sizing:border-box; }
+        .search-bar:focus { outline:none; border-color:#0a84ff; }
+        .search-bar::placeholder { color:#48484a; }
+
+        .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:24px; }
+        .stat-card { background:#1c1c1e; border:0.5px solid #38383a; border-radius:12px; padding:14px; text-align:center; }
+        .stat-card .num { font-size:1.5rem; font-weight:900; color:#fff; }
+        .stat-card .lbl { font-size:0.65rem; color:#636366; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+
+        .msg-card { background:rgba(10,132,255,0.08); border:0.5px solid rgba(10,132,255,0.2); border-radius:10px; padding:12px; margin-top:8px; }
+        .msg-card .msg-text { color:#98989d; font-size:0.82rem; }
+        .msg-card .msg-date { color:#48484a; font-size:0.7rem; margin-top:4px; }
+
+        @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        @media(max-width:600px) { .edit-grid{grid-template-columns:1fr;} .stats-row{grid-template-columns:1fr 1fr;} }
+    </style>
+</head>
+<body>
+
+<div class="admin-wrap">
+    <div id="adminLocked" class="admin-locked" style="display:none;">
+        <h2>🔒 Access Denied</h2>
+        <p>This page is restricted to the admin account.</p>
+        <button onclick="document.getElementById('authModal').style.display='flex'" class="admin-btn btn-msg" style="margin-top:20px;">Sign In</button>
+    </div>
+
+    <div id="adminPanel" style="display:none;">
+        <div class="admin-header">
+            <div>
+                <h1>🛡️ ADMIN PANEL</h1>
+                <span style="color:#636366;font-size:0.75rem;">andreze@me.com</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <a href="index.html" class="admin-btn" style="background:#2c2c2e;color:#98989d;text-decoration:none;">← Menu</a>
+                <button onclick="loadAllUsers()" class="admin-btn" style="background:#2c2c2e;color:#0a84ff;">↻ Refresh</button>
+            </div>
+        </div>
+
+        <div class="stats-row" id="adminStats"></div>
+        <input type="text" class="search-bar" id="searchBar" placeholder="Search by name or email..." oninput="filterUsers()">
+        <div id="userList"></div>
+    </div>
+</div>
+
+<!-- Auth Modal (same as other pages) -->
+<div id="authModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;">
+    <div class="modal-content" style="background:#1c1c1e; margin:20% auto; padding:24px; width:80%; max-width:400px; color:#fff; border-radius:20px;">
+        <span class="close-modal" onclick="document.getElementById('authModal').style.display='none'" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
+        <h3 id="authModalTitle">Admin Login</h3>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <input type="email" id="emailInput" placeholder="Email" style="padding:12px; border-radius:10px; border:0.5px solid #38383a; background:#000; color:#fff;">
+            <input type="password" id="passwordInput" placeholder="Password" style="padding:12px; border-radius:10px; border:0.5px solid #38383a; background:#000; color:#fff;">
+            <button class="admin-btn btn-msg" id="emailLoginBtn" style="width:100%;">Log In</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, setDoc, getDocs, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M",
+    authDomain: "powerlifting-programs.firebaseapp.com",
+    projectId: "powerlifting-programs",
+    storageBucket: "powerlifting-programs.firebasestorage.app",
+    messagingSenderId: "961044250962",
+    appId: "1:961044250962:web:c45644c186e9bb6ee67a8b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ADMIN_EMAIL = 'andreze@me.com';
+let allUsers = [];
+
+// ── AUTH ──
+document.getElementById('emailLoginBtn').addEventListener('click', () => {
+    const email = document.getElementById('emailInput').value;
+    const pass = document.getElementById('passwordInput').value;
+    signInWithEmailAndPassword(auth, email, pass)
+        .then(() => document.getElementById('authModal').style.display='none')
+        .catch(e => alert('Login failed: ' + e.message));
+});
+
+onAuthStateChanged(auth, user => {
+    if (user && user.email === ADMIN_EMAIL) {
+        document.getElementById('adminLocked').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        loadAllUsers();
+    } else if (user && user.email !== ADMIN_EMAIL) {
+        document.getElementById('adminLocked').style.display = 'block';
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('adminLocked').querySelector('p').textContent =
+            `Signed in as ${user.email} — admin access is restricted.`;
+    } else {
+        document.getElementById('adminLocked').style.display = 'block';
+        document.getElementById('adminPanel').style.display = 'none';
+    }
+});
+
+// ── LOAD ALL USERS ──
+async function loadAllUsers() {
+    const usersSnap = await getDocs(collection(db, "users"));
+    const leaderSnap = await getDocs(collection(db, "leaderboard"));
+
+    let leaderMap = {};
+    leaderSnap.forEach(d => { leaderMap[d.id] = d.data(); });
+
+    allUsers = [];
+    usersSnap.forEach(d => {
+        const data = d.data();
+        const lb = leaderMap[d.id] || {};
+        allUsers.push({
+            uid: d.id,
+            ...data,
+            leaderboard: lb,
+            displayName: data.name || data.settings?.userName || lb.name || data.email || 'Anonymous',
+            displayEmail: data.email || lb.email || '—',
+            total: lb.total || ((data.maxes?.Squat||data.squat||0) + (data.maxes?.Bench||data.bench||0) + (data.maxes?.Deadlift||data.deadlift||0)),
+            programLabel: data.program || lb.program || '—'
+        });
+    });
+
+    allUsers.sort((a,b) => b.total - a.total);
+    renderStats();
+    renderUsers(allUsers);
+}
+
+// ── STATS ──
+function renderStats() {
+    const total = allUsers.length;
+    const withTotal = allUsers.filter(u => u.total > 0).length;
+    const avgTotal = withTotal > 0 ? Math.round(allUsers.filter(u=>u.total>0).reduce((a,u)=>a+u.total,0) / withTotal) : 0;
+    const programs = {};
+    allUsers.forEach(u => { const p = u.programLabel || 'Unknown'; programs[p] = (programs[p]||0)+1; });
+
+    document.getElementById('adminStats').innerHTML = `
+        <div class="stat-card"><div class="num">${total}</div><div class="lbl">Total Users</div></div>
+        <div class="stat-card"><div class="num">${withTotal}</div><div class="lbl">Active (with totals)</div></div>
+        <div class="stat-card"><div class="num">${avgTotal}</div><div class="lbl">Avg Total</div></div>
+        <div class="stat-card"><div class="num">${Object.keys(programs).length}</div><div class="lbl">Programs</div></div>`;
+}
+
+// ── RENDER USERS ──
+function renderUsers(users) {
+    const container = document.getElementById('userList');
+    if (users.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#636366;padding:40px;">No users found.</p>';
+        return;
+    }
+
+    container.innerHTML = users.map((u, idx) => {
+        const s = u.maxes?.Squat || u.squat || 0;
+        const b = u.maxes?.Bench || u.bench || 0;
+        const d = u.maxes?.Deadlift || u.deadlift || 0;
+        const o = u.maxes?.OHP || u.ohp || 0;
+        const progClass = (u.programLabel||'').toLowerCase().includes('andre') ? 'andre' : 'base';
+        const week = u.activeWeek || u.leaderboard?.week || '—';
+        const customCount = (u.customLifts || []).length;
+        const msgs = u.adminMessages || [];
+
+        return `
+        <div class="user-card" id="card-${idx}" onclick="toggleCard(${idx})">
+            <div class="user-header">
+                <div>
+                    <div class="user-name">${u.displayName}</div>
+                    <div class="user-email">${u.displayEmail} · Week ${week}</div>
+                    <span class="user-program ${progClass}">${u.programLabel}</span>
+                    ${customCount > 0 ? `<span style="color:#bf5af2;font-size:0.7rem;margin-left:6px;">${customCount} custom lifts</span>` : ''}
+                </div>
+                <div style="text-align:right;">
+                    <div class="user-total">${u.total}</div>
+                    <div style="color:#636366;font-size:0.72rem;">S:${s} B:${b} D:${d}</div>
+                    ${o > 0 ? `<div style="color:#636366;font-size:0.72rem;">OHP:${o}</div>` : ''}
+                </div>
+            </div>
+
+            <div class="user-details">
+                <div class="edit-grid">
+                    <div class="edit-field"><label>Squat</label><input type="number" id="edit-s-${idx}" value="${s}"></div>
+                    <div class="edit-field"><label>Bench</label><input type="number" id="edit-b-${idx}" value="${b}"></div>
+                    <div class="edit-field"><label>Deadlift</label><input type="number" id="edit-d-${idx}" value="${d}"></div>
+                    <div class="edit-field"><label>OHP</label><input type="number" id="edit-o-${idx}" value="${o}"></div>
+                </div>
+
+                <div class="edit-grid">
+                    <div class="edit-field">
+                        <label>Override Week/Set/Weight</label>
+                        <textarea id="edit-override-${idx}" placeholder="e.g. Week 2, Monday Squat → 3x3 @ 315&#10;Freeform notes — saved to user's data">${u.adminOverrides || ''}</textarea>
+                    </div>
+                    <div class="edit-field">
+                        <label>Send Message to User</label>
+                        <textarea id="edit-msg-${idx}" placeholder="This will appear as a coach note in their app..."></textarea>
+                    </div>
+                </div>
+
+                <div class="acc-assign">
+                    <h4>Assign Accessories</h4>
+                    <div class="edit-grid">
+                        <div class="edit-field">
+                            <label>Exercise Name</label>
+                            <input type="text" id="acc-name-${idx}" placeholder="e.g. Pause Squat 3s">
+                        </div>
+                        <div class="edit-field">
+                            <label>Based on (lift)</label>
+                            <select id="acc-source-${idx}">
+                                <option value="squat">Squat</option>
+                                <option value="bench">Bench</option>
+                                <option value="deadlift">Deadlift</option>
+                                <option value="ohp">OHP</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="edit-grid">
+                        <div class="edit-field"><label>% of Max</label><input type="number" id="acc-pct-${idx}" placeholder="e.g. 70" step="5"></div>
+                        <div class="edit-field"><label>Sets x Reps</label><input type="text" id="acc-reps-${idx}" placeholder="e.g. 3x5"></div>
+                    </div>
+                    <div class="edit-grid">
+                        <div class="edit-field"><label>Day (0=Mon, 5=Sat)</label><input type="number" id="acc-day-${idx}" value="2" min="0" max="5"></div>
+                        <div class="edit-field"><label>&nbsp;</label><button class="admin-btn" style="background:#bf5af2;color:#fff;width:100%;" onclick="event.stopPropagation();assignAccessory(${idx})">+ Assign</button></div>
+                    </div>
+                </div>
+
+                ${msgs.length > 0 ? `<div style="margin-top:12px;"><div style="font-size:0.65rem;color:#636366;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Previous Messages</div>${msgs.map(m => `<div class="msg-card"><div class="msg-text">${m.text}</div><div class="msg-date">${m.date}</div></div>`).join('')}</div>` : ''}
+
+                <div style="display:flex;gap:8px;margin-top:16px;">
+                    <button class="admin-btn btn-save" onclick="event.stopPropagation();saveUser(${idx})" style="flex:1;">💾 Save Changes</button>
+                    <button class="admin-btn btn-msg" onclick="event.stopPropagation();sendMessage(${idx})">📨 Send</button>
+                </div>
+                <div style="font-size:0.7rem;color:#48484a;margin-top:8px;text-align:center;">UID: ${u.uid}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ── TOGGLE CARD ──
+window.toggleCard = function(idx) {
+    const card = document.getElementById(`card-${idx}`);
+    card.classList.toggle('expanded');
+};
+
+// ── SAVE USER ──
+window.saveUser = async function(idx) {
+    const u = allUsers[idx];
+    const s = parseFloat(document.getElementById(`edit-s-${idx}`).value) || 0;
+    const b = parseFloat(document.getElementById(`edit-b-${idx}`).value) || 0;
+    const d = parseFloat(document.getElementById(`edit-d-${idx}`).value) || 0;
+    const o = parseFloat(document.getElementById(`edit-o-${idx}`).value) || 0;
+    const overrides = document.getElementById(`edit-override-${idx}`).value.trim();
+
+    try {
+        await setDoc(doc(db, "users", u.uid), {
+            maxes: { Squat: s, Bench: b, Deadlift: d, OHP: o },
+            squat: s, bench: b, deadlift: d, ohp: o,
+            adminOverrides: overrides || ''
+        }, { merge: true });
+
+        // Update leaderboard too
+        const total = s + b + d;
+        if (total > 0) {
+            await setDoc(doc(db, "leaderboard", u.uid), {
+                squat: s, bench: b, deadlift: d, total,
+                updatedAt: Date.now()
+            }, { merge: true });
+        }
+
+        showToast(`✅ ${u.displayName} updated`);
+        loadAllUsers();
+    } catch(e) {
+        showToast(`❌ Error: ${e.message}`, 'error');
+    }
+};
+
+// ── SEND MESSAGE ──
+window.sendMessage = async function(idx) {
+    const u = allUsers[idx];
+    const text = document.getElementById(`edit-msg-${idx}`).value.trim();
+    if (!text) { showToast('Type a message first', 'error'); return; }
+
+    try {
+        const msgs = u.adminMessages || [];
+        msgs.push({ text, date: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }), from: 'Coach' });
+
+        await setDoc(doc(db, "users", u.uid), { adminMessages: msgs }, { merge: true });
+        document.getElementById(`edit-msg-${idx}`).value = '';
+        showToast(`📨 Message sent to ${u.displayName}`);
+        loadAllUsers();
+    } catch(e) {
+        showToast(`❌ Error: ${e.message}`, 'error');
+    }
+};
+
+// ── ASSIGN ACCESSORY ──
+window.assignAccessory = async function(idx) {
+    const u = allUsers[idx];
+    const name = document.getElementById(`acc-name-${idx}`).value.trim();
+    const source = document.getElementById(`acc-source-${idx}`).value;
+    const pct = parseFloat(document.getElementById(`acc-pct-${idx}`).value) / 100 || 0;
+    const reps = document.getElementById(`acc-reps-${idx}`).value.trim();
+    const day = parseInt(document.getElementById(`acc-day-${idx}`).value) || 0;
+
+    if (!name || !reps) { showToast('Fill in name and sets/reps', 'error'); return; }
+
+    try {
+        const existing = u.customLifts || [];
+        existing.push({
+            n: name + ' 📋',
+            t: name,
+            p: pct,
+            r: reps,
+            s: source,
+            dayIndex: day,
+            isAutoAcc: false,
+            assignedBy: 'coach'
+        });
+
+        await setDoc(doc(db, "users", u.uid), { customLifts: existing }, { merge: true });
+
+        // Also update localStorage key for the program they're on
+        showToast(`✅ ${name} assigned to ${u.displayName}`);
+        document.getElementById(`acc-name-${idx}`).value = '';
+        loadAllUsers();
+    } catch(e) {
+        showToast(`❌ Error: ${e.message}`, 'error');
+    }
+};
+
+// ── SEARCH ──
+window.filterUsers = function() {
+    const q = document.getElementById('searchBar').value.toLowerCase().trim();
+    if (!q) { renderUsers(allUsers); return; }
+    renderUsers(allUsers.filter(u =>
+        u.displayName.toLowerCase().includes(q) ||
+        u.displayEmail.toLowerCase().includes(q)
+    ));
+};
+
+// ── TOAST ──
+function showToast(msg, type) {
+    let el = document.getElementById('toast-container');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'toast-container';
+        el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+        document.body.appendChild(el);
+    }
+    const t = document.createElement('div');
+    t.style.cssText = `background:${type==='error'?'#ff453a':'#30d158'};color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.4);opacity:0;transition:opacity 0.3s;max-width:300px;`;
+    t.innerText = msg;
+    el.appendChild(t);
+    requestAnimationFrame(() => t.style.opacity = '1');
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+</script>
+<script src="pwa.js"></script>
+</body>
+</html>
