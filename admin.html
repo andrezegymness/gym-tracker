@@ -68,10 +68,15 @@
 <body>
 
 <div class="admin-wrap">
-    <div id="adminLocked" class="admin-locked" style="display:none;">
-        <h2>🔒 Access Denied</h2>
-        <p>This page is restricted to the admin account.</p>
-        <button onclick="document.getElementById('authModal').style.display='flex'" class="admin-btn btn-msg" style="margin-top:20px;">Sign In</button>
+    <div id="adminLocked" class="admin-locked">
+        <div id="adminLoading" style="margin-bottom:20px;">
+            <div style="color:#636366;font-size:0.9rem;">Loading...</div>
+        </div>
+        <div id="adminDenied" style="display:none;">
+            <h2>🔒 Access Denied</h2>
+            <p>This page is restricted to the admin account.</p>
+            <button onclick="document.getElementById('authModal').style.display='flex'" class="admin-btn btn-msg" style="margin-top:20px;">Sign In</button>
+        </div>
     </div>
 
     <div id="adminPanel" style="display:none;">
@@ -136,18 +141,27 @@ document.getElementById('emailLoginBtn').addEventListener('click', () => {
 });
 
 onAuthStateChanged(auth, user => {
+    const locked = document.getElementById('adminLocked');
+    const loading = document.getElementById('adminLoading');
+    const denied = document.getElementById('adminDenied');
+    const panel = document.getElementById('adminPanel');
+
     if (user && user.email === ADMIN_EMAIL) {
-        document.getElementById('adminLocked').style.display = 'none';
-        document.getElementById('adminPanel').style.display = 'block';
+        locked.style.display = 'none';
+        panel.style.display = 'block';
         loadAllUsers();
     } else if (user && user.email !== ADMIN_EMAIL) {
-        document.getElementById('adminLocked').style.display = 'block';
-        document.getElementById('adminPanel').style.display = 'none';
-        document.getElementById('adminLocked').querySelector('p').textContent =
+        loading.style.display = 'none';
+        denied.style.display = 'block';
+        locked.style.display = 'block';
+        panel.style.display = 'none';
+        denied.querySelector('p').textContent =
             `Signed in as ${user.email} — admin access is restricted.`;
     } else {
-        document.getElementById('adminLocked').style.display = 'block';
-        document.getElementById('adminPanel').style.display = 'none';
+        loading.style.display = 'none';
+        denied.style.display = 'block';
+        locked.style.display = 'block';
+        panel.style.display = 'none';
     }
 });
 
@@ -213,8 +227,8 @@ function renderUsers(users) {
         const msgs = u.adminMessages || [];
 
         return `
-        <div class="user-card" id="card-${idx}" onclick="toggleCard(${idx}, event)">
-            <div class="user-header">
+        <div class="user-card" id="card-${idx}">
+            <div class="user-header" onclick="toggleCard(${idx})" style="cursor:pointer;">
                 <div>
                     <div class="user-name">${u.displayName}</div>
                     <div class="user-email">${u.displayEmail} · Week ${week}</div>
@@ -228,7 +242,7 @@ function renderUsers(users) {
                 </div>
             </div>
 
-            <div class="user-details">
+            <div class="user-details" onclick="event.stopPropagation();">
                 <div class="edit-grid">
                     <div class="edit-field"><label>Squat</label><input type="number" id="edit-s-${idx}" value="${s}"></div>
                     <div class="edit-field"><label>Bench</label><input type="number" id="edit-b-${idx}" value="${b}"></div>
@@ -270,15 +284,15 @@ function renderUsers(users) {
                     </div>
                     <div class="edit-grid">
                         <div class="edit-field"><label>Day (0=Mon, 5=Sat)</label><input type="number" id="acc-day-${idx}" value="2" min="0" max="5"></div>
-                        <div class="edit-field"><label>&nbsp;</label><button class="admin-btn" style="background:#bf5af2;color:#fff;width:100%;" onclick="event.stopPropagation();assignAccessory(${idx})">+ Assign</button></div>
+                        <div class="edit-field"><label>&nbsp;</label><button class="admin-btn" style="background:#bf5af2;color:#fff;width:100%;" onclick="assignAccessory(${idx})">+ Assign</button></div>
                     </div>
                 </div>
 
                 ${msgs.length > 0 ? `<div style="margin-top:12px;"><div style="font-size:0.65rem;color:#636366;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Previous Messages</div>${msgs.map(m => `<div class="msg-card"><div class="msg-text">${m.text}</div><div class="msg-date">${m.date}</div></div>`).join('')}</div>` : ''}
 
                 <div style="display:flex;gap:8px;margin-top:16px;">
-                    <button class="admin-btn btn-save" onclick="event.stopPropagation();saveUser(${idx})" style="flex:1;">💾 Save Changes</button>
-                    <button class="admin-btn btn-msg" onclick="event.stopPropagation();sendMessage(${idx})">📨 Send</button>
+                    <button class="admin-btn btn-save" onclick="saveUser(${idx})" style="flex:1;">💾 Save Changes</button>
+                    <button class="admin-btn btn-msg" onclick="sendMessage(${idx})">📨 Send</button>
                 </div>
                 <div style="font-size:0.7rem;color:#48484a;margin-top:8px;text-align:center;">UID: ${u.uid}</div>
             </div>
@@ -287,13 +301,8 @@ function renderUsers(users) {
 }
 
 // ── TOGGLE CARD ──
-window.toggleCard = function(idx, event) {
-    // Don't toggle if clicking inside inputs, buttons, textareas, selects, or labels
-    const tag = event.target.tagName.toLowerCase();
-    if (['input','textarea','select','button','label'].includes(tag)) return;
-    // Don't toggle if clicking inside the details section when already expanded
+window.toggleCard = function(idx) {
     const card = document.getElementById(`card-${idx}`);
-    if (card.classList.contains('expanded') && event.target.closest('.user-details')) return;
     card.classList.toggle('expanded');
 };
 
