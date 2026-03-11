@@ -141,7 +141,7 @@
     </div>
 
     <div class="cd" style="margin-top:6px">
-        <button id="gcTog" onclick="S.gc=!S.gc;document.getElementById('gcC').style.display=S.gc?'block':'none';this.textContent=S.gc?'▼ Hide Goal Calculator':'🎯 Open Goal Calculator';this.style.background=S.gc?'rgba(10,132,255,.15)':'rgba(255,255,255,.04)';this.style.color=S.gc?'#0a84ff':'#636366';if(S.gc){document.getElementById('gWIn').value = Math.round(T||0); rGoal();}" style="width:100%;padding:11px;border:none;border-radius:20px;background:rgba(255,255,255,.04);color:#636366;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;outline:none">🎯 Open Goal Calculator</button>
+        <button id="gcTog" onclick="S.gc=!S.gc;document.getElementById('gcC').style.display=S.gc?'block':'none';this.textContent=S.gc?'▼ Hide Goal Calculator':'🎯 Open Goal Calculator';this.style.background=S.gc?'rgba(10,132,255,.15)':'rgba(255,255,255,.04)';this.style.color=S.gc?'#0a84ff':'#636366';if(S.gc){document.getElementById('gWIn').value=Math.round(T||0);rGoal();}" style="width:100%;padding:11px;border:none;border-radius:20px;background:rgba(255,255,255,.04);color:#636366;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;outline:none">🎯 Open Goal Calculator</button>
         <div id="gcC" style="display:none;margin-top:16px">
             <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:8px">
                 <span style="font-size:13px;color:#636366;font-weight:700">I did</span>
@@ -173,7 +173,6 @@ const KGP=[
     {w:0.25,c:"#333",l:".25",tc:"#888",h:38,pw:5,bd:"#666"},
     {w:0.125,c:"#2a2a2a",l:".125",tc:"#777",h:32,pw:5,bd:"#555"}
 ];
-
 const LBSP=[
     {w:45,c:"#222",l:"45",tc:"#fff",h:140,pw:14,bd:"#666"},
     {w:35,c:"#222",l:"35",tc:"#fff",h:128,pw:13,bd:"#666"},
@@ -182,7 +181,6 @@ const LBSP=[
     {w:5, c:"#222",l:"5", tc:"#fff",h:76,pw:9,bd:"#666"},
     {w:2.5,c:"#222",l:"2.5",tc:"#fff",h:60,pw:8,bd:"#666"}
 ];
-
 const BARS=[
     {l:"45lb Standard",kg:20.4117,lbs:45},
     {l:"20kg Comp Barbell",kg:20,lbs:44.0924},
@@ -243,14 +241,11 @@ function getOptimalExact(perSide, pu) {
     let bestPlates = cAll(basePS);
     let bestPS = basePS;
     let minPlates = bestPlates.length;
-    
-    const maxDev = pu === 'kg' ? 0.4536 : 1.0; 
-    
+    const maxDev = pu === 'kg' ? 0.4536 : 2.5;
     for (let offset = -maxDev; offset <= maxDev + 0.001; offset += smallestPlate) {
         const testPS = Math.round((perSide + offset)/smallestPlate)*smallestPlate;
         if (testPS < 0) continue;
         if (Math.abs(testPS - perSide) > maxDev + 0.001) continue;
-        
         const plates = cAll(testPS);
         if (plates.length < minPlates) {
             minPlates = plates.length;
@@ -289,10 +284,8 @@ function rCalc(){
     const midPl=cEasy(best);const midPS=midPl.reduce((s,p)=>s+p.w,0);const midT=makeTotals(midPS);
     const loPl=cEasy(lo);const loPS=loPl.reduce((s,p)=>s+p.w,0);const loT=makeTotals(loPS);
     const hiPl=cEasy(hi);const hiPS=hiPl.reduce((s,p)=>s+p.w,0);const hiT=makeTotals(hiPS);
-    const optExact = getOptimalExact(perSide, S.pu);
-    const exactPl = optExact.pl;
-    const exactPS = optExact.ps;
-    const exactT = makeTotals(exactPS);
+    const optExact=getOptimalExact(perSide,S.pu);
+    const exactPl=optExact.pl;const exactPS=optExact.ps;const exactT=makeTotals(exactPS);
 
     const data={lo:{ps:loPS,pl:loPl,t:loT},mid:{ps:midPS,pl:midPl,t:midT},hi:{ps:hiPS,pl:hiPl,t:hiT},exact:{ps:exactPS,pl:exactPl,t:exactT}};
 
@@ -315,19 +308,13 @@ function rCalc(){
 
     const iu=S.iu;
     let oh='';
-    if(!midIsLo){
-        oh+=`<button class="opt ${S.ao==='lo'?'on':''}" onclick="S.ao='lo';rCalc();rWU()" style="flex:1 1 20%">↓ ${(iu==='kg'?loT.kg:loT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">lighter</span></button>`;
-    }
+    if(!midIsLo) oh+=`<button class="opt ${S.ao==='lo'?'on':''}" onclick="S.ao='lo';rCalc();rWU()" style="flex:1 1 20%">↓ ${(iu==='kg'?loT.kg:loT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">lighter</span></button>`;
     oh+=`<button class="opt ${S.ao==='mid'?'on':''}" onclick="S.ao='mid';rCalc();rWU()" style="flex:1 1 20%">● ${(iu==='kg'?midT.kg:midT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">${midIsHi||midIsLo?'best':'best load'}</span></button>`;
-    if(!midIsHi){
-        oh+=`<button class="opt ${S.ao==='hi'?'on':''}" onclick="S.ao='hi';rCalc();rWU()" style="flex:1 1 20%">↑ ${(iu==='kg'?hiT.kg:hiT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">heavier</span></button>`;
-    }
-    oh+=`<button class="opt ${S.ao==='exact'?'on':''}" onclick="S.ao='exact';rCalc();rWU()" style="flex:1 1 20%; background:${S.ao==='exact'?'rgba(10,132,255,.15)':'rgba(255,255,255,.04)'};color:${S.ao==='exact'?'#0a84ff':'#636366'}">★ ${(iu==='kg'?exactT.kg:exactT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">exact load</span></button>`;
-    
+    if(!midIsHi) oh+=`<button class="opt ${S.ao==='hi'?'on':''}" onclick="S.ao='hi';rCalc();rWU()" style="flex:1 1 20%">↑ ${(iu==='kg'?hiT.kg:hiT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">heavier</span></button>`;
+    oh+=`<button class="opt ${S.ao==='exact'?'on':''}" onclick="S.ao='exact';rCalc();rWU()" style="flex:1 1 20%;background:${S.ao==='exact'?'rgba(10,132,255,.15)':'rgba(255,255,255,.04)'};color:${S.ao==='exact'?'#0a84ff':'#636366'}">★ ${(iu==='kg'?exactT.kg:exactT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">exact load</span></button>`;
     opts.innerHTML=oh;
 
     if(shareSec)shareSec.style.display='block';
-
     T=act.t.lbs;
     window._calcPlates=act.pl;window._calcT=act.t;
 }
@@ -338,9 +325,7 @@ function rRev(){
     const t=ps*2+bv;
     const kg=S.pu==='kg'?t:t*L;
     const lbs=kg*K;
-    
-    document.getElementById('rBar').innerHTML=barH(S.rp) + plateListHTML(S.rp);
-    
+    document.getElementById('rBar').innerHTML=barH(S.rp)+plateListHTML(S.rp);
     document.getElementById('rTot').innerHTML=`
         <div style="display:flex;justify-content:center;gap:20px;margin-top:6px">
             <div style="text-align:center"><div class="bn" style="color:#0a84ff">${(Math.round(kg*10)/10).toFixed(1)}</div><div class="un">KG</div></div>
@@ -350,6 +335,7 @@ function rRev(){
     T=lbs;
 }
 
+// ── SHARE IMAGE — 90s Retro Jagged Pattern ──
 function doShare(src){
     let plates,kg,lbs,sets,reps,note;
     if(src==='calc'){
@@ -375,102 +361,125 @@ function doShare(src){
     c.width=W;c.height=H;
     const x=c.getContext('2d');
 
-    // --- NEW HKS RETRO BACKGROUND LOGIC ---
-    
-    // 1. Solid Dark Base
-    x.fillStyle='#050505';
+    // Transparent base
+    x.clearRect(0,0,W,H);
+
+    // ── 90s RETRO JAGGED STREAK PATTERN ──
+    // Colors from the reference image: teal/mint, lavender/purple, coral/red
+    const streakColors=['#6BC5B0','#8B7EC8','#E8546A'];
+    // Use seeded random so pattern is consistent each render
+    let seed=42;
+    function sRand(){seed=(seed*16807)%2147483647;return(seed-1)/2147483646;}
+
+    for(let row=0;row<8;row++){
+        for(let col=0;col<12;col++){
+            const ci=(row*12+col)%3;
+            const color=streakColors[ci];
+            const baseX=col*100-80+sRand()*40;
+            const baseY=row*95-60+sRand()*30;
+            const len=180+sRand()*280;
+            const thick=5+sRand()*9;
+            const angle=(-48+sRand()*12)*Math.PI/180;
+
+            x.save();
+            x.translate(baseX,baseY);
+            x.rotate(angle);
+
+            // Jagged streak path
+            x.beginPath();
+            const segs=10+Math.floor(sRand()*8);
+            x.moveTo(0,-thick/2);
+            for(let s=1;s<=segs;s++){
+                const sx=(s/segs)*len;
+                const jag=(sRand()-0.5)*thick*2;
+                x.lineTo(sx,-thick/2+jag);
+            }
+            x.lineTo(len,thick/2);
+            for(let s=segs;s>=0;s--){
+                const sx=(s/segs)*len;
+                const jag=(sRand()-0.5)*thick*2;
+                x.lineTo(sx,thick/2+jag);
+            }
+            x.closePath();
+
+            x.fillStyle=color;
+            x.globalAlpha=0.65+sRand()*0.35;
+            x.fill();
+            x.globalAlpha=1;
+            x.restore();
+        }
+    }
+
+    // Darken lower portion for text legibility
+    const fadeGrad=x.createLinearGradient(0,H*0.25,0,H);
+    fadeGrad.addColorStop(0,'rgba(0,0,0,0)');
+    fadeGrad.addColorStop(0.35,'rgba(0,0,0,0.55)');
+    fadeGrad.addColorStop(1,'rgba(0,0,0,0.9)');
+    x.fillStyle=fadeGrad;
     x.fillRect(0,0,W,H);
 
-    // 2. Classic HKS Diagonal Stripes (Teal, Purple, Red)
-    x.save();
-    x.translate(W/2, H/2);
-    x.rotate(-35 * Math.PI / 180);
-    const sW = 140; // width of each stripe
-    const off = 100; // offset position
-    x.fillStyle='#ED1C24'; x.fillRect(-W, off, W*2, sW); // Red
-    x.fillStyle='#7B3F98'; x.fillRect(-W, off - sW, W*2, sW); // Purple
-    x.fillStyle='#00A388'; x.fillRect(-W, off - sW*2, W*2, sW); // Teal
-    x.restore();
+    // ── TEXT & BAR ──
+    x.shadowColor='rgba(0,0,0,0.9)';x.shadowBlur=14;x.shadowOffsetY=2;
 
-    // 3. Dark Gradient Overlay (Keeps the barbell and text popping)
-    const bgGrad = x.createLinearGradient(0, 0, 0, H);
-    bgGrad.addColorStop(0, 'rgba(0,0,0,0.2)');
-    bgGrad.addColorStop(0.4, 'rgba(0,0,0,0.7)');
-    bgGrad.addColorStop(1, 'rgba(0,0,0,0.95)');
-    x.fillStyle = bgGrad;
-    x.fillRect(0,0,W,H);
-    
-    // --- END BACKGROUND ---
-
-    // Top Header with drop shadow for legibility over the bright stripes
-    x.shadowColor = 'rgba(0,0,0,0.8)';
-    x.shadowBlur = 10;
-    x.shadowOffsetY = 2;
-    x.fillStyle='#ffffff'; // Changed to white so it pops off the background
-    x.font='800 18px -apple-system,sans-serif';
-    x.textAlign='center';
-    x.textBaseline='top';
+    // "IN DRE WE TRUST" top
+    x.fillStyle='#fff';x.font='800 18px -apple-system,sans-serif';
+    x.textAlign='center';x.textBaseline='top';
     x.fillText('IN DRE WE TRUST',W/2,16);
 
-    const barY=H*0.38;
-    const sx=50;
-
-    const barName = BARS[S.bi].l;
-    x.fillStyle='rgba(255,255,255,.6)';
-    x.font='700 18px -apple-system,sans-serif';
-    x.textAlign='center';
+    // Bar name
+    x.fillStyle='rgba(255,255,255,.5)';x.font='700 13px -apple-system,sans-serif';
     x.textBaseline='bottom';
-    x.fillText(`BAR: ${barName.toUpperCase()}`, W/2, barY - 170);
+    const barY=H*0.38;
+    x.fillText('BAR: '+BARS[S.bi].l.toUpperCase(),W/2,barY-160);
 
-    // Reset shadow before drawing plates so they don't get muddy
-    x.shadowColor = 'transparent';
+    // Reset shadow for plates
+    x.shadowColor='transparent';x.shadowBlur=0;x.shadowOffsetY=0;
 
+    // Draw barbell
+    const sx=50;
     const sleeveGrad=x.createLinearGradient(0,barY-7,0,barY+7);
     sleeveGrad.addColorStop(0,'#aaa');sleeveGrad.addColorStop(1,'#777');
-
     x.fillStyle='#777';x.fillRect(sx,barY-14,16,28);
     x.fillStyle='#999';x.fillRect(sx+16,barY-10,10,20);
-    
-    let totalPW = 0;
-    plates.forEach(p => totalPW += Math.max(p.pw*1.8, 14) + 2);
-    const usableSleeve = Math.max(380, totalPW + 15);
-    
-    x.fillStyle=sleeveGrad;x.fillRect(sx+26,barY-7,30 + usableSleeve,14);
+    let totalPW=0;
+    plates.forEach(p=>totalPW+=Math.max(p.pw*1.8,14)+2);
+    const usableSleeve=Math.max(380,totalPW+15);
+    x.fillStyle=sleeveGrad;x.fillRect(sx+26,barY-7,30+usableSleeve,14);
 
     let px=sx+56;
-    plates.forEach((p,i)=>{
+    plates.forEach((p)=>{
         const ph=Math.min(p.h*2.2,400);
         const pw=Math.max(p.pw*1.8,14);
         x.fillStyle=p.c;x.fillRect(px,barY-ph/2,pw,ph);
-        x.strokeStyle = p.bd ? p.bd : 'rgba(0,0,0,.3)';
+        x.strokeStyle=p.bd?p.bd:'rgba(0,0,0,.3)';
         x.lineWidth=1;x.strokeRect(px,barY-ph/2,pw,ph);
         x.fillStyle=p.tc;x.font=`bold ${Math.max(10,pw-6)}px -apple-system,sans-serif`;
         x.textAlign='center';x.textBaseline='middle';
         x.fillText(p.l,px+pw/2,barY);
         px+=pw+2;
     });
-
-    const endPx = sx + 26 + 30 + usableSleeve;
+    const endPx=sx+26+30+usableSleeve;
     x.fillStyle='#555';x.fillRect(endPx,barY-16,8,32);
 
+    // Weight numbers
+    x.shadowColor='rgba(0,0,0,0.9)';x.shadowBlur=14;x.shadowOffsetY=2;
     const wy=H*0.72;
-    
-    // Bring shadow back for the bottom text 
-    x.shadowColor = 'rgba(0,0,0,0.8)';
-    
     x.textAlign='center';x.textBaseline='middle';
     x.fillStyle='#fff';x.font='900 64px -apple-system,sans-serif';
     x.fillText((Math.round(kg*10)/10)+'',W*0.28,wy);
     x.fillStyle='rgba(255,255,255,.4)';x.font='700 18px -apple-system,sans-serif';
     x.fillText('KG',W*0.28,wy+38);
 
-    x.fillStyle='rgba(255,255,255,.15)';x.fillRect(W*0.5-1,wy-30,2,70);
+    x.shadowColor='transparent';
+    x.fillStyle='rgba(255,255,255,.12)';x.fillRect(W*0.5-1,wy-30,2,70);
+    x.shadowColor='rgba(0,0,0,0.9)';x.shadowBlur=14;
 
     x.fillStyle='#fff';x.font='900 64px -apple-system,sans-serif';
     x.fillText((Math.round(lbs*10)/10)+'',W*0.72,wy);
     x.fillStyle='rgba(255,255,255,.4)';x.font='700 18px -apple-system,sans-serif';
     x.fillText('LB',W*0.72,wy+38);
 
+    // Sets/Reps/Note
     let infoY=wy+65;
     if(sets||reps){
         x.fillStyle='rgba(255,255,255,.7)';x.font='700 16px -apple-system,sans-serif';
@@ -486,36 +495,21 @@ function doShare(src){
         x.fillText(note,W/2,infoY);
     }
 
+    // "DRE CALIBRATION" bottom
     x.fillStyle='#ff453a';x.font='800 14px -apple-system,sans-serif';
     x.textBaseline='bottom';
     x.fillText('DRE CALIBRATION',W/2,H-14);
+    x.shadowColor='transparent';x.shadowBlur=0;
 
-    c.toBlob(async blob => {
-        // TRICK 1: Silently force copy the raw image to the device clipboard for easy IG Story pasting
-        try {
-            const item = new ClipboardItem({ 'image/png': blob });
-            await navigator.clipboard.write([item]);
-        } catch (err) {
-            console.log('Clipboard direct copy not supported on this browser.');
+    c.toBlob(async blob=>{
+        try{const item=new ClipboardItem({'image/png':blob});await navigator.clipboard.write([item]);}catch(e){}
+        const file=new File([blob],'dre-calibration.png',{type:'image/png'});
+        if(navigator.canShare&&navigator.canShare({files:[file]})){
+            navigator.share({files:[file]}).catch(()=>{});
+        }else{
+            const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='dre-calibration.png';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);
         }
-
-        // TRICK 2: Open the share sheet, but strictly only hand it the file (NO TEXT!)
-        const file = new File([blob], 'dre-calibration.png', {type: 'image/png'});
-        if (navigator.canShare && navigator.canShare({files: [file]})) {
-            navigator.share({
-                files: [file] // Text removed to fix IG paste glitch
-            }).catch(() => {});
-        } else {
-            const u = URL.createObjectURL(blob); 
-            const a = document.createElement('a'); 
-            a.href = u; 
-            a.download = 'dre-calibration.png'; 
-            document.body.appendChild(a); 
-            a.click(); 
-            a.remove(); 
-            URL.revokeObjectURL(u);
-        }
-    }, 'image/png');
+    },'image/png');
 }
 
 // ── WARMUP ──
@@ -535,55 +529,28 @@ function rWU(){
 }
 
 // ── GOAL CALCULATOR ──
-function rGoal() {
-    const gw = parseFloat(document.getElementById('gWIn').value) || 0;
-    const gr = parseInt(document.getElementById('gRIn').value) || 1;
-    const out = document.getElementById('gOut');
-
-    if(gw <= 0 || gr <= 0) {
-        out.innerHTML = '<div style="text-align:center;color:#48484a;font-size:12px;padding:16px">Enter weight & reps</div>';
-        return;
+function rGoal(){
+    const gw=parseFloat(document.getElementById('gWIn').value)||0;
+    const gr=parseInt(document.getElementById('gRIn').value)||1;
+    const out=document.getElementById('gOut');
+    if(gw<=0||gr<=0){out.innerHTML='<div style="text-align:center;color:#48484a;font-size:12px;padding:16px">Enter weight & reps</div>';return}
+    const b1=gw*(36/(37-gr));
+    const e1=gw*(1+gr/30);
+    const o1=gw*(1+gr/40);
+    const w1=gw*100/(48.8+53.8*Math.exp(-0.075*gr));
+    const l1=gw*100/(101.3-2.67123*gr);
+    let html=`<div style="overflow-x:auto;"><table class="g-table"><tr><th>RM</th><th style="color:#fff">Average</th><th>Brzycki</th><th>Epley</th><th>O'Conner</th><th>Wathan</th><th>Lander</th></tr>`;
+    for(let r=1;r<=10;r++){
+        const b=r===1?b1:b1*(37-r)/36;
+        const e=r===1?e1:e1/(1+r/30);
+        const o=r===1?o1:o1/(1+r/40);
+        const w=r===1?w1:w1*(48.8+53.8*Math.exp(-0.075*r))/100;
+        const l=r===1?l1:l1*(101.3-2.67123*r)/100;
+        const avg=(b+e+o+w+l)/5;
+        html+=`<tr><td style="font-weight:700;color:#636366">${r}RM</td><td style="font-weight:800;color:#fff">${Math.round(avg)}</td><td>${Math.round(b)}</td><td>${Math.round(e)}</td><td>${Math.round(o)}</td><td>${Math.round(w)}</td><td>${Math.round(l)}</td></tr>`;
     }
-
-    // 1RM conversions using standard formulas
-    const b1 = gw * (36 / (37 - gr));
-    const e1 = gw * (1 + gr/30);
-    const o1 = gw * (1 + gr/40);
-    const w1 = gw * 100 / (48.8 + 53.8 * Math.exp(-0.075 * gr));
-    const l1 = gw * 100 / (101.3 - 2.67123 * gr);
-
-    let html = `<div style="overflow-x:auto;"><table class="g-table">
-        <tr>
-            <th>RM</th>
-            <th style="color:#fff">Average</th>
-            <th>Brzycki</th>
-            <th>Epley</th>
-            <th>O'Conner</th>
-            <th>Wathan</th>
-            <th>Lander</th>
-        </tr>`;
-
-    for(let r=1; r<=10; r++) {
-        const b = r===1 ? b1 : b1 * (37 - r) / 36;
-        const e = r===1 ? e1 : e1 / (1 + r/30);
-        const o = r===1 ? o1 : o1 / (1 + r/40);
-        const w = r===1 ? w1 : w1 * (48.8 + 53.8 * Math.exp(-0.075 * r)) / 100;
-        const l = r===1 ? l1 : l1 * (101.3 - 2.67123 * r) / 100;
-
-        const avg = (b + e + o + w + l) / 5;
-
-        html += `<tr>
-            <td style="font-weight:700;color:#636366">${r}RM</td>
-            <td style="font-weight:800;color:#fff">${Math.round(avg)}</td>
-            <td>${Math.round(b)}</td>
-            <td>${Math.round(e)}</td>
-            <td>${Math.round(o)}</td>
-            <td>${Math.round(w)}</td>
-            <td>${Math.round(l)}</td>
-        </tr>`;
-    }
-    html += `</table></div>`;
-    out.innerHTML = html;
+    html+=`</table></div>`;
+    out.innerHTML=html;
 }
 
 R();
