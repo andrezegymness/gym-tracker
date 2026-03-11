@@ -80,7 +80,6 @@
         <button class="tab" id="tRev" onclick="S.tab='rev';R()">Reverse</button>
     </div>
 
-    <!-- CALC -->
     <div id="vCalc">
         <div class="cd">
             <div class="lb">Target Weight</div>
@@ -93,8 +92,7 @@
             </div>
         </div>
         <div id="cRes"></div>
-        <div id="cOpts" style="display:flex;gap:5px;margin-bottom:12px"></div>
-        <!-- Share section for Calculate -->
+        <div id="cOpts" style="display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap"></div>
         <div class="cd" id="calcShareSec" style="display:none">
             <div class="lb">Add to Screenshot</div>
             <div style="display:flex;gap:6px;margin-bottom:8px">
@@ -107,7 +105,6 @@
         <button class="rst" onclick="document.getElementById('tIn').value='';S.ao='mid';rCalc();rWU();T=0">Clear</button>
     </div>
 
-    <!-- REVERSE -->
     <div id="vRev" style="display:none">
         <div class="cd">
             <div class="lb">Tap plates to load the bar</div>
@@ -119,7 +116,6 @@
             <button class="rst" onclick="S.rp.pop();rRev();rWU()" style="flex:1;color:#ff9f0a;background:rgba(255,159,10,.08)">Remove Last</button>
             <button class="rst" onclick="S.rp=[];rRev();rWU()" style="flex:1">Clear Bar</button>
         </div>
-        <!-- Share section for Reverse -->
         <div class="cd">
             <div class="lb">Add to Screenshot</div>
             <div style="display:flex;gap:6px;margin-bottom:8px">
@@ -131,7 +127,6 @@
         </div>
     </div>
 
-    <!-- WARMUP -->
     <div class="cd" style="margin-top:6px">
         <button id="wuTog" onclick="S.wu=!S.wu;document.getElementById('wuC').style.display=S.wu?'block':'none';this.textContent=S.wu?'▼ Hide Warm-Up':'▶ Open Warm-Up Calculator';this.style.background=S.wu?'rgba(255,159,10,.15)':'rgba(255,255,255,.04)';this.style.color=S.wu?'#ff9f0a':'#636366';if(S.wu)rWU()" style="width:100%;padding:11px;border:none;border-radius:20px;background:rgba(255,255,255,.04);color:#636366;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;outline:none">▶ Open Warm-Up Calculator</button>
         <div id="wuC" style="display:none;margin-top:12px">
@@ -169,8 +164,8 @@ const LBSP=[
 ];
 const BARS=[
     {l:"45lb Standard",kg:20.4117,lbs:45},
-    {l:"20kg Olympic",kg:20,lbs:44.0924},
-    {l:"25kg Comp",kg:25,lbs:55.1156}
+    {l:"20kg Comp Barbell",kg:20,lbs:44.0924},
+    {l:"25kg Squat Bar",kg:25,lbs:55.1156}
 ];
 
 let S={tab:'calc',bi:0,pu:'kg',iu:'lbs',rp:[],ao:'mid',wu:false,wl:'squat',ws:'standard'};
@@ -205,14 +200,10 @@ function R(){
 }
 
 // ── BEST PRACTICAL LOAD LOGIC ──
-// "Best" = fewest plates that gets closest to target
-// Priority: minimize plate count, then minimize weight difference
 function bestLoad(perSide){
-    // Easy load (no micros): round to nearest 2.5
     const inc=2.5;
     const lo=Math.floor(perSide/inc)*inc;
     const hi=Math.ceil(perSide/inc)*inc;
-    // Pick whichever is closer
     const best=(perSide-lo)<=(hi-perSide)?lo:hi;
     return{best,lo,hi};
 }
@@ -238,18 +229,17 @@ function rCalc(){
 
     const{best,lo,hi}=bestLoad(perSide);
 
-    // MID = best practical (easy plates, closest to target)
+    // MID = best practical (easy plates)
     const midPl=cEasy(best);const midPS=midPl.reduce((s,p)=>s+p.w,0);const midT=makeTotals(midPS);
-
     // LO = one step down
     const loPl=cEasy(lo);const loPS=loPl.reduce((s,p)=>s+p.w,0);const loT=makeTotals(loPS);
-
     // HI = one step up
     const hiPl=cEasy(hi);const hiPS=hiPl.reduce((s,p)=>s+p.w,0);const hiT=makeTotals(hiPS);
+    // EXACT = precise with silvers
+    const exactPl=cAll(perSide);const exactPS=exactPl.reduce((s,p)=>s+p.w,0);const exactT=makeTotals(exactPS);
 
-    const data={lo:{ps:loPS,pl:loPl,t:loT},mid:{ps:midPS,pl:midPl,t:midT},hi:{ps:hiPS,pl:hiPl,t:hiT}};
+    const data={lo:{ps:loPS,pl:loPl,t:loT},mid:{ps:midPS,pl:midPl,t:midT},hi:{ps:hiPS,pl:hiPl,t:hiT},exact:{ps:exactPS,pl:exactPl,t:exactT}};
 
-    // If mid equals hi or lo, indicate "best already selected"
     const midIsHi=Math.abs(midT.lbs-hiT.lbs)<0.3;
     const midIsLo=Math.abs(midT.lbs-loT.lbs)<0.3;
 
@@ -268,19 +258,20 @@ function rCalc(){
     const iu=S.iu;
     let oh='';
     if(!midIsLo){
-        oh+=`<button class="opt ${S.ao==='lo'?'on':''}" onclick="S.ao='lo';rCalc();rWU()">↓ ${(iu==='kg'?loT.kg:loT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">lighter</span></button>`;
+        oh+=`<button class="opt ${S.ao==='lo'?'on':''}" onclick="S.ao='lo';rCalc();rWU()" style="flex:1 1 20%">↓ ${(iu==='kg'?loT.kg:loT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">lighter</span></button>`;
     }
-    oh+=`<button class="opt ${S.ao==='mid'?'on':''}" onclick="S.ao='mid';rCalc();rWU()">● ${(iu==='kg'?midT.kg:midT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">${midIsHi||midIsLo?'best':'best load'}</span></button>`;
+    oh+=`<button class="opt ${S.ao==='mid'?'on':''}" onclick="S.ao='mid';rCalc();rWU()" style="flex:1 1 20%">● ${(iu==='kg'?midT.kg:midT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">${midIsHi||midIsLo?'best':'best load'}</span></button>`;
     if(!midIsHi){
-        oh+=`<button class="opt ${S.ao==='hi'?'on':''}" onclick="S.ao='hi';rCalc();rWU()">↑ ${(iu==='kg'?hiT.kg:hiT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">heavier</span></button>`;
+        oh+=`<button class="opt ${S.ao==='hi'?'on':''}" onclick="S.ao='hi';rCalc();rWU()" style="flex:1 1 20%">↑ ${(iu==='kg'?hiT.kg:hiT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">heavier</span></button>`;
     }
+    // EXACT OPTION BUTTON
+    oh+=`<button class="opt ${S.ao==='exact'?'on':''}" onclick="S.ao='exact';rCalc();rWU()" style="flex:1 1 20%; background:${S.ao==='exact'?'rgba(10,132,255,.15)':'rgba(255,255,255,.04)'};color:${S.ao==='exact'?'#0a84ff':'#636366'}">★ ${(iu==='kg'?exactT.kg:exactT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">exact weight</span></button>`;
+    
     opts.innerHTML=oh;
 
-    // Show share section
     if(shareSec)shareSec.style.display='block';
 
     T=act.t.lbs;
-    // Store plates for share
     window._calcPlates=act.pl;window._calcT=act.t;
 }
 
@@ -327,7 +318,6 @@ function doShare(src){
     c.width=W;c.height=H;
     const x=c.getContext('2d');
 
-    // Transparent background
     x.clearRect(0,0,W,H);
 
     // "IN DRE WE TRUST" top center
@@ -335,15 +325,30 @@ function doShare(src){
     x.textAlign='center';x.textBaseline='top';
     x.fillText('IN DRE WE TRUST',W/2,16);
 
-    // Draw barbell
     const barY=H*0.38;
     const sx=50;
-    x.fillStyle='#777';x.fillRect(sx,barY-14,16,28);
-    x.fillStyle='#999';x.fillRect(sx+16,barY-10,10,20);
-    x.fillStyle='#aaa';x.fillRect(sx+26,barY-7,30,14);
+
+    // ADDED: Barbell weight label above the bar
+    const barName = BARS[S.bi].l;
+    x.fillStyle='rgba(255,255,255,.6)';x.font='700 18px -apple-system,sans-serif';
+    x.textAlign='center';x.textBaseline='bottom';
+    x.fillText(`BAR: ${barName.toUpperCase()}`, W/2, barY - 170);
+
+    // Draw realistic sleeve foundation
+    const g=x.createLinearGradient(0,barY-7,0,barY+7);
+    g.addColorStop(0,'#aaa');g.addColorStop(1,'#777');
+
+    x.fillStyle='#777';x.fillRect(sx,barY-14,16,28); // collar
+    x.fillStyle='#999';x.fillRect(sx+16,barY-10,10,20); // neck
+    
+    // Calculate required plate width so sleeve isn't too short if loaded heavily
+    let totalPW = 0;
+    plates.forEach(p => totalPW += Math.max(p.pw*1.8, 14) + 2);
+    const usableSleeve = Math.max(380, totalPW + 15); // Fixed realistic length (approx 16 inches)
+    
+    x.fillStyle=g;x.fillRect(sx+26,barY-7,30 + usableSleeve,14);
 
     let px=sx+56;
-    const counts={};
     plates.forEach((p,i)=>{
         const ph=Math.min(p.h*2.2,400);
         const pw=Math.max(p.pw*1.8,14);
@@ -353,12 +358,11 @@ function doShare(src){
         x.textAlign='center';x.textBaseline='middle';
         x.fillText(p.l,px+pw/2,barY);
         px+=pw+2;
-        counts[p.l]=(counts[p.l]||0)+1;
     });
-    x.fillStyle='#555';x.fillRect(px,barY-16,8,32);
-    const g=x.createLinearGradient(px+8,barY-7,px+8,barY+7);
-    g.addColorStop(0,'#aaa');g.addColorStop(1,'#777');
-    x.fillStyle=g;x.fillRect(px+8,barY-7,W-px-50,14);
+
+    // Draw end cap at end of realistic sleeve
+    const endPx = sx + 26 + 30 + usableSleeve;
+    x.fillStyle='#555';x.fillRect(endPx,barY-16,8,32);
 
     // Weight numbers
     const wy=H*0.72;
