@@ -154,14 +154,17 @@ const KGP=[
     {w:0.25,c:"#333",l:".25",tc:"#888",h:38,pw:5,bd:"#666"},
     {w:0.125,c:"#2a2a2a",l:".125",tc:"#777",h:32,pw:5,bd:"#555"}
 ];
+
+// UPDATED: Standard iron plate look for LBS
 const LBSP=[
-    {w:45,c:"#DC2626",l:"45",tc:"#fff",h:140,pw:14},
-    {w:35,c:"#2563EB",l:"35",tc:"#fff",h:128,pw:13},
-    {w:25,c:"#16A34A",l:"25",tc:"#fff",h:116,pw:12},
-    {w:10,c:"#E5E7EB",l:"10",tc:"#000",h:96,pw:10},
-    {w:5, c:"#6B7280",l:"5", tc:"#fff",h:76,pw:9},
-    {w:2.5,c:"#1c1c1e",l:"2.5",tc:"#fff",h:60,pw:8,bd:"#666"}
+    {w:45,c:"#222",l:"45",tc:"#fff",h:140,pw:14,bd:"#666"},
+    {w:35,c:"#222",l:"35",tc:"#fff",h:128,pw:13,bd:"#666"},
+    {w:25,c:"#222",l:"25",tc:"#fff",h:116,pw:12,bd:"#666"},
+    {w:10,c:"#222",l:"10",tc:"#fff",h:96,pw:10,bd:"#666"},
+    {w:5, c:"#222",l:"5", tc:"#fff",h:76,pw:9,bd:"#666"},
+    {w:2.5,c:"#222",l:"2.5",tc:"#fff",h:60,pw:8,bd:"#666"}
 ];
+
 const BARS=[
     {l:"45lb Standard",kg:20.4117,lbs:45},
     {l:"20kg Comp Barbell",kg:20,lbs:44.0924},
@@ -191,7 +194,7 @@ function plateListHTML(pls){
     const counts=[];
     P().forEach(p=>{
         let c=0;pls.forEach(pl=>{if(pl.w===p.w)c++});
-        if(c>0)counts.push(`<span style="background:#222;padding:3px 6px;border-radius:4px;border:1px solid ${p.c};color:#fff;font-weight:700">${c} × ${p.l}</span>`);
+        if(c>0)counts.push(`<span style="background:#222;padding:3px 6px;border-radius:4px;border:1px solid ${p.bd||p.c};color:#fff;font-weight:700">${c} × ${p.l}</span>`);
     });
     return `<div style="font-size:11px;margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">${counts.join('')}</div>`;
 }
@@ -406,7 +409,11 @@ function doShare(src){
         const ph=Math.min(p.h*2.2,400);
         const pw=Math.max(p.pw*1.8,14);
         x.fillStyle=p.c;x.fillRect(px,barY-ph/2,pw,ph);
-        x.strokeStyle='rgba(0,0,0,.25)';x.lineWidth=1;x.strokeRect(px,barY-ph/2,pw,ph);
+        
+        // UPDATED: Using plate border property if it exists, otherwise fallback to dark overlay
+        x.strokeStyle = p.bd ? p.bd : 'rgba(0,0,0,.3)';
+        x.lineWidth=1;x.strokeRect(px,barY-ph/2,pw,ph);
+        
         x.fillStyle=p.tc;x.font=`bold ${Math.max(10,pw-6)}px -apple-system,sans-serif`;
         x.textAlign='center';x.textBaseline='middle';
         x.fillText(p.l,px+pw/2,barY);
