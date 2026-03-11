@@ -64,6 +64,10 @@
         .wuc{font-size:11px;color:#636366;font-style:italic;margin-top:3px;padding-left:7px;border-left:2px solid #ff9f0a}
         .ft{text-align:center;padding:20px 0;color:#38383a;font-size:10px;font-weight:600;letter-spacing:1px}
         #shareCanvas{display:none}
+        
+        .g-table {width:100%;font-size:11px;text-align:center;border-collapse:collapse;margin-top:10px;}
+        .g-table th {padding:8px 4px;font-weight:700;color:#636366;border-bottom:1px solid #38383a;}
+        .g-table td {padding:8px 4px;border-bottom:0.5px solid #2c2c2e;color:#aaa;}
     </style>
 </head>
 <body>
@@ -135,6 +139,21 @@
             <div id="wuR"></div>
         </div>
     </div>
+
+    <div class="cd" style="margin-top:6px">
+        <button id="gcTog" onclick="S.gc=!S.gc;document.getElementById('gcC').style.display=S.gc?'block':'none';this.textContent=S.gc?'▼ Hide Goal Calculator':'🎯 Open Goal Calculator';this.style.background=S.gc?'rgba(10,132,255,.15)':'rgba(255,255,255,.04)';this.style.color=S.gc?'#0a84ff':'#636366';if(S.gc){document.getElementById('gWIn').value = Math.round(T||0); rGoal();}" style="width:100%;padding:11px;border:none;border-radius:20px;background:rgba(255,255,255,.04);color:#636366;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;outline:none">🎯 Open Goal Calculator</button>
+        <div id="gcC" style="display:none;margin-top:16px">
+            <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:8px">
+                <span style="font-size:13px;color:#636366;font-weight:700">I did</span>
+                <input type="number" class="sinp" id="gWIn" placeholder="W" oninput="rGoal()" style="width:70px;font-size:16px;text-align:center;padding:8px">
+                <span style="font-size:13px;color:#636366;font-weight:700">for</span>
+                <input type="number" class="sinp" id="gRIn" placeholder="R" value="1" oninput="rGoal()" style="width:60px;font-size:16px;text-align:center;padding:8px">
+                <span style="font-size:13px;color:#636366;font-weight:700">reps.</span>
+            </div>
+            <div id="gOut"></div>
+        </div>
+    </div>
+
     <div class="ft">DRE CALIBRATION · BARBELL LOADER</div>
 </div>
 <canvas id="shareCanvas"></canvas>
@@ -155,7 +174,6 @@ const KGP=[
     {w:0.125,c:"#2a2a2a",l:".125",tc:"#777",h:32,pw:5,bd:"#555"}
 ];
 
-// UPDATED: Standard iron plate look for LBS
 const LBSP=[
     {w:45,c:"#222",l:"45",tc:"#fff",h:140,pw:14,bd:"#666"},
     {w:35,c:"#222",l:"35",tc:"#fff",h:128,pw:13,bd:"#666"},
@@ -171,13 +189,12 @@ const BARS=[
     {l:"25kg Squat Bar",kg:25,lbs:55.1156}
 ];
 
-let S={tab:'calc',bi:0,pu:'kg',iu:'lbs',rp:[],ao:'mid',wu:false,wl:'squat',ws:'standard'};
+let S={tab:'calc',bi:0,pu:'kg',iu:'lbs',rp:[],ao:'mid',wu:false,gc:false,wl:'squat',ws:'standard'};
 let T=0;
 function P(){return S.pu==='kg'?KGP:LBSP}
 function B(){return BARS[S.bi]}
 
 function cAll(ps){let r=ps;const o=[];for(const p of P()){while(r>=p.w-0.001){o.push(p);r-=p.w}}return o}
-// Easy = skip micros (<2.5 for KG)
 function eP(){return S.pu==='lbs'?LBSP:KGP.filter(p=>p.w>=2.5)}
 function cEasy(ps){let r=ps;const o=[];for(const p of eP()){while(r>=p.w-0.001){o.push(p);r-=p.w}}return o}
 
@@ -188,7 +205,6 @@ function barH(pls){
     return `<div class="bar-wrap"><div class="bar-inner"><div class="bar-collar"></div><div class="bar-neck"></div><div class="bar-sleeve"></div><div class="bar-plates">${pls.map((p,i)=>bpH(p,i)).join('')}</div><div class="bar-cap"></div><div class="bar-ext"></div></div></div>`;
 }
 
-// Generates the text breakdown of the plates (e.g., 4 x 25, 1 x 10)
 function plateListHTML(pls){
     if(!pls||pls.length===0) return '<div style="font-size:11px;color:#636366;text-align:center;margin-top:8px">No plates loaded</div>';
     const counts=[];
@@ -213,7 +229,6 @@ function R(){
     rCalc();rRev();if(S.wu)rWU();
 }
 
-// ── BEST PRACTICAL LOAD LOGIC ──
 function bestLoad(perSide){
     const inc=2.5;
     const lo=Math.floor(perSide/inc)*inc;
@@ -222,7 +237,6 @@ function bestLoad(perSide){
     return{best,lo,hi};
 }
 
-// ── SMART EXACT OPTIMIZATION (+/- 2LBS THRESHOLD) ──
 function getOptimalExact(perSide, pu) {
     const smallestPlate = P()[P().length-1].w;
     const basePS = Math.round(perSide/smallestPlate)*smallestPlate;
@@ -230,10 +244,8 @@ function getOptimalExact(perSide, pu) {
     let bestPS = basePS;
     let minPlates = bestPlates.length;
     
-    // Threshold is ~1 lb per side (2 lbs total on the bar)
     const maxDev = pu === 'kg' ? 0.4536 : 1.0; 
     
-    // Check surrounding weights within threshold to find the one with the fewest plates
     for (let offset = -maxDev; offset <= maxDev + 0.001; offset += smallestPlate) {
         const testPS = Math.round((perSide + offset)/smallestPlate)*smallestPlate;
         if (testPS < 0) continue;
@@ -245,7 +257,6 @@ function getOptimalExact(perSide, pu) {
             bestPS = testPS;
             bestPlates = plates;
         } else if (plates.length === minPlates) {
-            // Tie breaker: if plate count is the same, pick the one closer to original target
             if (Math.abs(testPS - perSide) < Math.abs(bestPS - perSide)) {
                 bestPS = testPS;
                 bestPlates = plates;
@@ -261,7 +272,6 @@ function makeTotals(perSideActual){
     return{kg:totalKg,lbs:totalKg*K};
 }
 
-// ── CALCULATE TAB ──
 function rCalc(){
     const raw=parseFloat(document.getElementById('tIn').value);
     const res=document.getElementById('cRes'),opts=document.getElementById('cOpts');
@@ -276,14 +286,9 @@ function rCalc(){
 
     const{best,lo,hi}=bestLoad(perSide);
 
-    // MID = best practical (easy plates)
     const midPl=cEasy(best);const midPS=midPl.reduce((s,p)=>s+p.w,0);const midT=makeTotals(midPS);
-    // LO = one step down
     const loPl=cEasy(lo);const loPS=loPl.reduce((s,p)=>s+p.w,0);const loT=makeTotals(loPS);
-    // HI = one step up
     const hiPl=cEasy(hi);const hiPS=hiPl.reduce((s,p)=>s+p.w,0);const hiT=makeTotals(hiPS);
-    
-    // EXACT = Optimized precise load within threshold
     const optExact = getOptimalExact(perSide, S.pu);
     const exactPl = optExact.pl;
     const exactPS = optExact.ps;
@@ -317,7 +322,6 @@ function rCalc(){
     if(!midIsHi){
         oh+=`<button class="opt ${S.ao==='hi'?'on':''}" onclick="S.ao='hi';rCalc();rWU()" style="flex:1 1 20%">↑ ${(iu==='kg'?hiT.kg:hiT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">heavier</span></button>`;
     }
-    // EXACT OPTION BUTTON
     oh+=`<button class="opt ${S.ao==='exact'?'on':''}" onclick="S.ao='exact';rCalc();rWU()" style="flex:1 1 20%; background:${S.ao==='exact'?'rgba(10,132,255,.15)':'rgba(255,255,255,.04)'};color:${S.ao==='exact'?'#0a84ff':'#636366'}">★ ${(iu==='kg'?exactT.kg:exactT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">exact load</span></button>`;
     
     opts.innerHTML=oh;
@@ -328,7 +332,6 @@ function rCalc(){
     window._calcPlates=act.pl;window._calcT=act.t;
 }
 
-// ── REVERSE TAB ──
 function rRev(){
     const bv=S.pu==='kg'?B().kg:B().lbs;
     const ps=S.rp.reduce((s,p)=>s+p.w,0);
@@ -336,7 +339,6 @@ function rRev(){
     const kg=S.pu==='kg'?t:t*L;
     const lbs=kg*K;
     
-    // Inject both the visual bar and the text-based plate list underneath it
     document.getElementById('rBar').innerHTML=barH(S.rp) + plateListHTML(S.rp);
     
     document.getElementById('rTot').innerHTML=`
@@ -348,7 +350,6 @@ function rRev(){
     T=lbs;
 }
 
-// ── SHARE IMAGE (transparent BG) ──
 function doShare(src){
     let plates,kg,lbs,sets,reps,note;
     if(src==='calc'){
@@ -376,7 +377,6 @@ function doShare(src){
 
     x.clearRect(0,0,W,H);
 
-    // "IN DRE WE TRUST" top center
     x.fillStyle='#ff453a';x.font='800 18px -apple-system,sans-serif';
     x.textAlign='center';x.textBaseline='top';
     x.fillText('IN DRE WE TRUST',W/2,16);
@@ -384,23 +384,20 @@ function doShare(src){
     const barY=H*0.38;
     const sx=50;
 
-    // Barbell weight label above the bar
     const barName = BARS[S.bi].l;
     x.fillStyle='rgba(255,255,255,.6)';x.font='700 18px -apple-system,sans-serif';
     x.textAlign='center';x.textBaseline='bottom';
     x.fillText(`BAR: ${barName.toUpperCase()}`, W/2, barY - 170);
 
-    // Draw realistic sleeve foundation
     const g=x.createLinearGradient(0,barY-7,0,barY+7);
     g.addColorStop(0,'#aaa');g.addColorStop(1,'#777');
 
-    x.fillStyle='#777';x.fillRect(sx,barY-14,16,28); // collar
-    x.fillStyle='#999';x.fillRect(sx+16,barY-10,10,20); // neck
+    x.fillStyle='#777';x.fillRect(sx,barY-14,16,28);
+    x.fillStyle='#999';x.fillRect(sx+16,barY-10,10,20);
     
-    // Calculate required plate width so sleeve isn't too short if loaded heavily
     let totalPW = 0;
     plates.forEach(p => totalPW += Math.max(p.pw*1.8, 14) + 2);
-    const usableSleeve = Math.max(380, totalPW + 15); // Fixed realistic length
+    const usableSleeve = Math.max(380, totalPW + 15);
     
     x.fillStyle=g;x.fillRect(sx+26,barY-7,30 + usableSleeve,14);
 
@@ -409,22 +406,17 @@ function doShare(src){
         const ph=Math.min(p.h*2.2,400);
         const pw=Math.max(p.pw*1.8,14);
         x.fillStyle=p.c;x.fillRect(px,barY-ph/2,pw,ph);
-        
-        // UPDATED: Using plate border property if it exists, otherwise fallback to dark overlay
         x.strokeStyle = p.bd ? p.bd : 'rgba(0,0,0,.3)';
         x.lineWidth=1;x.strokeRect(px,barY-ph/2,pw,ph);
-        
         x.fillStyle=p.tc;x.font=`bold ${Math.max(10,pw-6)}px -apple-system,sans-serif`;
         x.textAlign='center';x.textBaseline='middle';
         x.fillText(p.l,px+pw/2,barY);
         px+=pw+2;
     });
 
-    // Draw end cap at end of realistic sleeve
     const endPx = sx + 26 + 30 + usableSleeve;
     x.fillStyle='#555';x.fillRect(endPx,barY-16,8,32);
 
-    // Weight numbers
     const wy=H*0.72;
     x.textAlign='center';x.textBaseline='middle';
     x.fillStyle='#fff';x.font='900 64px -apple-system,sans-serif';
@@ -439,7 +431,6 @@ function doShare(src){
     x.fillStyle='rgba(255,255,255,.4)';x.font='700 18px -apple-system,sans-serif';
     x.fillText('LB',W*0.72,wy+38);
 
-    // Sets/Reps/Note if provided
     let infoY=wy+65;
     if(sets||reps){
         x.fillStyle='rgba(255,255,255,.7)';x.font='700 16px -apple-system,sans-serif';
@@ -455,7 +446,6 @@ function doShare(src){
         x.fillText(note,W/2,infoY);
     }
 
-    // "DRE CALIBRATION" bottom center
     x.fillStyle='#ff453a';x.font='800 14px -apple-system,sans-serif';
     x.textBaseline='bottom';
     x.fillText('DRE CALIBRATION',W/2,H-14);
@@ -484,6 +474,58 @@ function rWU(){
         const rp=s.r==='OPT'?'Opt':s.r+'r';
         return `<div class="wur"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:15px">${lb}</b> <span style="color:#636366;font-size:11px">${kg}kg</span>${belt?' <span style="background:#ff453a;color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:10px">BELT</span>':''}</div><div><span style="color:#0a84ff;font-weight:700;font-size:12px">${rp}</span> <span style="color:#48484a;font-size:10px">${Math.round(s.p*100)}%</span></div></div><div class="wuc">${cu[S.wl][i]||'Focus.'}</div></div>`;
     }).join('');
+}
+
+// ── GOAL CALCULATOR (NEW) ──
+function rGoal() {
+    const gw = parseFloat(document.getElementById('gWIn').value) || 0;
+    const gr = parseInt(document.getElementById('gRIn').value) || 1;
+    const out = document.getElementById('gOut');
+
+    if(gw <= 0 || gr <= 0) {
+        out.innerHTML = '<div style="text-align:center;color:#48484a;font-size:12px;padding:16px">Enter weight & reps</div>';
+        return;
+    }
+
+    // 1RM conversions using standard formulas
+    const b1 = gw * (36 / (37 - gr));
+    const e1 = gw * (1 + gr/30);
+    const o1 = gw * (1 + gr/40);
+    const w1 = gw * 100 / (48.8 + 53.8 * Math.exp(-0.075 * gr));
+    const l1 = gw * 100 / (101.3 - 2.67123 * gr);
+
+    let html = `<div style="overflow-x:auto;"><table class="g-table">
+        <tr>
+            <th>RM</th>
+            <th style="color:#fff">Average</th>
+            <th>Brzycki</th>
+            <th>Epley</th>
+            <th>O'Conner</th>
+            <th>Wathan</th>
+            <th>Lander</th>
+        </tr>`;
+
+    for(let r=1; r<=10; r++) {
+        const b = r===1 ? b1 : b1 * (37 - r) / 36;
+        const e = r===1 ? e1 : e1 / (1 + r/30);
+        const o = r===1 ? o1 : o1 / (1 + r/40);
+        const w = r===1 ? w1 : w1 * (48.8 + 53.8 * Math.exp(-0.075 * r)) / 100;
+        const l = r===1 ? l1 : l1 * (101.3 - 2.67123 * r) / 100;
+
+        const avg = (b + e + o + w + l) / 5;
+
+        html += `<tr>
+            <td style="font-weight:700;color:#636366">${r}RM</td>
+            <td style="font-weight:800;color:#fff">${Math.round(avg)}</td>
+            <td>${Math.round(b)}</td>
+            <td>${Math.round(e)}</td>
+            <td>${Math.round(o)}</td>
+            <td>${Math.round(w)}</td>
+            <td>${Math.round(l)}</td>
+        </tr>`;
+    }
+    html += `</table></div>`;
+    out.innerHTML = html;
 }
 
 R();
