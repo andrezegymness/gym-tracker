@@ -375,22 +375,58 @@ function doShare(src){
     c.width=W;c.height=H;
     const x=c.getContext('2d');
 
-    x.clearRect(0,0,W,H);
+    // --- NEW HKS RETRO BACKGROUND LOGIC ---
+    
+    // 1. Solid Dark Base
+    x.fillStyle='#050505';
+    x.fillRect(0,0,W,H);
 
-    x.fillStyle='#ff453a';x.font='800 18px -apple-system,sans-serif';
-    x.textAlign='center';x.textBaseline='top';
+    // 2. Classic HKS Diagonal Stripes (Teal, Purple, Red)
+    x.save();
+    x.translate(W/2, H/2);
+    x.rotate(-35 * Math.PI / 180);
+    const sW = 140; // width of each stripe
+    const off = 100; // offset position
+    x.fillStyle='#ED1C24'; x.fillRect(-W, off, W*2, sW); // Red
+    x.fillStyle='#7B3F98'; x.fillRect(-W, off - sW, W*2, sW); // Purple
+    x.fillStyle='#00A388'; x.fillRect(-W, off - sW*2, W*2, sW); // Teal
+    x.restore();
+
+    // 3. Dark Gradient Overlay (Keeps the barbell and text popping)
+    const bgGrad = x.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, 'rgba(0,0,0,0.2)');
+    bgGrad.addColorStop(0.4, 'rgba(0,0,0,0.7)');
+    bgGrad.addColorStop(1, 'rgba(0,0,0,0.95)');
+    x.fillStyle = bgGrad;
+    x.fillRect(0,0,W,H);
+    
+    // --- END BACKGROUND ---
+
+    // Top Header with drop shadow for legibility over the bright stripes
+    x.shadowColor = 'rgba(0,0,0,0.8)';
+    x.shadowBlur = 10;
+    x.shadowOffsetY = 2;
+    x.fillStyle='#ffffff'; // Changed to white so it pops off the background
+    x.font='800 18px -apple-system,sans-serif';
+    x.textAlign='center';
+    x.textBaseline='top';
     x.fillText('IN DRE WE TRUST',W/2,16);
 
     const barY=H*0.38;
     const sx=50;
 
     const barName = BARS[S.bi].l;
-    x.fillStyle='rgba(255,255,255,.6)';x.font='700 18px -apple-system,sans-serif';
-    x.textAlign='center';x.textBaseline='bottom';
+    x.fillStyle='rgba(255,255,255,.6)';
+    x.font='700 18px -apple-system,sans-serif';
+    x.textAlign='center';
+    x.textBaseline='bottom';
     x.fillText(`BAR: ${barName.toUpperCase()}`, W/2, barY - 170);
 
-    const g=x.createLinearGradient(0,barY-7,0,barY+7);
-    g.addColorStop(0,'#aaa');g.addColorStop(1,'#777');
+    // Reset shadow before drawing plates so they don't get muddy
+    x.shadowColor = 'transparent';
+
+    const sleeveGrad=x.createLinearGradient(0,barY-7,0,barY+7);
+    sleeveGrad.addColorStop(0,'#aaa');sleeveGrad.addColorStop(1,'#777');
 
     x.fillStyle='#777';x.fillRect(sx,barY-14,16,28);
     x.fillStyle='#999';x.fillRect(sx+16,barY-10,10,20);
@@ -399,7 +435,7 @@ function doShare(src){
     plates.forEach(p => totalPW += Math.max(p.pw*1.8, 14) + 2);
     const usableSleeve = Math.max(380, totalPW + 15);
     
-    x.fillStyle=g;x.fillRect(sx+26,barY-7,30 + usableSleeve,14);
+    x.fillStyle=sleeveGrad;x.fillRect(sx+26,barY-7,30 + usableSleeve,14);
 
     let px=sx+56;
     plates.forEach((p,i)=>{
@@ -418,6 +454,10 @@ function doShare(src){
     x.fillStyle='#555';x.fillRect(endPx,barY-16,8,32);
 
     const wy=H*0.72;
+    
+    // Bring shadow back for the bottom text 
+    x.shadowColor = 'rgba(0,0,0,0.8)';
+    
     x.textAlign='center';x.textBaseline='middle';
     x.fillStyle='#fff';x.font='900 64px -apple-system,sans-serif';
     x.fillText((Math.round(kg*10)/10)+'',W*0.28,wy);
@@ -463,7 +503,7 @@ function doShare(src){
         const file = new File([blob], 'dre-calibration.png', {type: 'image/png'});
         if (navigator.canShare && navigator.canShare({files: [file]})) {
             navigator.share({
-                files: [file] // Notice we removed the 'title' here!
+                files: [file] // Text removed to fix IG paste glitch
             }).catch(() => {});
         } else {
             const u = URL.createObjectURL(blob); 
@@ -494,7 +534,7 @@ function rWU(){
     }).join('');
 }
 
-// ── GOAL CALCULATOR (NEW) ──
+// ── GOAL CALCULATOR ──
 function rGoal() {
     const gw = parseFloat(document.getElementById('gWIn').value) || 0;
     const gr = parseInt(document.getElementById('gRIn').value) || 1;
