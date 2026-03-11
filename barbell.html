@@ -159,12 +159,6 @@
 <canvas id="shareCanvas"></canvas>
 
 <script>
-// Load the livery mask image immediately so it's ready when doShare is called.
-// Assumes your web server allows cross-origin requests for getImageData.
-let imgMask = new Image();
-imgMask.crossOrigin = "Anonymous"; // Crucial for using pixel manipulation masking
-imgMask.src = "uploaded:image_b5af75.jpg-5087e80d-6cac-4d66-89e4-0f89b3408f8d"; // filename reference from turn 9
-
 const K=2.20462,L=1/K;
 
 const KGP=[
@@ -381,77 +375,38 @@ function doShare(src){
     c.width=W;c.height=H;
     const x=c.getContext('2d');
 
-    // Ensure mask image is fully loaded before drawing
-    if (!imgMask.complete) {
-        alert("Livery template still loading. Try again in a moment.");
-        return; 
-    }
-
-    // --- NEW COMPLEX HKS LIERY + MASKING LOGIC ---
+    // --- NEW HKS RETRO BACKGROUND LOGIC ---
     
-    // 1. DRE CALIBRATION Base Wall
+    // 1. Solid Dark Base
     x.fillStyle='#050505';
     x.fillRect(0,0,W,H);
 
-    // 2. Prep MASKING CANVASES (Off-screen)
-    const mCanvas = document.createElement('canvas');
-    mCanvas.width = W; mCanvas.height = H;
-    const mCtx = mCanvas.getContext('2d');
-
-    const sCanvas = document.createElement('canvas');
-    sCanvas.width = W; sCanvas.height = H;
-    const sCtx = sCanvas.getContext('2d');
-
-    // Step A: Convert Black/White mask image to an OPACITY MASK (White Opaque, Black Transparent)
-    // Draw stretched mask onto temp canvas
-    mCtx.drawImage(imgMask, 0, 0, W, H);
-    // Get pixel data to manipulate alpha channel based on brightness
-    const imageData = mCtx.getImageData(0, 0, W, H);
-    const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-        // Luminance calculation (average RGB)
-        const luminance = (data[i] + data[i+1] + data[i+2]) / 3;
-        // The mask is white designs on black. 
-        // We want to keep white designs, so make black background transparent.
-        data[i+3] = luminance; // Set alpha based on luminance. White (255) -> Opaque (255). Black (0) -> Transparent (0).
-    }
-    // Put modified alpha mask data back onto the temp canvas
-    mCtx.putImageData(imageData, 0, 0);
-
-    // Step B: Draw FULL diagonal HKS retro stripes onto SEPARATE temp canvas
-    sCtx.save();
-    sCtx.translate(W/2, H/2);
-    sCtx.rotate(-35 * Math.PI / 180);
+    // 2. Classic HKS Diagonal Stripes (Teal, Purple, Red)
+    x.save();
+    x.translate(W/2, H/2);
+    x.rotate(-35 * Math.PI / 180);
     const sW = 140; // width of each stripe
     const off = 100; // offset position
-    sCtx.fillStyle='#ED1C24'; sCtx.fillRect(-W, off, W*2, sW); // Red
-    sCtx.fillStyle='#7B3F98'; sCtx.fillRect(-W, off - sW, W*2, sW); // Purple
-    sCtx.fillStyle='#00A388'; sCtx.fillRect(-W, off - sW*2, W*2, sW); // Teal
-    sCtx.restore();
+    x.fillStyle='#ED1C24'; x.fillRect(-W, off, W*2, sW); // Red
+    x.fillStyle='#7B3F98'; x.fillRect(-W, off - sW, W*2, sW); // Purple
+    x.fillStyle='#00A388'; x.fillRect(-W, off - sW*2, W*2, sW); // Teal
+    x.restore();
 
-    // Step C: MASK the stripes! (Designs = Stripes, everything else transparent base wall)
-    sCtx.globalCompositeOperation = 'destination-in'; // Keeps source (stripes) only where dest (alpha mask) is non-transparent
-    sCtx.drawImage(mCanvas, 0, 0, W, H);
-    sCtx.globalCompositeOperation = 'source-over'; // Reset to default
-
-    // Step D: Composite masked designs onto MAIN canvas
-    x.drawImage(sCanvas, 0, 0, W, H);
-
-    // 3. Dark Gradient Overlay (Legibility for barbell and text)
+    // 3. Dark Gradient Overlay (Keeps the barbell and text popping)
     const bgGrad = x.createLinearGradient(0, 0, 0, H);
-    bgGrad.addColorStop(0, 'rgba(0,0,0,0.1)'); // Minimal top darken
-    bgGrad.addColorStop(0.4, 'rgba(0,0,0,0.7)'); // Fast ramp-up
-    bgGrad.addColorStop(1, 'rgba(0,0,0,0.95)'); // Heavy bottom darken
+    bgGrad.addColorStop(0, 'rgba(0,0,0,0.2)');
+    bgGrad.addColorStop(0.4, 'rgba(0,0,0,0.7)');
+    bgGrad.addColorStop(1, 'rgba(0,0,0,0.95)');
     x.fillStyle = bgGrad;
     x.fillRect(0,0,W,H);
     
-    // --- END BACKGROUND INTEGRATION ---
+    // --- END BACKGROUND ---
 
-    // Top Header with drop shadow for legibility over stripes
-    x.shadowColor = 'rgba(0,0,0,0.9)';
+    // Top Header with drop shadow for legibility over the bright stripes
+    x.shadowColor = 'rgba(0,0,0,0.8)';
     x.shadowBlur = 10;
     x.shadowOffsetY = 2;
-    x.fillStyle='#ffffff'; // White text
+    x.fillStyle='#ffffff'; // Changed to white so it pops off the background
     x.font='800 18px -apple-system,sans-serif';
     x.textAlign='center';
     x.textBaseline='top';
@@ -467,18 +422,18 @@ function doShare(src){
     x.textBaseline='bottom';
     x.fillText(`BAR: ${barName.toUpperCase()}`, W/2, barY - 170);
 
-    // Reset shadow for clean plates
+    // Reset shadow before drawing plates so they don't get muddy
     x.shadowColor = 'transparent';
 
     const sleeveGrad=x.createLinearGradient(0,barY-7,0,barY+7);
     sleeveGrad.addColorStop(0,'#aaa');sleeveGrad.addColorStop(1,'#777');
 
-    x.fillStyle='#777';x.fillRect(sx,barY-14,16,28); // collar
-    x.fillStyle='#999';x.fillRect(sx+16,barY-10,10,20); // neck
+    x.fillStyle='#777';x.fillRect(sx,barY-14,16,28);
+    x.fillStyle='#999';x.fillRect(sx+16,barY-10,10,20);
     
     let totalPW = 0;
     plates.forEach(p => totalPW += Math.max(p.pw*1.8, 14) + 2);
-    const usableSleeve = Math.max(380, totalPW + 15); // Fixed realistic length
+    const usableSleeve = Math.max(380, totalPW + 15);
     
     x.fillStyle=sleeveGrad;x.fillRect(sx+26,barY-7,30 + usableSleeve,14);
 
@@ -487,10 +442,8 @@ function doShare(src){
         const ph=Math.min(p.h*2.2,400);
         const pw=Math.max(p.pw*1.8,14);
         x.fillStyle=p.c;x.fillRect(px,barY-ph/2,pw,ph);
-        
         x.strokeStyle = p.bd ? p.bd : 'rgba(0,0,0,.3)';
         x.lineWidth=1;x.strokeRect(px,barY-ph/2,pw,ph);
-        
         x.fillStyle=p.tc;x.font=`bold ${Math.max(10,pw-6)}px -apple-system,sans-serif`;
         x.textAlign='center';x.textBaseline='middle';
         x.fillText(p.l,px+pw/2,barY);
@@ -498,13 +451,12 @@ function doShare(src){
     });
 
     const endPx = sx + 26 + 30 + usableSleeve;
-    x.fillStyle='#555';x.fillRect(endPx,barY-16,8,32); // end cap
+    x.fillStyle='#555';x.fillRect(endPx,barY-16,8,32);
 
-    // Weight numbers
     const wy=H*0.72;
     
-    // Shadow for numbers
-    x.shadowColor = 'rgba(0,0,0,0.9)';
+    // Bring shadow back for the bottom text 
+    x.shadowColor = 'rgba(0,0,0,0.8)';
     
     x.textAlign='center';x.textBaseline='middle';
     x.fillStyle='#fff';x.font='900 64px -apple-system,sans-serif';
@@ -519,7 +471,6 @@ function doShare(src){
     x.fillStyle='rgba(255,255,255,.4)';x.font='700 18px -apple-system,sans-serif';
     x.fillText('LB',W*0.72,wy+38);
 
-    // Sets/Reps/Note if provided
     let infoY=wy+65;
     if(sets||reps){
         x.fillStyle='rgba(255,255,255,.7)';x.font='700 16px -apple-system,sans-serif';
@@ -540,22 +491,29 @@ function doShare(src){
     x.fillText('DRE CALIBRATION',W/2,H-14);
 
     c.toBlob(async blob => {
-        // TRICK 1: Force copy image to device clipboard for IG Story paste fix
+        // TRICK 1: Silently force copy the raw image to the device clipboard for easy IG Story pasting
         try {
             const item = new ClipboardItem({ 'image/png': blob });
             await navigator.clipboard.write([item]);
         } catch (err) {
-            console.log('Clipboard direct copy not supported.');
+            console.log('Clipboard direct copy not supported on this browser.');
         }
 
-        // TRICK 2: Share sheet, but only hand file (NO TEXT title)
+        // TRICK 2: Open the share sheet, but strictly only hand it the file (NO TEXT!)
         const file = new File([blob], 'dre-calibration.png', {type: 'image/png'});
         if (navigator.canShare && navigator.canShare({files: [file]})) {
             navigator.share({
-                files: [file] // notice 'title' is removed
+                files: [file] // Text removed to fix IG paste glitch
             }).catch(() => {});
         } else {
-            const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = 'dre-calibration.png'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(u);
+            const u = URL.createObjectURL(blob); 
+            const a = document.createElement('a'); 
+            a.href = u; 
+            a.download = 'dre-calibration.png'; 
+            document.body.appendChild(a); 
+            a.click(); 
+            a.remove(); 
+            URL.revokeObjectURL(u);
         }
     }, 'image/png');
 }
@@ -587,6 +545,7 @@ function rGoal() {
         return;
     }
 
+    // 1RM conversions using standard formulas
     const b1 = gw * (36 / (37 - gr));
     const e1 = gw * (1 + gr/30);
     const o1 = gw * (1 + gr/40);
