@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,56 +11,53 @@
     <title>Barbell Loader — Dre Calibration</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body { background:#000; color:#fff; font-family:-apple-system,'SF Pro Display','Inter',sans-serif; margin:0; padding:0; min-height:100vh; }
-        .bl-wrap { max-width:500px; margin:0 auto; padding:0 12px 100px; }
-        .bl-header { text-align:center; padding:20px 0 12px; }
-        .bl-brand { font-size:11px; font-weight:800; letter-spacing:3px; color:#ff453a; text-transform:uppercase; }
-        .bl-title { font-size:22px; font-weight:900; color:#fff; margin:4px 0; }
-        .bl-back { color:#0a84ff; text-decoration:none; font-weight:600; font-size:13px; display:block; text-align:center; margin-bottom:8px; }
+        body{background:#000;color:#fff;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;margin:0;padding:0;min-height:100vh}
+        .bl-wrap{max-width:500px;margin:0 auto;padding:0 12px 100px}
+        .bl-header{text-align:center;padding:20px 0 12px}
+        .bl-brand{font-size:11px;font-weight:800;letter-spacing:3px;color:#ff453a;text-transform:uppercase}
+        .bl-title{font-size:22px;font-weight:900;color:#fff;margin:4px 0}
+        .bl-back{color:#0a84ff;text-decoration:none;font-weight:600;font-size:13px;display:block;text-align:center;margin-bottom:8px}
+        .bl-tabs{display:flex;background:#1c1c1e;border-radius:12px;padding:3px;margin-bottom:16px}
+        .bl-tab{flex:1;padding:10px 0;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;background:transparent;color:#636366;transition:all 0.25s}
+        .bl-tab.active{background:#fff;color:#000}
+        .bl-card{background:#1c1c1e;border-radius:16px;padding:16px;margin-bottom:14px;border:0.5px solid #38383a}
+        .bl-label{font-size:10px;font-weight:700;color:#636366;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+        .bl-input{width:100%;background:#000;border:0.5px solid #38383a;color:#fff;padding:14px;border-radius:12px;font-size:20px;font-weight:800;text-align:center;font-family:inherit;box-sizing:border-box;outline:none}
+        .bl-input:focus{border-color:#0a84ff;box-shadow:0 0 0 3px rgba(10,132,255,0.15)}
+        .bl-toggle{padding:8px 14px;border:0.5px solid #38383a;border-radius:8px;background:#1c1c1e;color:#636366;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;transition:all 0.2s}
+        .bl-toggle.on{border-color:#0a84ff;background:rgba(10,132,255,0.15);color:#0a84ff}
+        .bl-big{font-size:36px;font-weight:900;text-align:center;line-height:1.1}
+        .bl-unit{font-size:14px;font-weight:500;color:#636366}
+        .bl-plate-btn{width:52px;height:52px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;transition:transform 0.15s;border:1.5px solid rgba(255,255,255,0.1)}
+        .bl-plate-btn:active{transform:scale(0.9)}
+        .bl-opt{flex:1;padding:10px 8px;border-radius:10px;border:0.5px solid #38383a;background:#000;color:#98989d;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;text-align:center;transition:all 0.2s}
+        .bl-opt.on{border-color:#ffd60a;background:rgba(255,214,10,0.1);color:#ffd60a}
+        .bl-reset{width:100%;padding:12px;border:0.5px solid #ff453a;border-radius:12px;background:rgba(255,69,58,0.08);color:#ff453a;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+        .bl-share{width:100%;padding:14px;border:none;border-radius:12px;background:#0a84ff;color:#fff;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;margin-bottom:14px}
 
-        .bl-tabs { display:flex; background:#1c1c1e; border-radius:12px; padding:3px; margin-bottom:16px; }
-        .bl-tab { flex:1; padding:10px 0; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; background:transparent; color:#636366; transition:all 0.25s; }
-        .bl-tab.active { background:#fff; color:#000; }
+```
+    /* Slim powerlifting bar visual */
+    .bl-bar{display:flex;align-items:center;padding:24px 0;overflow-x:auto;min-height:180px;justify-content:flex-start}
+    .bl-collar-end{width:14px;height:24px;background:#777;border-radius:3px 0 0 3px;flex-shrink:0}
+    .bl-collar-mid{width:10px;height:20px;background:#999;flex-shrink:0}
+    .bl-sleeve{width:30px;height:14px;background:linear-gradient(180deg,#aaa,#777);flex-shrink:0}
+    .bl-plates-area{display:flex;align-items:center;gap:1px}
+    .bl-endcap{width:6px;height:28px;background:#555;border-radius:0 2px 2px 0;flex-shrink:0}
+    .bl-bar-ext{flex:1;min-width:60px;height:14px;background:linear-gradient(180deg,#999,#777);border-radius:0 5px 5px 0}
 
-        .bl-card { background:#1c1c1e; border-radius:16px; padding:16px; margin-bottom:14px; border:0.5px solid #38383a; }
-        .bl-label { font-size:10px; font-weight:700; color:#636366; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
-        .bl-input { width:100%; background:#000; border:0.5px solid #38383a; color:#fff; padding:14px; border-radius:12px; font-size:20px; font-weight:800; text-align:center; font-family:inherit; box-sizing:border-box; outline:none; }
-        .bl-input:focus { border-color:#0a84ff; box-shadow:0 0 0 3px rgba(10,132,255,0.15); }
+    /* Slim plate — tall & thin like comp plates */
+    .bl-plate{display:flex;align-items:center;justify-content:center;font-weight:900;border-radius:2px;flex-shrink:0;box-shadow:1px 0 4px rgba(0,0,0,0.4);writing-mode:vertical-rl;text-orientation:mixed;letter-spacing:-0.5px;border:0.5px solid rgba(0,0,0,0.2);animation:blSlide 0.25s ease both}
+    @keyframes blSlide{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
 
-        .bl-toggle { padding:8px 14px; border:0.5px solid #38383a; border-radius:8px; background:#1c1c1e; color:#636366; font-weight:700; font-size:12px; cursor:pointer; font-family:inherit; transition:all 0.2s; }
-        .bl-toggle.on { border-color:#0a84ff; background:rgba(10,132,255,0.15); color:#0a84ff; }
+    .wu-row{padding:10px 0;border-bottom:0.5px solid #2c2c2e}
+    .wu-cue{font-size:12px;color:#636366;font-style:italic;margin-top:4px;padding-left:8px;border-left:2px solid #ff9f0a}
+    .bl-footer{text-align:center;padding:24px 0;color:#38383a;font-size:11px;font-weight:600;letter-spacing:1px}
 
-        .bl-big { font-size:36px; font-weight:900; text-align:center; line-height:1.1; }
-        .bl-unit { font-size:14px; font-weight:500; color:#636366; }
+    /* Hidden canvas for share image */
+    #shareCanvas{display:none}
+</style>
+```
 
-        .bl-plate-btn { width:52px; height:52px; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; transition:transform 0.15s; border:1.5px solid rgba(255,255,255,0.1); }
-        .bl-plate-btn:active { transform:scale(0.9); }
-
-        .bl-opt { flex:1; padding:10px 8px; border-radius:10px; border:0.5px solid #38383a; background:#000; color:#98989d; font-weight:700; font-size:12px; cursor:pointer; font-family:inherit; text-align:center; transition:all 0.2s; }
-        .bl-opt.on { border-color:#ffd60a; background:rgba(255,214,10,0.1); color:#ffd60a; }
-
-        .bl-reset { width:100%; padding:12px; border:0.5px solid #ff453a; border-radius:12px; background:rgba(255,69,58,0.08); color:#ff453a; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
-        .bl-reset:active { transform:scale(0.98); }
-
-        .bl-share { width:100%; padding:14px; border:none; border-radius:12px; background:#0a84ff; color:#fff; font-weight:700; font-size:15px; cursor:pointer; font-family:inherit; margin-bottom:14px; }
-
-        /* Barbell visual */
-        .bl-bar { display:flex; align-items:center; justify-content:flex-start; padding:20px 0; overflow-x:auto; min-height:160px; }
-        .bl-sleeve-start { width:16px; height:28px; background:#555; border-radius:4px 0 0 4px; flex-shrink:0; }
-        .bl-sleeve-mid { width:40px; height:18px; background:linear-gradient(180deg,#888,#555); flex-shrink:0; }
-        .bl-plates-area { display:flex; align-items:center; gap:2px; }
-        .bl-collar { width:8px; height:32px; background:#333; border-radius:0 2px 2px 0; flex-shrink:0; }
-        .bl-bar-ext { flex:1; min-width:40px; height:18px; background:linear-gradient(180deg,#888,#666); border-radius:0 6px 6px 0; }
-
-        .bl-plate-vis { border:1px solid rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; font-weight:800; box-shadow:2px 0 6px rgba(0,0,0,0.3); writing-mode:vertical-rl; text-orientation:mixed; border-radius:3px; flex-shrink:0; animation:blSlide 0.3s ease both; }
-        @keyframes blSlide { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
-
-        /* Warmup */
-        .wu-row { padding:10px 0; border-bottom:0.5px solid #2c2c2e; }
-        .wu-cue { font-size:12px; color:#636366; font-style:italic; margin-top:4px; padding-left:8px; border-left:2px solid #ff9f0a; }
-
-        .bl-footer { text-align:center; padding:24px 0; color:#38383a; font-size:11px; font-weight:600; letter-spacing:1px; }
-    </style>
 </head>
 <body>
 <div class="bl-wrap">
@@ -68,23 +66,15 @@
         <div class="bl-brand">Dre Calibration</div>
         <div class="bl-title">Barbell Loader</div>
     </div>
-
-    <!-- Bar selector -->
     <div id="barSelect" style="display:flex;gap:6px;margin-bottom:12px;justify-content:center;flex-wrap:wrap;"></div>
-
-    <!-- Plate unit -->
     <div style="display:flex;gap:6px;margin-bottom:16px;justify-content:center;">
         <button class="bl-toggle" id="puKg" onclick="setPlateUnit('kg')">KG Plates</button>
         <button class="bl-toggle" id="puLbs" onclick="setPlateUnit('lbs')">LBS Plates</button>
     </div>
-
-    <!-- Tabs -->
     <div class="bl-tabs">
         <button class="bl-tab active" id="tabCalc" onclick="setTab('calc')">Calculate</button>
         <button class="bl-tab" id="tabReverse" onclick="setTab('reverse')">Reverse</button>
     </div>
-
-    <!-- CALC TAB -->
     <div id="calcView">
         <div class="bl-card">
             <div class="bl-label">Target Weight</div>
@@ -100,8 +90,6 @@
         <div id="calcOptions" style="display:flex;gap:6px;margin-bottom:14px;"></div>
         <button class="bl-reset" onclick="clearCalc()">Clear</button>
     </div>
-
-    <!-- REVERSE TAB -->
     <div id="reverseView" style="display:none;">
         <div class="bl-card">
             <div class="bl-label">Tap plates to load the bar</div>
@@ -113,10 +101,8 @@
             <button class="bl-reset" onclick="removeLastPlate()" style="flex:1;border-color:#ff9f0a;color:#ff9f0a;background:rgba(255,159,10,0.08);">Remove Last</button>
             <button class="bl-reset" onclick="clearReverse()" style="flex:1;">Clear Bar</button>
         </div>
-        <button class="bl-share" id="shareBtn" onclick="shareSetup()">📤 Share Setup</button>
+        <button class="bl-share" id="shareBtn" onclick="shareSetup()">📸 Share to Story</button>
     </div>
-
-    <!-- WARMUP -->
     <div class="bl-card" style="margin-top:8px;">
         <button id="wuToggle" onclick="toggleWarmup()" style="width:100%;padding:12px;border:none;border-radius:10px;background:#2c2c2e;color:#98989d;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">▶ Open Warm-Up Calculator</button>
         <div id="wuContent" style="display:none;margin-top:14px;">
@@ -125,244 +111,330 @@
             <div id="wuSets"></div>
         </div>
     </div>
-
     <div class="bl-footer">DRE CALIBRATION · BARBELL LOADER</div>
 </div>
+<canvas id="shareCanvas"></canvas>
 
 <script>
-// ==========================================
-// BARBELL LOADER — Dre Calibration
-// ==========================================
-const KG2LBS = 2.20462;
-const LBS2KG = 1 / KG2LBS;
+const KG2LBS=2.20462, LBS2KG=1/KG2LBS;
 
-const KG_PLATES = [
-    {w:25,color:"#DC2626",label:"25",tc:"#fff",h:120},
-    {w:20,color:"#2563EB",label:"20",tc:"#fff",h:110},
-    {w:15,color:"#EAB308",label:"15",tc:"#000",h:100},
-    {w:10,color:"#16A34A",label:"10",tc:"#fff",h:80},
-    {w:5,color:"#E5E7EB",label:"5",tc:"#000",h:64},
-    {w:2.5,color:"#1c1c1e",label:"2.5",tc:"#fff",h:48,bd:"#555"}
+// Slim competition plate specs: tall, narrow widths
+const KG_PLATES=[
+    {w:25,  color:"#DC2626",label:"25", tc:"#fff",h:140,pw:14},
+    {w:20,  color:"#2563EB",label:"20", tc:"#fff",h:132,pw:13},
+    {w:15,  color:"#EAB308",label:"15", tc:"#000",h:124,pw:12},
+    {w:10,  color:"#16A34A",label:"10", tc:"#fff",h:110,pw:11},
+    {w:5,   color:"#E5E7EB",label:"5",  tc:"#000",h:90, pw:9},
+    {w:2.5, color:"#1c1c1e",label:"2.5",tc:"#fff",h:70, pw:8,bd:"#666"},
+    {w:1.25,color:"#555",   label:"1.25",tc:"#fff",h:56, pw:7,bd:"#888"},
+    {w:0.5, color:"#444",   label:"0.5", tc:"#aaa",h:44, pw:6,bd:"#777"}
 ];
-const LBS_PLATES = [
-    {w:45,color:"#DC2626",label:"45",tc:"#fff",h:120},
-    {w:35,color:"#2563EB",label:"35",tc:"#fff",h:108},
-    {w:25,color:"#16A34A",label:"25",tc:"#fff",h:96},
-    {w:10,color:"#E5E7EB",label:"10",tc:"#000",h:76},
-    {w:5,color:"#6B7280",label:"5",tc:"#fff",h:60},
-    {w:2.5,color:"#1c1c1e",label:"2.5",tc:"#fff",h:48,bd:"#555"}
+const LBS_PLATES=[
+    {w:45,  color:"#DC2626",label:"45", tc:"#fff",h:140,pw:14},
+    {w:35,  color:"#2563EB",label:"35", tc:"#fff",h:128,pw:13},
+    {w:25,  color:"#16A34A",label:"25", tc:"#fff",h:116,pw:12},
+    {w:10,  color:"#E5E7EB",label:"10", tc:"#000",h:96, pw:10},
+    {w:5,   color:"#6B7280",label:"5",  tc:"#fff",h:76, pw:9},
+    {w:2.5, color:"#1c1c1e",label:"2.5",tc:"#fff",h:60, pw:8,bd:"#666"}
 ];
-const BARS = [
+const BARS=[
     {label:"45 lb Standard",kg:20.4117,lbs:45},
     {label:"20 kg Olympic",kg:20,lbs:44.0924},
     {label:"25 kg Comp",kg:25,lbs:55.1156}
 ];
 
-let state = { tab:'calc', barIdx:0, plateUnit:'kg', inputUnit:'lbs', reversePlates:[], activeOpt:'exact', wuOpen:false, wuLift:'squat', wuStyle:'standard' };
+let S={tab:'calc',barIdx:0,pu:'kg',iu:'lbs',rp:[],ao:'exact',wuOpen:false,wuLift:'squat',wuStyle:'standard'};
+function pl(){return S.pu==='kg'?KG_PLATES:LBS_PLATES;}
+function br(){return BARS[S.barIdx];}
 
-function plates() { return state.plateUnit==='kg'?KG_PLATES:LBS_PLATES; }
-function bar() { return BARS[state.barIdx]; }
+function calcPl(ps){let r=ps;const l=[];for(const p of pl()){while(r>=p.w-0.01){l.push(p);r-=p.w;}}return l;}
 
-function calcPlatesForWeight(perSide) {
-    let rem=perSide; const loaded=[];
-    for(const p of plates()) { while(rem>=p.w-0.01){loaded.push(p);rem-=p.w;} }
-    return loaded;
+// For rounding, smallest plate is 2.5
+function roundCalcPl(ps){
+    const minP=2.5;
+    const rounded=Math.round(ps/minP)*minP;
+    const lower=Math.floor(ps/minP)*minP;
+    const upper=Math.ceil(ps/minP)*minP;
+    return{rounded,lower,upper};
 }
 
-function renderPlateVis(plate,i) {
-    const wid = plate.w>=10?26:plate.w>=5?20:16;
-    return `<div class="bl-plate-vis" style="height:${plate.h}px;width:${wid}px;background:${plate.color};color:${plate.tc};font-size:${wid<20?7:9}px;${plate.bd?'border:1.5px solid '+plate.bd+';':''}animation-delay:${i*0.06}s;">${plate.label}</div>`;
+function plateHTML(p,i){
+    return `<div class="bl-plate" style="height:${p.h}px;width:${p.pw}px;background:${p.color};color:${p.tc};font-size:${p.pw<10?6:8}px;${p.bd?'border:1px solid '+p.bd+';':''}animation-delay:${i*0.05}s;">${p.label}</div>`;
 }
 
-function renderBar(plateList) {
-    return `<div class="bl-bar"><div class="bl-sleeve-start"></div><div class="bl-sleeve-mid"></div><div class="bl-plates-area">${plateList.map((p,i)=>renderPlateVis(p,i)).join('')}</div><div class="bl-collar"></div><div class="bl-bar-ext"></div></div>`;
+function barHTML(pls){
+    return `<div class="bl-bar"><div class="bl-collar-end"></div><div class="bl-collar-mid"></div><div class="bl-sleeve"></div><div class="bl-plates-area">${pls.map((p,i)=>plateHTML(p,i)).join('')}</div><div class="bl-endcap"></div><div class="bl-bar-ext"></div></div>`;
 }
 
-// ── BAR SELECT ──
-function renderBarSelect() {
-    document.getElementById('barSelect').innerHTML = BARS.map((b,i) =>
-        `<button class="bl-toggle ${i===state.barIdx?'on':''}" onclick="setBarIdx(${i})">${b.label}</button>`
-    ).join('');
+function renderBarSelect(){
+    document.getElementById('barSelect').innerHTML=BARS.map((b,i)=>`<button class="bl-toggle ${i===S.barIdx?'on':''}" onclick="S.barIdx=${i};render();">${b.label}</button>`).join('');
 }
 
-// ── PLATE UNIT ──
-function setPlateUnit(u) { state.plateUnit=u; state.reversePlates=[]; render(); }
-function setBarIdx(i) { state.barIdx=i; render(); }
-function setInputUnit(u) { state.inputUnit=u; render(); }
-function setTab(t) { state.tab=t; render(); }
+function setPlateUnit(u){S.pu=u;S.rp=[];render();}
+function setInputUnit(u){S.iu=u;render();}
+function setTab(t){S.tab=t;render();}
 
 // ── CALCULATE ──
-function onCalcInput() { state.activeOpt='exact'; renderCalc(); renderWarmup(); }
+function onCalcInput(){S.ao='exact';renderCalc();renderWU();}
+function clearCalc(){document.getElementById('targetInput').value='';S.ao='exact';renderCalc();renderWU();window._tLbs=0;}
 
-function renderCalc() {
-    const raw = parseFloat(document.getElementById('targetInput').value);
-    const res = document.getElementById('calcResult');
-    const opts = document.getElementById('calcOptions');
+function renderCalc(){
+    const raw=parseFloat(document.getElementById('targetInput').value);
+    const res=document.getElementById('calcResult'),opts=document.getElementById('calcOptions');
     if(!raw||raw<=0){res.innerHTML='';opts.innerHTML='';return;}
+    const b=br(),bVal=S.pu==='kg'?b.kg:b.lbs;
+    const tInUnit=S.iu==='kg'?(S.pu==='kg'?raw:raw*KG2LBS):(S.pu==='lbs'?raw:raw*LBS2KG);
+    const ps=(tInUnit-bVal)/2;
+    if(ps<0){res.innerHTML=`<div class="bl-card" style="border-color:#ff453a;text-align:center;color:#ff453a;font-size:14px;">Target less than bar weight</div>`;opts.innerHTML='';return;}
 
-    const b = bar();
-    const tKg = state.inputUnit==='kg'?raw:raw*LBS2KG;
-    const tLbs = state.inputUnit==='lbs'?raw:raw*KG2LBS;
-    const bVal = state.plateUnit==='kg'?b.kg:b.lbs;
-    const perSide = ((state.plateUnit==='kg'?tKg:tLbs)-bVal)/2;
+    const{rounded,lower,upper}=roundCalcPl(ps);
+    const toT=(v)=>{const tot=v*2+bVal;const kg=S.pu==='kg'?tot:tot*LBS2KG;const lbs=S.pu==='kg'?tot*KG2LBS:tot;return{kg,lbs};};
 
-    if(perSide<0){res.innerHTML=`<div class="bl-card" style="border-color:#ff453a;text-align:center;color:#ff453a;font-size:14px;">Target is less than bar weight</div>`;opts.innerHTML='';return;}
-
-    const minP=2.5;
-    const rounded=Math.round(perSide/minP)*minP;
-    const lower=Math.floor(perSide/minP)*minP;
-    const upper=Math.ceil(perSide/minP)*minP;
-
-    const toTotals=(ps)=>{const tot=ps*2+bVal;const kg=state.plateUnit==='kg'?tot:tot*LBS2KG;const lbs=state.plateUnit==='kg'?tot*KG2LBS:tot;return{kg,lbs};};
-
-    const options = {
-        exact:{ps:rounded,plates:calcPlatesForWeight(rounded),totals:toTotals(rounded)},
-        lower:lower!==rounded?{ps:lower,plates:calcPlatesForWeight(lower),totals:toTotals(lower)}:null,
-        upper:upper!==rounded?{ps:upper,plates:calcPlatesForWeight(upper),totals:toTotals(upper)}:null
+    const data={
+        exact:{ps:rounded,plates:calcPl(rounded),t:toT(rounded)},
+        lower:lower!==rounded?{ps:lower,plates:calcPl(lower),t:toT(lower)}:null,
+        upper:upper!==rounded?{ps:upper,plates:calcPl(upper),t:toT(upper)}:null
     };
+    const act=data[S.ao]||data.exact;
 
-    const act = options[state.activeOpt]||options.exact;
-
-    res.innerHTML = `<div class="bl-card">${renderBar(act.plates)}
+    res.innerHTML=`<div class="bl-card">${barHTML(act.plates)}
         <div style="display:flex;justify-content:center;gap:24px;margin-top:8px;">
-            <div style="text-align:center;"><div class="bl-big" style="color:#0a84ff;">${act.totals.kg.toFixed(1)}</div><div class="bl-unit">KG</div></div>
-            <div style="text-align:center;"><div class="bl-big" style="color:#ffd60a;">${act.totals.lbs.toFixed(1)}</div><div class="bl-unit">LBS</div></div>
+            <div style="text-align:center;"><div class="bl-big" style="color:#0a84ff;">${act.t.kg.toFixed(1)}</div><div class="bl-unit">KG</div></div>
+            <div style="text-align:center;"><div class="bl-big" style="color:#ffd60a;">${act.t.lbs.toFixed(1)}</div><div class="bl-unit">LBS</div></div>
         </div>
-        <div style="text-align:center;margin-top:8px;font-size:12px;color:#636366;">${act.ps} ${state.plateUnit} per side · ${act.plates.length} plate${act.plates.length!==1?'s':''} each side</div>
+        <div style="text-align:center;margin-top:8px;font-size:12px;color:#636366;">${act.ps} ${S.pu} per side · ${act.plates.length} plate${act.plates.length!==1?'s':''}</div>
     </div>`;
 
-    // Options
-    if(options.lower||options.upper) {
-        let h='';
-        if(options.lower) h+=`<button class="bl-opt ${state.activeOpt==='lower'?'on':''}" onclick="state.activeOpt='lower';renderCalc();renderWarmup();">↓ ${options.lower.totals[state.inputUnit==='kg'?'kg':'lbs'].toFixed(1)} ${state.inputUnit}</button>`;
-        h+=`<button class="bl-opt ${state.activeOpt==='exact'?'on':''}" onclick="state.activeOpt='exact';renderCalc();renderWarmup();">● ${options.exact.totals[state.inputUnit==='kg'?'kg':'lbs'].toFixed(1)} ${state.inputUnit}</button>`;
-        if(options.upper) h+=`<button class="bl-opt ${state.activeOpt==='upper'?'on':''}" onclick="state.activeOpt='upper';renderCalc();renderWarmup();">↑ ${options.upper.totals[state.inputUnit==='kg'?'kg':'lbs'].toFixed(1)} ${state.inputUnit}</button>`;
-        opts.innerHTML=h;
-    } else { opts.innerHTML=''; }
+    let oh='';
+    if(data.lower) oh+=`<button class="bl-opt ${S.ao==='lower'?'on':''}" onclick="S.ao='lower';renderCalc();renderWU();">↓ ${data.lower.t[S.iu==='kg'?'kg':'lbs'].toFixed(1)} ${S.iu}</button>`;
+    oh+=`<button class="bl-opt ${S.ao==='exact'?'on':''}" onclick="S.ao='exact';renderCalc();renderWU();">● ${data.exact.t[S.iu==='kg'?'kg':'lbs'].toFixed(1)} ${S.iu}</button>`;
+    if(data.upper) oh+=`<button class="bl-opt ${S.ao==='upper'?'on':''}" onclick="S.ao='upper';renderCalc();renderWU();">↑ ${data.upper.t[S.iu==='kg'?'kg':'lbs'].toFixed(1)} ${S.iu}</button>`;
+    opts.innerHTML=oh;
 
-    // Store for warmup
-    window._currentTotalLbs = act.totals.lbs;
+    window._tLbs=act.t.lbs;
 }
 
-function clearCalc() { document.getElementById('targetInput').value=''; state.activeOpt='exact'; renderCalc(); renderWarmup(); window._currentTotalLbs=0; }
-
 // ── REVERSE ──
-function addPlate(idx) { state.reversePlates.push(plates()[idx]); renderReverse(); renderWarmup(); }
-function removeLastPlate() { state.reversePlates.pop(); renderReverse(); renderWarmup(); }
-function clearReverse() { state.reversePlates=[]; renderReverse(); renderWarmup(); }
+function addPlate(i){S.rp.push(pl()[i]);renderRev();renderWU();}
+function removeLastPlate(){S.rp.pop();renderRev();renderWU();}
+function clearReverse(){S.rp=[];renderRev();renderWU();}
 
-function renderReverse() {
-    const b=bar();
-    const bVal=state.plateUnit==='kg'?b.kg:b.lbs;
-    const perSide=state.reversePlates.reduce((s,p)=>s+p.w,0);
-    const tot=perSide*2+bVal;
-    const kg=state.plateUnit==='kg'?tot:tot*LBS2KG;
-    const lbs=state.plateUnit==='kg'?tot*KG2LBS:tot;
-
-    document.getElementById('reverseBar').innerHTML = renderBar(state.reversePlates);
-    document.getElementById('reverseTotal').innerHTML = `
+function renderRev(){
+    const b=br(),bVal=S.pu==='kg'?b.kg:b.lbs;
+    const ps=S.rp.reduce((s,p)=>s+p.w,0);
+    const tot=ps*2+bVal;
+    const kg=S.pu==='kg'?tot:tot*LBS2KG;
+    const lbs=S.pu==='kg'?tot*KG2LBS:tot;
+    document.getElementById('reverseBar').innerHTML=barHTML(S.rp);
+    document.getElementById('reverseTotal').innerHTML=`
         <div style="display:flex;justify-content:center;gap:24px;">
             <div style="text-align:center;"><div class="bl-big" style="color:#0a84ff;">${kg.toFixed(1)}</div><div class="bl-unit">KG</div></div>
             <div style="text-align:center;"><div class="bl-big" style="color:#ffd60a;">${lbs.toFixed(1)}</div><div class="bl-unit">LBS</div></div>
         </div>
-        <div style="font-size:12px;color:#636366;margin-top:6px;">${perSide} ${state.plateUnit} per side · ${state.reversePlates.length} plate${state.reversePlates.length!==1?'s':''}</div>`;
-
-    window._currentTotalLbs = lbs;
+        <div style="font-size:12px;color:#636366;margin-top:6px;">${ps} ${S.pu} per side · ${S.rp.length} plate${S.rp.length!==1?'s':''}</div>`;
+    window._tLbs=lbs;
 }
 
-function renderPlateBtns() {
-    document.getElementById('plateBtns').innerHTML = plates().map((p,i) =>
+function renderPlateBtns(){
+    document.getElementById('plateBtns').innerHTML=pl().map((p,i)=>
         `<button class="bl-plate-btn" style="background:${p.color};color:${p.tc};${p.bd?'border:2px solid '+p.bd+';':''}" onclick="addPlate(${i})">${p.label}</button>`
     ).join('');
 }
 
-// ── SHARE ──
-function shareSetup() {
-    const b=bar();const bVal=state.plateUnit==='kg'?b.kg:b.lbs;
-    const perSide=state.reversePlates.reduce((s,p)=>s+p.w,0);
-    const tot=perSide*2+bVal;
-    const kg=(state.plateUnit==='kg'?tot:tot*LBS2KG).toFixed(2);
-    const lbs=(state.plateUnit==='kg'?tot*KG2LBS:tot).toFixed(2);
-    const counts={};state.reversePlates.forEach(p=>{counts[p.label]=(counts[p.label]||0)+1;});
-    const parts=Object.entries(counts).map(([l,c])=>`${c}x${l}${state.plateUnit}`).join(', ');
-    const text=`Dre Calibration: ${kg} KG / ${lbs} LBS loaded! (Bar: ${b.label} + ${parts||'empty'} per side)`;
-    navigator.clipboard.writeText(text).then(()=>{
-        const btn=document.getElementById('shareBtn');btn.textContent='✓ Copied!';setTimeout(()=>{btn.textContent='📤 Share Setup';},2000);
+// ── SHARE AS IMAGE ──
+function shareSetup(){
+    const b=br(),bVal=S.pu==='kg'?b.kg:b.lbs;
+    const ps=S.rp.reduce((s,p)=>s+p.w,0);
+    const tot=ps*2+bVal;
+    const kg=S.pu==='kg'?tot:tot*LBS2KG;
+    const lbs=S.pu==='kg'?tot*KG2LBS:tot;
+
+    const canvas=document.getElementById('shareCanvas');
+    const W=1080,H=1350; // Instagram story size
+    canvas.width=W;canvas.height=H;
+    const ctx=canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+
+    // Subtle grid pattern
+    ctx.strokeStyle='#111';ctx.lineWidth=0.5;
+    for(let i=0;i<W;i+=40){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+    for(let i=0;i<H;i+=40){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}
+
+    // Draw barbell
+    const barY=H*0.42;
+    const barStartX=80;
+    const sleeveW=50;
+
+    // Collar
+    ctx.fillStyle='#777';
+    ctx.fillRect(barStartX,barY-16,20,32);
+    ctx.fillStyle='#999';
+    ctx.fillRect(barStartX+20,barY-12,14,24);
+    // Sleeve
+    ctx.fillStyle='#aaa';
+    ctx.fillRect(barStartX+34,barY-9,sleeveW,18);
+
+    // Plates
+    let plateX=barStartX+34+sleeveW;
+    const plateColors={};
+    S.rp.forEach((p,i)=>{
+        const ph=Math.min(p.h*2.8,500);
+        const pw=Math.max(p.pw*2,18);
+        ctx.fillStyle=p.color;
+        ctx.fillRect(plateX,barY-ph/2,pw,ph);
+        // Plate border
+        ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1;
+        ctx.strokeRect(plateX,barY-ph/2,pw,ph);
+        // Number on plate
+        ctx.fillStyle=p.tc;
+        ctx.font=`bold ${Math.max(12,pw-4)}px -apple-system,sans-serif`;
+        ctx.textAlign='center';ctx.textBaseline='top';
+        ctx.fillText(p.label,plateX+pw/2,barY-ph/2+8);
+        // Count label at bottom
+        ctx.font='bold 11px -apple-system,sans-serif';
+        ctx.fillText(S.pu.toUpperCase(),plateX+pw/2,barY+ph/2-20);
+        // Plate number (order)
+        ctx.fillStyle=p.tc;ctx.font='bold 14px -apple-system,sans-serif';
+        ctx.fillText(String(i+1),plateX+pw/2,barY-ph/2+28);
+
+        plateX+=pw+2;
+        // Track for summary
+        plateColors[p.label]=(plateColors[p.label]||0)+1;
     });
+
+    // End cap
+    ctx.fillStyle='#555';
+    ctx.fillRect(plateX,barY-18,10,36);
+
+    // Bar extends
+    const grad=ctx.createLinearGradient(plateX+10,barY-9,plateX+10,barY+9);
+    grad.addColorStop(0,'#aaa');grad.addColorStop(1,'#777');
+    ctx.fillStyle=grad;
+    ctx.fillRect(plateX+10,barY-9,W-plateX-60,18);
+
+    // Weight display - huge text
+    const weightY=H*0.72;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+
+    // KG
+    ctx.fillStyle='#fff';
+    ctx.font='900 96px -apple-system,sans-serif';
+    ctx.fillText(Math.round(kg*10)/10+'',W*0.3,weightY);
+    ctx.fillStyle='#636366';
+    ctx.font='700 28px -apple-system,sans-serif';
+    ctx.fillText('KG',W*0.3,weightY+55);
+
+    // Divider
+    ctx.fillStyle='#38383a';
+    ctx.fillRect(W*0.5-1,weightY-50,2,110);
+
+    // LBS
+    ctx.fillStyle='#fff';
+    ctx.font='900 96px -apple-system,sans-serif';
+    ctx.fillText(Math.round(lbs*10)/10+'',W*0.7,weightY);
+    ctx.fillStyle='#636366';
+    ctx.font='700 28px -apple-system,sans-serif';
+    ctx.fillText('LB',W*0.7,weightY+55);
+
+    // Brand at top
+    ctx.fillStyle='#ff453a';
+    ctx.font='800 16px -apple-system,sans-serif';
+    ctx.letterSpacing='4px';
+    ctx.textAlign='center';
+    ctx.fillText('DRE CALIBRATION',W/2,60);
+
+    // Subtitle
+    ctx.fillStyle='#48484a';
+    ctx.font='600 13px -apple-system,sans-serif';
+    ctx.fillText('BARBELL LOADER',W/2,82);
+
+    // Plate summary at bottom
+    const summaryParts=Object.entries(plateColors).map(([l,c])=>`${c}×${l}${S.pu}`);
+    ctx.fillStyle='#636366';
+    ctx.font='600 14px -apple-system,sans-serif';
+    ctx.fillText(`Bar: ${b.label} · ${summaryParts.join(', ')||'Empty'} per side`,W/2,H*0.88);
+
+    // Brand watermark bottom
+    ctx.fillStyle='#ff453a';
+    ctx.font='800 14px -apple-system,sans-serif';
+    ctx.fillText('DRE CALIBRATION',W/2,H-50);
+    ctx.fillStyle='#38383a';
+    ctx.font='500 11px -apple-system,sans-serif';
+    ctx.fillText('drecalibration.com',W/2,H-30);
+
+    // Convert to image and offer download/share
+    canvas.toBlob(blob=>{
+        const file=new File([blob],'dre-calibration-bar.png',{type:'image/png'});
+
+        // Try native share (mobile)
+        if(navigator.canShare && navigator.canShare({files:[file]})){
+            navigator.share({files:[file],title:'Dre Calibration',text:`${Math.round(kg)}kg / ${Math.round(lbs)}lbs loaded!`}).catch(()=>{});
+        } else {
+            // Fallback: download the image
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement('a');
+            a.href=url;a.download='dre-calibration-bar.png';
+            document.body.appendChild(a);a.click();a.remove();
+            URL.revokeObjectURL(url);
+        }
+        const btn=document.getElementById('shareBtn');
+        btn.textContent='✓ Image saved!';
+        setTimeout(()=>{btn.textContent='📸 Share to Story';},2500);
+    },'image/png');
 }
 
 // ── WARMUP ──
-function toggleWarmup() {
-    state.wuOpen=!state.wuOpen;
-    document.getElementById('wuContent').style.display=state.wuOpen?'block':'none';
-    document.getElementById('wuToggle').textContent=state.wuOpen?'▼ Hide Warm-Up Calculator':'▶ Open Warm-Up Calculator';
-    document.getElementById('wuToggle').style.background=state.wuOpen?'rgba(255,159,10,0.15)':'#2c2c2e';
-    document.getElementById('wuToggle').style.color=state.wuOpen?'#ff9f0a':'#98989d';
-    if(state.wuOpen) renderWarmup();
+function toggleWarmup(){
+    S.wuOpen=!S.wuOpen;
+    document.getElementById('wuContent').style.display=S.wuOpen?'block':'none';
+    const btn=document.getElementById('wuToggle');
+    btn.textContent=S.wuOpen?'▼ Hide Warm-Up Calculator':'▶ Open Warm-Up Calculator';
+    btn.style.background=S.wuOpen?'rgba(255,159,10,0.15)':'#2c2c2e';
+    btn.style.color=S.wuOpen?'#ff9f0a':'#98989d';
+    if(S.wuOpen)renderWU();
 }
+function setWuLift(l){S.wuLift=l;renderWU();}
+function setWuStyle(s){S.wuStyle=s;renderWU();}
 
-function setWuLift(l) { state.wuLift=l; renderWarmup(); }
-function setWuStyle(s) { state.wuStyle=s; renderWarmup(); }
-
-function renderWarmup() {
-    // Lift buttons
-    document.getElementById('wuLiftBtns').innerHTML = ['squat','bench','deadlift'].map(l =>
-        `<button class="bl-toggle ${state.wuLift===l?'on':''}" onclick="setWuLift('${l}')">${l.charAt(0).toUpperCase()+l.slice(1)}</button>`
+function renderWU(){
+    document.getElementById('wuLiftBtns').innerHTML=['squat','bench','deadlift'].map(l=>
+        `<button class="bl-toggle ${S.wuLift===l?'on':''}" onclick="setWuLift('${l}')">${l.charAt(0).toUpperCase()+l.slice(1)}</button>`
     ).join('');
-
-    // Style buttons
-    document.getElementById('wuStyleBtns').innerHTML = [['standard','Standard'],['big','Aggressive'],['tight','Conservative']].map(([k,l]) =>
-        `<button class="bl-toggle ${state.wuStyle===k?'on':''}" onclick="setWuStyle('${k}')">${l}</button>`
+    document.getElementById('wuStyleBtns').innerHTML=[['standard','Standard'],['big','Aggressive'],['tight','Conservative']].map(([k,l])=>
+        `<button class="bl-toggle ${S.wuStyle===k?'on':''}" onclick="setWuStyle('${k}')">${l}</button>`
     ).join('');
-
-    const target = window._currentTotalLbs || 0;
-    const el = document.getElementById('wuSets');
-    if(!target || target<=0) { el.innerHTML='<div style="text-align:center;color:#48484a;font-size:13px;padding:20px;">Enter a weight above to generate warm-up sets</div>'; return; }
-
-    const protocols = {standard:[{p:0.505,r:'5'},{p:0.608,r:'3'},{p:0.72,r:'2'},{p:0.834,r:'1'},{p:0.93,r:'1'},{p:0.97,r:'OPT'}],big:[{p:0.45,r:'5'},{p:0.68,r:'3'},{p:0.84,r:'1'},{p:0.92,r:'1'},{p:0.97,r:'OPT'}],tight:[{p:0.40,r:'8'},{p:0.52,r:'5'},{p:0.64,r:'3'},{p:0.75,r:'2'},{p:0.84,r:'1'},{p:0.90,r:'1'},{p:0.94,r:'1'},{p:0.98,r:'OPT'}]};
-    const cues = {squat:["Move fast, open hips.","Focus foot pressure.","Start bracing.","BELT ON.","Max pressure.","Final heavy feel.","Comp setup.","Optional."],bench:["Active lats.","Drive heels.","Tight arch.","Explode.","Comp pause.","Final heavy feel.","Comp setup.","Optional."],deadlift:["Pull slack.","Chest up.","Squeeze lats.","BELT ON.","Comp speed.","Final heavy feel.","Comp setup.","Optional."]};
-
-    const proto = protocols[state.wuStyle];
-    const cuelist = cues[state.wuLift];
-
-    el.innerHTML = proto.map((s,i) => {
-        const lbs=Math.round((target*s.p)/5)*5;
-        const kg=Math.round(lbs*LBS2KG*10)/10;
-        const belt=(state.wuLift==='squat'&&s.p>=0.70)||(state.wuLift==='deadlift'&&s.p>=0.83);
+    const t=window._tLbs||0;
+    const el=document.getElementById('wuSets');
+    if(!t||t<=0){el.innerHTML='<div style="text-align:center;color:#48484a;font-size:13px;padding:20px;">Enter a weight to generate warm-up sets</div>';return;}
+    const protos={standard:[{p:.505,r:'5'},{p:.608,r:'3'},{p:.72,r:'2'},{p:.834,r:'1'},{p:.93,r:'1'},{p:.97,r:'OPT'}],big:[{p:.45,r:'5'},{p:.68,r:'3'},{p:.84,r:'1'},{p:.92,r:'1'},{p:.97,r:'OPT'}],tight:[{p:.40,r:'8'},{p:.52,r:'5'},{p:.64,r:'3'},{p:.75,r:'2'},{p:.84,r:'1'},{p:.90,r:'1'},{p:.94,r:'1'},{p:.98,r:'OPT'}]};
+    const cues={squat:["Move fast, open hips.","Focus foot pressure.","Start bracing.","BELT ON.","Max pressure.","Final heavy feel.","Comp setup.","Optional."],bench:["Active lats.","Drive heels.","Tight arch.","Explode.","Comp pause.","Final heavy feel.","Comp setup.","Optional."],deadlift:["Pull slack.","Chest up.","Squeeze lats.","BELT ON.","Comp speed.","Final heavy feel.","Comp setup.","Optional."]};
+    el.innerHTML=protos[S.wuStyle].map((s,i)=>{
+        const lbs=Math.round((t*s.p)/5)*5;const kg=Math.round(lbs*LBS2KG*10)/10;
+        const belt=(S.wuLift==='squat'&&s.p>=.70)||(S.wuLift==='deadlift'&&s.p>=.83);
         const reps=s.r==='OPT'?'Optional':s.r+' Reps';
-        const cue=cuelist[i]||'Focus.';
-        return `<div class="wu-row">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div><span style="font-weight:800;font-size:16px;color:#fff;">${lbs} lbs</span><span style="color:#636366;font-size:12px;margin-left:8px;">${kg} kg</span>${belt?'<span style="background:#ff453a;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:8px;text-transform:uppercase;">Belt</span>':''}</div>
-                <div style="text-align:right;"><span style="color:#0a84ff;font-weight:700;font-size:13px;">${reps}</span><span style="color:#48484a;font-size:11px;margin-left:6px;">${Math.round(s.p*100)}%</span></div>
-            </div>
-            <div class="wu-cue">${cue}</div>
-        </div>`;
+        return `<div class="wu-row"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span style="font-weight:800;font-size:16px;color:#fff;">${lbs} lbs</span><span style="color:#636366;font-size:12px;margin-left:8px;">${kg} kg</span>${belt?'<span style="background:#ff453a;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:8px;text-transform:uppercase;">Belt</span>':''}</div><div style="text-align:right;"><span style="color:#0a84ff;font-weight:700;font-size:13px;">${reps}</span><span style="color:#48484a;font-size:11px;margin-left:6px;">${Math.round(s.p*100)}%</span></div></div><div class="wu-cue">${(cues[S.wuLift][i]||'Focus.')}</div></div>`;
     }).join('');
 }
 
-// ── RENDER ALL ──
-function render() {
+// ── RENDER ──
+function render(){
     renderBarSelect();
-
-    document.getElementById('puKg').className='bl-toggle'+(state.plateUnit==='kg'?' on':'');
-    document.getElementById('puLbs').className='bl-toggle'+(state.plateUnit==='lbs'?' on':'');
-    document.getElementById('iuLbs').className='bl-toggle'+(state.inputUnit==='lbs'?' on':'');
-    document.getElementById('iuKg').className='bl-toggle'+(state.inputUnit==='kg'?' on':'');
-    document.getElementById('tabCalc').className='bl-tab'+(state.tab==='calc'?' active':'');
-    document.getElementById('tabReverse').className='bl-tab'+(state.tab==='reverse'?' active':'');
-    document.getElementById('calcView').style.display=state.tab==='calc'?'block':'none';
-    document.getElementById('reverseView').style.display=state.tab==='reverse'?'block':'none';
-
-    renderPlateBtns();
-    renderCalc();
-    renderReverse();
-    if(state.wuOpen) renderWarmup();
+    document.getElementById('puKg').className='bl-toggle'+(S.pu==='kg'?' on':'');
+    document.getElementById('puLbs').className='bl-toggle'+(S.pu==='lbs'?' on':'');
+    document.getElementById('iuLbs').className='bl-toggle'+(S.iu==='lbs'?' on':'');
+    document.getElementById('iuKg').className='bl-toggle'+(S.iu==='kg'?' on':'');
+    document.getElementById('tabCalc').className='bl-tab'+(S.tab==='calc'?' active':'');
+    document.getElementById('tabReverse').className='bl-tab'+(S.tab==='reverse'?' active':'');
+    document.getElementById('calcView').style.display=S.tab==='calc'?'block':'none';
+    document.getElementById('reverseView').style.display=S.tab==='reverse'?'block':'none';
+    renderPlateBtns();renderCalc();renderRev();if(S.wuOpen)renderWU();
 }
-
-window._currentTotalLbs = 0;
-render();
+window._tLbs=0;render();
 </script>
+
 <script src="pwa.js"></script>
+
 </body>
 </html>
