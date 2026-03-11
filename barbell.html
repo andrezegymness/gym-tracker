@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,68 +10,61 @@
     <title>Barbell Loader — Dre Calibration</title>
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
-        body{background:#000;color:#fff;font-family:-apple-system,'SF Pro Display',sans-serif;min-height:100vh}
+        body{background:#000;color:#fff;font-family:-apple-system,'SF Pro Display',sans-serif;min-height:100vh;-webkit-tap-highlight-color:transparent}
         .w{max-width:500px;margin:0 auto;padding:0 14px 100px}
         a.bk{color:#0a84ff;text-decoration:none;font-weight:600;font-size:13px;display:block;text-align:center;padding:12px 0 4px}
         .hd{text-align:center;padding:8px 0 14px}
         .hd .br{font-size:10px;font-weight:800;letter-spacing:3px;color:#ff453a;text-transform:uppercase}
         .hd .ti{font-size:20px;font-weight:900}
 
-```
-    /* Toggles */
-    .tg{padding:7px 12px;border:0.5px solid #38383a;border-radius:8px;background:#1c1c1e;color:#636366;font-weight:700;font-size:11px;cursor:pointer;font-family:inherit;transition:all .2s}
-    .tg.on{border-color:#0a84ff;background:rgba(10,132,255,.15);color:#0a84ff}
-    .row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+        .tg{padding:7px 12px;border-radius:20px;background:rgba(255,255,255,.06);color:#636366;font-weight:700;font-size:11px;cursor:pointer;font-family:inherit;transition:all .2s;border:none;outline:none}
+        .tg.on{background:rgba(10,132,255,.2);color:#0a84ff}
+        .tg:active{opacity:.7}
+        .row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
 
-    /* Tabs */
-    .tabs{display:flex;background:#1c1c1e;border-radius:11px;padding:3px;margin-bottom:14px}
-    .tab{flex:1;padding:9px 0;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;background:transparent;color:#636366;transition:all .2s}
-    .tab.on{background:#fff;color:#000}
+        .tabs{display:flex;background:#1c1c1e;border-radius:11px;padding:3px;margin-bottom:14px}
+        .tab{flex:1;padding:9px 0;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;background:transparent;color:#636366;transition:all .25s;outline:none}
+        .tab.on{background:#fff;color:#000}
+        .tab:active{opacity:.8}
 
-    /* Cards */
-    .cd{background:#1c1c1e;border-radius:14px;padding:14px;margin-bottom:12px;border:0.5px solid #38383a}
-    .lb{font-size:9px;font-weight:700;color:#636366;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-    .inp{width:100%;background:#000;border:0.5px solid #38383a;color:#fff;padding:12px;border-radius:10px;font-size:18px;font-weight:800;text-align:center;font-family:inherit;outline:none}
-    .inp:focus{border-color:#0a84ff;box-shadow:0 0 0 3px rgba(10,132,255,.15)}
+        .cd{background:#1c1c1e;border-radius:14px;padding:14px;margin-bottom:12px;border:0.5px solid #2c2c2e}
+        .lb{font-size:9px;font-weight:700;color:#636366;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+        .inp{width:100%;background:#000;border:0.5px solid #38383a;color:#fff;padding:12px;border-radius:10px;font-size:18px;font-weight:800;text-align:center;font-family:inherit;outline:none}
+        .inp:focus{border-color:#0a84ff;box-shadow:0 0 0 3px rgba(10,132,255,.15)}
+        .sinp{width:100%;background:#000;border:0.5px solid #2c2c2e;color:#fff;padding:10px;border-radius:8px;font-size:13px;font-family:inherit;outline:none}
+        .sinp:focus{border-color:#ff453a}
 
-    /* Big numbers */
-    .bn{font-size:32px;font-weight:900;text-align:center;line-height:1.1}
-    .un{font-size:12px;font-weight:500;color:#636366}
+        .bn{font-size:32px;font-weight:900;text-align:center;line-height:1.1}
+        .un{font-size:12px;font-weight:500;color:#636366}
 
-    /* Plate buttons */
-    .pb{width:48px;height:48px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.1)}
+        .pb{width:48px;height:48px;border-radius:50%;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;border:none;outline:none;transition:transform .1s}
+        .pb:active{transform:scale(.88)}
 
-    /* Options */
-    .opt{flex:1;padding:9px 6px;border-radius:9px;border:0.5px solid #38383a;background:#000;color:#98989d;font-weight:700;font-size:11px;cursor:pointer;font-family:inherit;text-align:center}
-    .opt.on{border-color:#ffd60a;background:rgba(255,214,10,.1);color:#ffd60a}
+        .opt{flex:1;padding:9px 6px;border-radius:20px;background:rgba(255,255,255,.04);color:#636366;font-weight:700;font-size:11px;cursor:pointer;font-family:inherit;text-align:center;border:none;outline:none;transition:all .2s}
+        .opt.on{background:rgba(255,214,10,.12);color:#ffd60a}
+        .opt:active{opacity:.7}
 
-    /* Reset/Action */
-    .rst{width:100%;padding:11px;border:0.5px solid #ff453a;border-radius:11px;background:rgba(255,69,58,.08);color:#ff453a;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
-    .shr{width:100%;padding:13px;border:none;border-radius:11px;background:#ff453a;color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;margin-bottom:12px}
+        .rst{width:100%;padding:11px;border-radius:20px;background:rgba(255,69,58,.08);color:#ff453a;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;border:none;outline:none;transition:opacity .2s}
+        .rst:active{opacity:.7}
+        .shr{width:100%;padding:13px;border:none;border-radius:20px;background:#ff453a;color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;margin-bottom:12px;outline:none;transition:opacity .2s}
+        .shr:active{opacity:.8}
 
-    /* ── BARBELL VISUAL ── */
-    .bar-wrap{position:relative;height:170px;overflow-x:auto;overflow-y:hidden;margin:8px 0}
-    .bar-inner{display:flex;align-items:center;position:absolute;left:0;top:50%;transform:translateY(-50%);min-width:100%}
-    .bar-collar{width:12px;height:22px;background:#777;border-radius:3px 0 0 3px;flex-shrink:0}
-    .bar-neck{width:8px;height:18px;background:#999;flex-shrink:0}
-    .bar-sleeve{width:24px;height:12px;background:linear-gradient(180deg,#aaa,#777);flex-shrink:0}
-    .bar-plates{display:flex;align-items:center;gap:1px;flex-shrink:0}
-    .bar-cap{width:5px;height:26px;background:#555;border-radius:0 2px 2px 0;flex-shrink:0}
-    .bar-ext{flex:1;min-width:50px;height:12px;background:linear-gradient(180deg,#999,#777);border-radius:0 4px 4px 0}
+        .bar-wrap{position:relative;height:160px;overflow-x:auto;overflow-y:hidden;margin:8px 0}
+        .bar-inner{display:flex;align-items:center;position:absolute;left:0;top:50%;transform:translateY(-50%);min-width:100%}
+        .bar-collar{width:12px;height:22px;background:#777;border-radius:3px 0 0 3px;flex-shrink:0}
+        .bar-neck{width:8px;height:18px;background:#999;flex-shrink:0}
+        .bar-sleeve{width:24px;height:12px;background:linear-gradient(180deg,#aaa,#777);flex-shrink:0}
+        .bar-plates{display:flex;align-items:center;gap:1px;flex-shrink:0}
+        .bar-cap{width:5px;height:26px;background:#555;border-radius:0 2px 2px 0;flex-shrink:0}
+        .bar-ext{flex:1;min-width:50px;height:12px;background:linear-gradient(180deg,#999,#777);border-radius:0 4px 4px 0}
+        .bp{display:flex;align-items:center;justify-content:center;font-weight:900;border-radius:2px;flex-shrink:0;box-shadow:1px 0 3px rgba(0,0,0,.4);writing-mode:vertical-rl;text-orientation:mixed;animation:sl .2s ease both}
+        @keyframes sl{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
 
-    /* Individual plate on bar — slim comp style */
-    .bp{display:flex;align-items:center;justify-content:center;font-weight:900;border-radius:2px;flex-shrink:0;box-shadow:1px 0 3px rgba(0,0,0,.4);writing-mode:vertical-rl;text-orientation:mixed;animation:sl .2s ease both}
-    @keyframes sl{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
-
-    /* Warmup */
-    .wur{padding:8px 0;border-bottom:0.5px solid #2c2c2e}
-    .wuc{font-size:11px;color:#636366;font-style:italic;margin-top:3px;padding-left:7px;border-left:2px solid #ff9f0a}
-
-    .ft{text-align:center;padding:20px 0;color:#38383a;font-size:10px;font-weight:600;letter-spacing:1px}
-    #shareCanvas{display:none}
-</style>
-```
-
+        .wur{padding:8px 0;border-bottom:0.5px solid #2c2c2e}
+        .wuc{font-size:11px;color:#636366;font-style:italic;margin-top:3px;padding-left:7px;border-left:2px solid #ff9f0a}
+        .ft{text-align:center;padding:20px 0;color:#38383a;font-size:10px;font-weight:600;letter-spacing:1px}
+        #shareCanvas{display:none}
+    </style>
 </head>
 <body>
 <div class="w">
@@ -88,77 +80,92 @@
         <button class="tab" id="tRev" onclick="S.tab='rev';R()">Reverse</button>
     </div>
 
-```
-<!-- CALC -->
-<div id="vCalc">
-    <div class="cd">
-        <div class="lb">Target Weight</div>
-        <div style="display:flex;gap:8px;align-items:center">
-            <input type="number" class="inp" id="tIn" placeholder="0" oninput="S.ao='mid';rCalc();rWU()" style="flex:1">
-            <div style="display:flex;flex-direction:column;gap:3px">
-                <button class="tg" id="iuL" onclick="S.iu='lbs';R()">LBS</button>
-                <button class="tg" id="iuK" onclick="S.iu='kg';R()">KG</button>
+    <!-- CALC -->
+    <div id="vCalc">
+        <div class="cd">
+            <div class="lb">Target Weight</div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <input type="number" class="inp" id="tIn" placeholder="0" oninput="S.ao='mid';rCalc();rWU()" style="flex:1">
+                <div style="display:flex;flex-direction:column;gap:3px">
+                    <button class="tg" id="iuL" onclick="S.iu='lbs';R()">LBS</button>
+                    <button class="tg" id="iuK" onclick="S.iu='kg';R()">KG</button>
+                </div>
             </div>
         </div>
+        <div id="cRes"></div>
+        <div id="cOpts" style="display:flex;gap:5px;margin-bottom:12px"></div>
+        <!-- Share section for Calculate -->
+        <div class="cd" id="calcShareSec" style="display:none">
+            <div class="lb">Add to Screenshot</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+                <input class="sinp" id="cSets" placeholder="Sets (e.g. 3)" style="flex:1">
+                <input class="sinp" id="cReps" placeholder="Reps (e.g. 5)" style="flex:1">
+            </div>
+            <input class="sinp" id="cNote" placeholder="Note (e.g. PR attempt, speed work...)" style="margin-bottom:8px">
+            <button class="shr" onclick="doShare('calc')">📸 Share to Story</button>
+        </div>
+        <button class="rst" onclick="document.getElementById('tIn').value='';S.ao='mid';rCalc();rWU();T=0">Clear</button>
     </div>
-    <div id="cRes"></div>
-    <div id="cOpts" style="display:flex;gap:5px;margin-bottom:12px"></div>
-    <button class="rst" onclick="document.getElementById('tIn').value='';S.ao='mid';rCalc();rWU();T=0">Clear</button>
-</div>
 
-<!-- REVERSE -->
-<div id="vRev" style="display:none">
-    <div class="cd">
-        <div class="lb">Tap plates to load the bar</div>
-        <div id="pBtns" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px"></div>
-        <div id="rBar"></div>
-        <div id="rTot" style="text-align:center;margin-top:6px"></div>
+    <!-- REVERSE -->
+    <div id="vRev" style="display:none">
+        <div class="cd">
+            <div class="lb">Tap plates to load the bar</div>
+            <div id="pBtns" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px"></div>
+            <div id="rBar"></div>
+            <div id="rTot" style="text-align:center;margin-top:6px"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button class="rst" onclick="S.rp.pop();rRev();rWU()" style="flex:1;color:#ff9f0a;background:rgba(255,159,10,.08)">Remove Last</button>
+            <button class="rst" onclick="S.rp=[];rRev();rWU()" style="flex:1">Clear Bar</button>
+        </div>
+        <!-- Share section for Reverse -->
+        <div class="cd">
+            <div class="lb">Add to Screenshot</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+                <input class="sinp" id="rSets" placeholder="Sets" style="flex:1">
+                <input class="sinp" id="rReps" placeholder="Reps" style="flex:1">
+            </div>
+            <input class="sinp" id="rNote" placeholder="Note..." style="margin-bottom:8px">
+            <button class="shr" id="shrBtn" onclick="doShare('rev')">📸 Share to Story</button>
+        </div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button class="rst" onclick="S.rp.pop();rRev();rWU()" style="flex:1;border-color:#ff9f0a;color:#ff9f0a;background:rgba(255,159,10,.08)">Remove Last</button>
-        <button class="rst" onclick="S.rp=[];rRev();rWU()" style="flex:1">Clear Bar</button>
-    </div>
-    <button class="shr" id="shrBtn" onclick="doShare()">📸 Share to Story</button>
-</div>
 
-<!-- WARMUP -->
-<div class="cd" style="margin-top:6px">
-    <button id="wuTog" onclick="S.wu=!S.wu;document.getElementById('wuC').style.display=S.wu?'block':'none';this.textContent=S.wu?'▼ Hide Warm-Up':'▶ Open Warm-Up Calculator';this.style.background=S.wu?'rgba(255,159,10,.15)':'#2c2c2e';this.style.color=S.wu?'#ff9f0a':'#98989d';if(S.wu)rWU()" style="width:100%;padding:11px;border:none;border-radius:9px;background:#2c2c2e;color:#98989d;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">▶ Open Warm-Up Calculator</button>
-    <div id="wuC" style="display:none;margin-top:12px">
-        <div class="row" id="wuL"></div>
-        <div class="row" id="wuS"></div>
-        <div id="wuR"></div>
+    <!-- WARMUP -->
+    <div class="cd" style="margin-top:6px">
+        <button id="wuTog" onclick="S.wu=!S.wu;document.getElementById('wuC').style.display=S.wu?'block':'none';this.textContent=S.wu?'▼ Hide Warm-Up':'▶ Open Warm-Up Calculator';this.style.background=S.wu?'rgba(255,159,10,.15)':'rgba(255,255,255,.04)';this.style.color=S.wu?'#ff9f0a':'#636366';if(S.wu)rWU()" style="width:100%;padding:11px;border:none;border-radius:20px;background:rgba(255,255,255,.04);color:#636366;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;outline:none">▶ Open Warm-Up Calculator</button>
+        <div id="wuC" style="display:none;margin-top:12px">
+            <div class="row" id="wuL"></div>
+            <div class="row" id="wuS"></div>
+            <div id="wuR"></div>
+        </div>
     </div>
-</div>
-<div class="ft">DRE CALIBRATION · BARBELL LOADER</div>
-```
-
+    <div class="ft">DRE CALIBRATION · BARBELL LOADER</div>
 </div>
 <canvas id="shareCanvas"></canvas>
 
 <script>
 const K=2.20462,L=1/K;
 
-// ── PLATE INVENTORY (from Load the Bar screenshot, excluding crossed out) ──
 const KGP=[
-    {w:25,  c:"#DC2626",l:"25", tc:"#fff",h:140,pw:14},
-    {w:20,  c:"#2563EB",l:"20", tc:"#fff",h:132,pw:13},
-    {w:15,  c:"#EAB308",l:"15", tc:"#000",h:124,pw:12},
-    {w:10,  c:"#16A34A",l:"10", tc:"#fff",h:110,pw:11},
-    {w:5,   c:"#E5E7EB",l:"5",  tc:"#000",h:90, pw:9},
-    {w:2.5, c:"#1c1c1e",l:"2.5",tc:"#fff",h:72, pw:8,bd:"#666"},
-    {w:1.25,c:"#555",   l:"1.25",tc:"#ccc",h:58,pw:7,bd:"#888"},
-    {w:0.5, c:"#444",   l:"0.5",tc:"#999",h:46,pw:6,bd:"#777"},
-    {w:0.25,c:"#333",   l:".25",tc:"#888",h:38,pw:5,bd:"#666"},
+    {w:25,c:"#DC2626",l:"25",tc:"#fff",h:140,pw:14},
+    {w:20,c:"#2563EB",l:"20",tc:"#fff",h:132,pw:13},
+    {w:15,c:"#EAB308",l:"15",tc:"#000",h:124,pw:12},
+    {w:10,c:"#16A34A",l:"10",tc:"#fff",h:110,pw:11},
+    {w:5, c:"#E5E7EB",l:"5", tc:"#000",h:90,pw:9},
+    {w:2.5,c:"#1c1c1e",l:"2.5",tc:"#fff",h:72,pw:8,bd:"#666"},
+    {w:1.25,c:"#555",l:"1.25",tc:"#ccc",h:58,pw:7,bd:"#888"},
+    {w:0.5,c:"#444",l:"0.5",tc:"#999",h:46,pw:6,bd:"#777"},
+    {w:0.25,c:"#333",l:".25",tc:"#888",h:38,pw:5,bd:"#666"},
     {w:0.125,c:"#2a2a2a",l:".125",tc:"#777",h:32,pw:5,bd:"#555"}
 ];
 const LBSP=[
-    {w:45,  c:"#DC2626",l:"45", tc:"#fff",h:140,pw:14},
-    {w:35,  c:"#2563EB",l:"35", tc:"#fff",h:128,pw:13},
-    {w:25,  c:"#16A34A",l:"25", tc:"#fff",h:116,pw:12},
-    {w:10,  c:"#E5E7EB",l:"10", tc:"#000",h:96, pw:10},
-    {w:5,   c:"#6B7280",l:"5",  tc:"#fff",h:76, pw:9},
-    {w:2.5, c:"#1c1c1e",l:"2.5",tc:"#fff",h:60, pw:8,bd:"#666"}
+    {w:45,c:"#DC2626",l:"45",tc:"#fff",h:140,pw:14},
+    {w:35,c:"#2563EB",l:"35",tc:"#fff",h:128,pw:13},
+    {w:25,c:"#16A34A",l:"25",tc:"#fff",h:116,pw:12},
+    {w:10,c:"#E5E7EB",l:"10",tc:"#000",h:96,pw:10},
+    {w:5, c:"#6B7280",l:"5", tc:"#fff",h:76,pw:9},
+    {w:2.5,c:"#1c1c1e",l:"2.5",tc:"#fff",h:60,pw:8,bd:"#666"}
 ];
 const BARS=[
     {l:"45lb Standard",kg:20.4117,lbs:45},
@@ -167,30 +174,15 @@ const BARS=[
 ];
 
 let S={tab:'calc',bi:0,pu:'kg',iu:'lbs',rp:[],ao:'mid',wu:false,wl:'squat',ws:'standard'};
-let T=0; // current total lbs for warmup
-
+let T=0;
 function P(){return S.pu==='kg'?KGP:LBSP}
 function B(){return BARS[S.bi]}
 
-// All plates for exact calculation
 function cAll(ps){let r=ps;const o=[];for(const p of P()){while(r>=p.w-0.001){o.push(p);r-=p.w}}return o}
+// Easy = skip micros (<2.5 for KG)
+function eP(){return S.pu==='lbs'?LBSP:KGP.filter(p=>p.w>=2.5)}
+function cEasy(ps){let r=ps;const o=[];for(const p of eP()){while(r>=p.w-0.001){o.push(p);r-=p.w}}return o}
 
-// "Easy load" plates — skip micro (1.25, 0.5, 0.25, 0.125 for KG / skip nothing extra for LBS since smallest is 2.5)
-function easyPlates(){
-    if(S.pu==='lbs') return LBSP;
-    return KGP.filter(p=>p.w>=2.5); // skip 1.25, 0.5, 0.25, 0.125
-}
-function cEasy(ps){let r=ps;const o=[];for(const p of easyPlates()){while(r>=p.w-0.001){o.push(p);r-=p.w}}return o}
-
-// Rounding to nearest easy-load increment (2.5 kg / 2.5 lbs)
-function easyRound(ps){
-    const inc=2.5;
-    return{lo:Math.floor(ps/inc)*inc, hi:Math.ceil(ps/inc)*inc};
-}
-
-function toT(ps){const bv=S.pu==='kg'?B().kg:B().lbs;const t=ps*2+bv;return{kg:S.pu==='kg'?t:t*L,lbs:S.pu==='kg'?t*K:t}}
-
-// ── BAR HTML ──
 function bpH(p,i){
     return `<div class="bp" style="height:${p.h}px;width:${p.pw}px;background:${p.c};color:${p.tc};font-size:${p.pw<8?5:p.pw<10?6:7}px;${p.bd?'border:1px solid '+p.bd+';':''}animation-delay:${i*.04}s">${p.l}</div>`;
 }
@@ -198,71 +190,72 @@ function barH(pls){
     return `<div class="bar-wrap"><div class="bar-inner"><div class="bar-collar"></div><div class="bar-neck"></div><div class="bar-sleeve"></div><div class="bar-plates">${pls.map((p,i)=>bpH(p,i)).join('')}</div><div class="bar-cap"></div><div class="bar-ext"></div></div></div>`;
 }
 
-// ── RENDER ──
 function R(){
-    // Bar select
     document.getElementById('barSel').innerHTML=BARS.map((b,i)=>`<button class="tg ${i===S.bi?'on':''}" onclick="S.bi=${i};R()">${b.l}</button>`).join('');
-    // Unit toggles
     document.getElementById('puKg').className='tg'+(S.pu==='kg'?' on':'');
     document.getElementById('puLbs').className='tg'+(S.pu==='lbs'?' on':'');
     document.getElementById('iuL').className='tg'+(S.iu==='lbs'?' on':'');
     document.getElementById('iuK').className='tg'+(S.iu==='kg'?' on':'');
-    // Tabs
     document.getElementById('tCalc').className='tab'+(S.tab==='calc'?' on':'');
     document.getElementById('tRev').className='tab'+(S.tab==='rev'?' on':'');
     document.getElementById('vCalc').style.display=S.tab==='calc'?'block':'none';
     document.getElementById('vRev').style.display=S.tab==='rev'?'block':'none';
-    // Plate btns
-    document.getElementById('pBtns').innerHTML=P().map((p,i)=>`<button class="pb" style="background:${p.c};color:${p.tc};${p.bd?'border:2px solid '+p.bd+';':''}" onclick="S.rp.push(P()[${i}]);rRev();rWU()">${p.l}</button>`).join('');
+    document.getElementById('pBtns').innerHTML=P().map((p,i)=>`<button class="pb" style="background:${p.c};color:${p.tc};${p.bd?'box-shadow:inset 0 0 0 2px '+p.bd+';':''}" onclick="S.rp.push(P()[${i}]);rRev();rWU()">${p.l}</button>`).join('');
     rCalc();rRev();if(S.wu)rWU();
+}
+
+// ── BEST PRACTICAL LOAD LOGIC ──
+// "Best" = fewest plates that gets closest to target
+// Priority: minimize plate count, then minimize weight difference
+function bestLoad(perSide){
+    // Easy load (no micros): round to nearest 2.5
+    const inc=2.5;
+    const lo=Math.floor(perSide/inc)*inc;
+    const hi=Math.ceil(perSide/inc)*inc;
+    // Pick whichever is closer
+    const best=(perSide-lo)<=(hi-perSide)?lo:hi;
+    return{best,lo,hi};
+}
+
+function makeTotals(perSideActual){
+    const barKg=B().kg;
+    const totalKg=S.pu==='kg'?perSideActual*2+barKg:perSideActual*2*L+barKg;
+    return{kg:totalKg,lbs:totalKg*K};
 }
 
 // ── CALCULATE TAB ──
 function rCalc(){
     const raw=parseFloat(document.getElementById('tIn').value);
     const res=document.getElementById('cRes'),opts=document.getElementById('cOpts');
-    if(!raw||raw<=0){res.innerHTML='';opts.innerHTML='';T=0;return}
+    const shareSec=document.getElementById('calcShareSec');
+    if(!raw||raw<=0){res.innerHTML='';opts.innerHTML='';T=0;if(shareSec)shareSec.style.display='none';return}
 
-    // Always convert to KG first as source of truth
     const inputKg=S.iu==='kg'?raw:raw*L;
     const barKg=B().kg;
     const perSideKg=(inputKg-barKg)/2;
-    if(perSideKg<0){res.innerHTML=`<div class="cd" style="border-color:#ff453a;text-align:center;color:#ff453a;font-size:13px">Target less than bar weight</div>`;opts.innerHTML='';return}
-
-    // Convert to plate unit for plate loading
+    if(perSideKg<0){res.innerHTML=`<div class="cd" style="text-align:center;color:#ff453a;font-size:13px">Target less than bar weight</div>`;opts.innerHTML='';return}
     const perSide=S.pu==='kg'?perSideKg:perSideKg*K;
 
-    // MIDDLE: exact using all plates
-    const midPl=cAll(perSide);
-    const midPS=midPl.reduce((s,p)=>s+p.w,0);
-    // Actual total back through KG
-    const midKg=S.pu==='kg'?midPS*2+barKg:(midPS*2)*L+barKg;
-    const midLbs=midKg*K;
+    const{best,lo,hi}=bestLoad(perSide);
 
-    // LOWER/UPPER: easy-load (no micros), round to 2.5 in plate unit
-    const inc=2.5;
-    const loPS=Math.floor(perSide/inc)*inc;
-    const hiPS=Math.ceil(perSide/inc)*inc;
+    // MID = best practical (easy plates, closest to target)
+    const midPl=cEasy(best);const midPS=midPl.reduce((s,p)=>s+p.w,0);const midT=makeTotals(midPS);
 
-    const loPl=cEasy(loPS);const loAct=loPl.reduce((s,p)=>s+p.w,0);
-    const loKg=S.pu==='kg'?loAct*2+barKg:(loAct*2)*L+barKg;
-    const loLbs=loKg*K;
+    // LO = one step down
+    const loPl=cEasy(lo);const loPS=loPl.reduce((s,p)=>s+p.w,0);const loT=makeTotals(loPS);
 
-    const hiPl=cEasy(hiPS);const hiAct=hiPl.reduce((s,p)=>s+p.w,0);
-    const hiKg=S.pu==='kg'?hiAct*2+barKg:(hiAct*2)*L+barKg;
-    const hiLbs=hiKg*K;
+    // HI = one step up
+    const hiPl=cEasy(hi);const hiPS=hiPl.reduce((s,p)=>s+p.w,0);const hiT=makeTotals(hiPS);
 
-    const data={
-        lo:{ps:loAct,pl:loPl,kg:loKg,lbs:loLbs},
-        mid:{ps:midPS,pl:midPl,kg:midKg,lbs:midLbs},
-        hi:{ps:hiAct,pl:hiPl,kg:hiKg,lbs:hiLbs}
-    };
-    const showLo=Math.abs(data.lo.lbs-data.mid.lbs)>0.3;
-    const showHi=Math.abs(data.hi.lbs-data.mid.lbs)>0.3;
+    const data={lo:{ps:loPS,pl:loPl,t:loT},mid:{ps:midPS,pl:midPl,t:midT},hi:{ps:hiPS,pl:hiPl,t:hiT}};
+
+    // If mid equals hi or lo, indicate "best already selected"
+    const midIsHi=Math.abs(midT.lbs-hiT.lbs)<0.3;
+    const midIsLo=Math.abs(midT.lbs-loT.lbs)<0.3;
+
     const act=data[S.ao]||data.mid;
-
-    const dKg=(Math.round(act.kg*10)/10).toFixed(1);
-    const dLbs=(Math.round(act.lbs*10)/10).toFixed(1);
+    const dKg=(Math.round(act.t.kg*10)/10).toFixed(1);
+    const dLbs=(Math.round(act.t.lbs*10)/10).toFixed(1);
 
     res.innerHTML=`<div class="cd">${barH(act.pl)}
         <div style="display:flex;justify-content:center;gap:20px;margin-top:6px">
@@ -274,12 +267,21 @@ function rCalc(){
 
     const iu=S.iu;
     let oh='';
-    if(showLo)oh+=`<button class="opt ${S.ao==='lo'?'on':''}" onclick="S.ao='lo';rCalc();rWU()">↓ ${(iu==='kg'?data.lo.kg:data.lo.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.7">easy load</span></button>`;
-    oh+=`<button class="opt ${S.ao==='mid'?'on':''}" onclick="S.ao='mid';rCalc();rWU()">● ${(iu==='kg'?data.mid.kg:data.mid.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.7">exact</span></button>`;
-    if(showHi)oh+=`<button class="opt ${S.ao==='hi'?'on':''}" onclick="S.ao='hi';rCalc();rWU()">↑ ${(iu==='kg'?data.hi.kg:data.hi.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.7">easy load</span></button>`;
+    if(!midIsLo){
+        oh+=`<button class="opt ${S.ao==='lo'?'on':''}" onclick="S.ao='lo';rCalc();rWU()">↓ ${(iu==='kg'?loT.kg:loT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">lighter</span></button>`;
+    }
+    oh+=`<button class="opt ${S.ao==='mid'?'on':''}" onclick="S.ao='mid';rCalc();rWU()">● ${(iu==='kg'?midT.kg:midT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">${midIsHi||midIsLo?'best':'best load'}</span></button>`;
+    if(!midIsHi){
+        oh+=`<button class="opt ${S.ao==='hi'?'on':''}" onclick="S.ao='hi';rCalc();rWU()">↑ ${(iu==='kg'?hiT.kg:hiT.lbs).toFixed(1)}<br><span style="font-size:9px;opacity:.6">heavier</span></button>`;
+    }
     opts.innerHTML=oh;
 
-    T=act.lbs;
+    // Show share section
+    if(shareSec)shareSec.style.display='block';
+
+    T=act.t.lbs;
+    // Store plates for share
+    window._calcPlates=act.pl;window._calcT=act.t;
 }
 
 // ── REVERSE TAB ──
@@ -288,108 +290,119 @@ function rRev(){
     const ps=S.rp.reduce((s,p)=>s+p.w,0);
     const t=ps*2+bv;
     const kg=S.pu==='kg'?t:t*L;
-    const lbs=S.pu==='kg'?t*K:t;
+    const lbs=kg*K;
     document.getElementById('rBar').innerHTML=barH(S.rp);
     document.getElementById('rTot').innerHTML=`
         <div style="display:flex;justify-content:center;gap:20px">
-            <div style="text-align:center"><div class="bn" style="color:#0a84ff">${kg.toFixed(1)}</div><div class="un">KG</div></div>
-            <div style="text-align:center"><div class="bn" style="color:#ffd60a">${lbs.toFixed(1)}</div><div class="un">LBS</div></div>
+            <div style="text-align:center"><div class="bn" style="color:#0a84ff">${(Math.round(kg*10)/10).toFixed(1)}</div><div class="un">KG</div></div>
+            <div style="text-align:center"><div class="bn" style="color:#ffd60a">${(Math.round(lbs*10)/10).toFixed(1)}</div><div class="un">LBS</div></div>
         </div>
         <div style="font-size:11px;color:#636366;margin-top:4px">${ps} ${S.pu} per side · ${S.rp.length} plate${S.rp.length!==1?'s':''}</div>`;
     T=lbs;
 }
 
-// ── SHARE IMAGE (compact for IG story overlay) ──
-function doShare(){
-    const bv=S.pu==='kg'?B().kg:B().lbs;
-    const ps=S.rp.reduce((s,p)=>s+p.w,0);
-    const t=ps*2+bv;
-    const kg=S.pu==='kg'?t:t*L;
-    const lbs=S.pu==='kg'?t*K:t;
+// ── SHARE IMAGE (transparent BG) ──
+function doShare(src){
+    let plates,kg,lbs,sets,reps,note;
+    if(src==='calc'){
+        plates=window._calcPlates||[];
+        kg=window._calcT?window._calcT.kg:0;
+        lbs=window._calcT?window._calcT.lbs:0;
+        sets=document.getElementById('cSets').value.trim();
+        reps=document.getElementById('cReps').value.trim();
+        note=document.getElementById('cNote').value.trim();
+    } else {
+        plates=S.rp;
+        const bv=S.pu==='kg'?B().kg:B().lbs;
+        const ps=plates.reduce((s,p)=>s+p.w,0);
+        const t=ps*2+bv;
+        kg=S.pu==='kg'?t:t*L;lbs=kg*K;
+        sets=document.getElementById('rSets').value.trim();
+        reps=document.getElementById('rReps').value.trim();
+        note=document.getElementById('rNote').value.trim();
+    }
 
     const c=document.getElementById('shareCanvas');
-    // Compact: 1080 wide x 700 tall — sits nicely as overlay
-    const W=1080,H=700;
+    const W=1080,H=660;
     c.width=W;c.height=H;
     const x=c.getContext('2d');
 
-    // BG: dark with subtle transparency feel
-    x.fillStyle='#0a0a0a';x.fillRect(0,0,W,H);
-    // Border glow
-    x.strokeStyle='#1c1c1e';x.lineWidth=2;
-    x.strokeRect(20,20,W-40,H-40);
+    // Transparent background
+    x.clearRect(0,0,W,H);
 
-    // Brand top-left
-    x.fillStyle='#ff453a';x.font='800 14px -apple-system,sans-serif';x.textAlign='left';
-    x.fillText('DRE CALIBRATION',40,52);
+    // "IN DRE WE TRUST" top center
+    x.fillStyle='#ff453a';x.font='800 18px -apple-system,sans-serif';
+    x.textAlign='center';x.textBaseline='top';
+    x.fillText('IN DRE WE TRUST',W/2,16);
 
-    // Draw barbell centered
-    const barY=H*0.42;
-    const startX=60;
-    // Collar
-    x.fillStyle='#777';x.fillRect(startX,barY-14,16,28);
-    x.fillStyle='#999';x.fillRect(startX+16,barY-10,10,20);
-    x.fillStyle='#aaa';x.fillRect(startX+26,barY-7,30,14);
+    // Draw barbell
+    const barY=H*0.38;
+    const sx=50;
+    x.fillStyle='#777';x.fillRect(sx,barY-14,16,28);
+    x.fillStyle='#999';x.fillRect(sx+16,barY-10,10,20);
+    x.fillStyle='#aaa';x.fillRect(sx+26,barY-7,30,14);
 
-    // Plates
-    let px=startX+56;
+    let px=sx+56;
     const counts={};
-    S.rp.forEach((p,i)=>{
-        const ph=Math.min(p.h*2.2,420);
+    plates.forEach((p,i)=>{
+        const ph=Math.min(p.h*2.2,400);
         const pw=Math.max(p.pw*1.8,14);
         x.fillStyle=p.c;x.fillRect(px,barY-ph/2,pw,ph);
-        x.strokeStyle='rgba(0,0,0,.3)';x.lineWidth=1;x.strokeRect(px,barY-ph/2,pw,ph);
-        // Label
+        x.strokeStyle='rgba(0,0,0,.25)';x.lineWidth=1;x.strokeRect(px,barY-ph/2,pw,ph);
         x.fillStyle=p.tc;x.font=`bold ${Math.max(10,pw-6)}px -apple-system,sans-serif`;
         x.textAlign='center';x.textBaseline='middle';
         x.fillText(p.l,px+pw/2,barY);
-        // Count at top
-        x.font='bold 11px -apple-system,sans-serif';
-        x.fillText(String(i+1),px+pw/2,barY-ph/2+12);
-        // Unit at bottom
-        x.font='bold 9px -apple-system,sans-serif';
-        x.fillText(S.pu.toUpperCase(),px+pw/2,barY+ph/2-10);
         px+=pw+2;
         counts[p.l]=(counts[p.l]||0)+1;
     });
-    // Cap + bar extension
     x.fillStyle='#555';x.fillRect(px,barY-16,8,32);
     const g=x.createLinearGradient(px+8,barY-7,px+8,barY+7);
     g.addColorStop(0,'#aaa');g.addColorStop(1,'#777');
-    x.fillStyle=g;x.fillRect(px+8,barY-7,W-px-60,14);
+    x.fillStyle=g;x.fillRect(px+8,barY-7,W-px-50,14);
 
-    // Weight — big, centered below bar
-    const wy=H*0.78;
+    // Weight numbers
+    const wy=H*0.72;
     x.textAlign='center';x.textBaseline='middle';
-    x.fillStyle='#fff';x.font='900 72px -apple-system,sans-serif';
-    x.fillText(Math.round(kg*10)/10+'',W*0.28,wy);
-    x.fillStyle='#636366';x.font='700 20px -apple-system,sans-serif';
-    x.fillText('KG',W*0.28,wy+40);
+    x.fillStyle='#fff';x.font='900 64px -apple-system,sans-serif';
+    x.fillText((Math.round(kg*10)/10)+'',W*0.28,wy);
+    x.fillStyle='rgba(255,255,255,.4)';x.font='700 18px -apple-system,sans-serif';
+    x.fillText('KG',W*0.28,wy+38);
 
-    x.fillStyle='#2c2c2e';x.fillRect(W*0.5-1,wy-35,2,80);
+    x.fillStyle='rgba(255,255,255,.15)';x.fillRect(W*0.5-1,wy-30,2,70);
 
-    x.fillStyle='#fff';x.font='900 72px -apple-system,sans-serif';
-    x.fillText(Math.round(lbs*10)/10+'',W*0.72,wy);
-    x.fillStyle='#636366';x.font='700 20px -apple-system,sans-serif';
-    x.fillText('LB',W*0.72,wy+40);
+    x.fillStyle='#fff';x.font='900 64px -apple-system,sans-serif';
+    x.fillText((Math.round(lbs*10)/10)+'',W*0.72,wy);
+    x.fillStyle='rgba(255,255,255,.4)';x.font='700 18px -apple-system,sans-serif';
+    x.fillText('LB',W*0.72,wy+38);
 
-    // Summary bottom
-    const parts=Object.entries(counts).map(([l,n])=>`${n}×${l}${S.pu}`).join(', ');
-    x.fillStyle='#48484a';x.font='600 12px -apple-system,sans-serif';x.textAlign='center';
-    x.fillText(`${B().l} · ${parts||'Empty'} /side`,W/2,H-36);
+    // Sets/Reps/Note if provided
+    let infoY=wy+65;
+    if(sets||reps){
+        x.fillStyle='rgba(255,255,255,.7)';x.font='700 16px -apple-system,sans-serif';
+        let sr='';
+        if(sets&&reps) sr=sets+'×'+reps;
+        else if(sets) sr=sets+' sets';
+        else if(reps) sr=reps+' reps';
+        x.fillText(sr,W/2,infoY);
+        infoY+=22;
+    }
+    if(note){
+        x.fillStyle='rgba(255,255,255,.5)';x.font='500 14px -apple-system,sans-serif';
+        x.fillText(note,W/2,infoY);
+    }
 
-    // Brand bottom-right
-    x.fillStyle='#ff453a';x.font='800 12px -apple-system,sans-serif';x.textAlign='right';
-    x.fillText('DRE CALIBRATION',W-40,H-36);
+    // "DRE CALIBRATION" bottom center
+    x.fillStyle='#ff453a';x.font='800 14px -apple-system,sans-serif';
+    x.textBaseline='bottom';
+    x.fillText('DRE CALIBRATION',W/2,H-14);
 
     c.toBlob(blob=>{
         const file=new File([blob],'dre-calibration.png',{type:'image/png'});
         if(navigator.canShare&&navigator.canShare({files:[file]})){
-            navigator.share({files:[file],title:'Dre Calibration',text:`${Math.round(kg)}kg / ${Math.round(lbs)}lbs`}).catch(()=>{});
+            navigator.share({files:[file],title:'Dre Calibration'}).catch(()=>{});
         } else {
             const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='dre-calibration.png';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);
         }
-        const b=document.getElementById('shrBtn');b.textContent='✓ Saved!';setTimeout(()=>b.textContent='📸 Share to Story',2000);
     },'image/png');
 }
 
@@ -405,14 +418,12 @@ function rWU(){
         const lb=Math.round((T*s.p)/5)*5;const kg=Math.round(lb*L*10)/10;
         const belt=(S.wl==='squat'&&s.p>=.70)||(S.wl==='deadlift'&&s.p>=.83);
         const rp=s.r==='OPT'?'Opt':s.r+'r';
-        return `<div class="wur"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:15px">${lb}</b> <span style="color:#636366;font-size:11px">${kg}kg</span>${belt?' <span style="background:#ff453a;color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px">BELT</span>':''}</div><div><span style="color:#0a84ff;font-weight:700;font-size:12px">${rp}</span> <span style="color:#48484a;font-size:10px">${Math.round(s.p*100)}%</span></div></div><div class="wuc">${cu[S.wl][i]||'Focus.'}</div></div>`;
+        return `<div class="wur"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:15px">${lb}</b> <span style="color:#636366;font-size:11px">${kg}kg</span>${belt?' <span style="background:#ff453a;color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:10px">BELT</span>':''}</div><div><span style="color:#0a84ff;font-weight:700;font-size:12px">${rp}</span> <span style="color:#48484a;font-size:10px">${Math.round(s.p*100)}%</span></div></div><div class="wuc">${cu[S.wl][i]||'Focus.'}</div></div>`;
     }).join('');
 }
 
 R();
 </script>
-
 <script src="pwa.js"></script>
-
 </body>
 </html>
