@@ -136,16 +136,17 @@ function resolveSmartLift(lift, weekIndex) {
 
 const smartLibrary = {
     "Squat: Weak Hole": [
-        { n: "Pin Squat (Low)", t: "Explosive Start", p: 0.65, r: "3x3", s: "squat" },
-        { n: "Pause Squat (3s)", t: "No Bounce", p: 0.70, r: "3x4", s: "squat" },
+        { n: "Pin Squat (Low)", t: "Explosive Start", p: 0.65, r: "3x3", s: "squat", sw: ["Pause Squat (3s)", "Tempo Squat (5-3-0)", "Box Squat"] },
+        { n: "Pause Squat (3s)", t: "No Bounce", p: 0.70, r: "3x4", s: "squat", sw: ["Pin Squat (Low)", "Tempo Squat (5-3-0)", "Box Squat"] },
         { n: "1.5 Rep Squat", t: "TUT", p: 0.60, r: "3x5", s: "squat" },
-        { n: "Box Squat", t: "Hip Power", p: 0.75, r: "4x3", s: "squat" }
+        { n: "Box Squat", t: "Hip Power", p: 0.75, r: "4x3", s: "squat", sw: ["Pin Squat (Low)", "Pause Squat (3s)", "Tempo Squat (5-3-0)"] }
     ],
     "Squat: Mechanics/Core": [
         { n: "Tempo Squat (5-3-0)", t: "Path Control", p: 0.60, r: "3x5", s: "squat" },
-        { n: "SSB Squat", t: "Upper Back", p: 0.75, r: "3x6", s: "squat" },
-        { n: "Front Squat", t: "Upright/Quad", p: 0.65, r: "3x6", s: "squat" },
-        { n: "Zombie Squat", t: "Bracing", p: 0.50, r: "3x5", s: "squat" }
+        { n: "SSB Squat", t: "Upper Back", p: 0.75, r: "3x6", s: "squat", sw: ["High Bar Squat", "Front Squat", "Pendulum Squat"] },
+        { n: "Front Squat", t: "Upright/Quad", p: 0.65, r: "3x6", s: "squat", sw: ["High Bar Squat", "SSB Squat", "Hack Squat"] },
+        { n: "Zombie Squat", t: "Bracing", p: 0.50, r: "3x5", s: "squat" },
+        { n: "High Bar Squat", t: "Quad Emphasis", p: 0.80, r: "3x5", s: "squat", sw: ["SSB Squat", "Front Squat", "Pendulum Squat"] }
     ],
     "Squat: Overload/CNS": [
         { n: "Heavy Walkout", t: "CNS Priming", p: 1.10, r: "3x15s", s: "squat" },
@@ -158,11 +159,11 @@ const smartLibrary = {
         { n: "Spoto Press", t: "Reversal", p: 0.70, r: "3x5", s: "bench" },
         { n: "Dead Press", t: "Concentric Only", p: 0.80, r: "5x1", s: "bench" },
         { n: "Larsen Press", t: "Stability", p: 0.70, r: "3x6", s: "bench" },
-        { n: "Weighted Dips", t: "Mass Builder", p: 0.20, r: "3x8", s: "bench" }
+        { n: "Weighted Dips", t: "Mass Builder", p: 0.20, r: "3x8", s: "bench", sw: ["Close Grip Bench", "Incline Barbell Bench (Smart)", "Push-ups"] }
     ],
     "Bench: Lockout/Tri": [
-        { n: "Floor Press", t: "Lockout", p: 0.80, r: "3x5", s: "bench" },
-        { n: "Close Grip Bench", t: "Tricep Mass", p: 0.75, r: "3x8", s: "bench" },
+        { n: "Floor Press", t: "Lockout", p: 0.80, r: "3x5", s: "bench", sw: ["Close Grip Bench", "Board Press", "Spoto Press"] },
+        { n: "Close Grip Bench", t: "Tricep Mass", p: 0.75, r: "3x8", s: "bench", sw: ["Floor Press", "Larsen Press", "Weighted Dips"] },
         { n: "Board Press", t: "Overload", p: 1.05, r: "3x3", s: "bench" },
         { n: "Pin Lockouts", t: "Tendons", p: 1.10, r: "3x5", s: "bench" }
     ],
@@ -177,13 +178,14 @@ const smartLibrary = {
         { n: "Cable Crossover", t: "Inner Chest", p: 0.15, r: "3x15", s: "bench" }
     ],
     "Deadlift: Floor/Start": [
-        { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift" },
-        { n: "Halting DL", t: "Start Mechanics", p: 0.70, r: "3x5", s: "deadlift" },
-        { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift" },
-        { n: "Snatch Grip RDL (Smart)", t: "Upper Back", p: 0.40, r: "3x10", s: "deadlift", note: "W1:3x10@40-45% | W2:3x8@45-50% | W3:2x6@50-55% | W4-5:OFF" }
+        { n: "Deficit Deadlift", t: "Floor Speed", p: 0.70, r: "3x5", s: "deadlift", sw: ["Snatch Grip Deadlift", "Paused DL", "Halting DL"] },
+        { n: "Halting DL", t: "Start Mechanics", p: 0.70, r: "3x5", s: "deadlift", sw: ["Deficit Deadlift", "Paused DL", "Tempo Deadlift"] },
+        { n: "Paused DL", t: "Positioning", p: 0.70, r: "3x3", s: "deadlift", sw: ["Deficit Deadlift", "Halting DL", "Tempo Deadlift"] },
+        { n: "Snatch Grip RDL (Smart)", t: "Upper Back", p: 0.40, r: "3x10", s: "deadlift", note: "W1:3x10@40-45% | W2:3x8@45-50% | W3:2x6@50-55% | W4-5:OFF" },
+        { n: "Snatch Grip Deadlift", t: "Upper Back Builder", p: 0.55, r: "3x5", s: "deadlift", sw: ["Deficit Deadlift", "Paused DL", "Halting DL"] }
     ],
     "Deadlift: Hips/Lockout": [
-        { n: "Block Pulls (Smart)", t: "Lockout", p: 0.80, r: "3x4", s: "deadlift", note: "3-4in Height. W1:3x4@80% | W2:3x3@85% | W3:2x3@90% | W4:2x1@75%" },
+        { n: "Block Pulls (Smart)", t: "Lockout", p: 0.80, r: "3x4", s: "deadlift", note: "3-4in Height. W1:3x4@80% | W2:3x3@85% | W3:2x3@90% | W4:2x1@75%", sw: ["Rack Pull Hold", "Banded Deadlift", "Hip Thrust"] },
         { n: "Dimel Deadlift", t: "Glute Speed", p: 0.40, r: "2x20", s: "deadlift" },
         { n: "Banded Deadlift", t: "Lockout Grind", p: 0.50, r: "5x2", s: "deadlift" },
         { n: "Rack Pull Hold", t: "Grip/Traps", p: 1.10, r: "3x10s", s: "deadlift" },
@@ -191,55 +193,58 @@ const smartLibrary = {
         { n: "Tempo Deadlift", t: "Eccentric", p: 0.60, r: "3x3", s: "deadlift" }
     ],
     "Glutes: Aesthetics": [
-        { n: "Hip Thrust", t: "Thickness (Max)", p: 0.50, r: "4x10", s: "deadlift" },
+        { n: "Hip Thrust", t: "Thickness (Max)", p: 0.50, r: "4x10", s: "deadlift", sw: ["Glute Bridge", "Good Mornings", "Cable Abduction"] },
         { n: "Cable Abduction", t: "Upper Shelf (Med)", p: 0.10, r: "3x15", s: "squat" },
         { n: "Deficit Rev Lunge", t: "Tie-in/Lift", p: 0.25, r: "3x10", s: "squat" },
         { n: "Glute Kickback", t: "Roundness", p: 0.05, r: "3x20", s: "squat" },
         { n: "45 Deg Hypers", t: "Upper Glute", p: 0, r: "3x20", s: "squat" }
     ],
     "Legs: Quads/Hams": [
-        { n: "Leg Press", t: "Overall Mass", p: 1.50, r: "4x10", s: "squat" },
-        { n: "Hack Squat", t: "Outer Sweep", p: 0.60, r: "3x8", s: "squat" },
+        { n: "Leg Press", t: "Overall Mass", p: 1.50, r: "4x10", s: "squat", sw: ["Hack Squat", "Belt Squat", "Pendulum Squat"] },
+        { n: "Hack Squat", t: "Outer Sweep", p: 0.60, r: "3x8", s: "squat", sw: ["Leg Press", "Belt Squat", "Pendulum Squat"] },
         { n: "Walking Lunges", t: "Unilateral", p: 0.25, r: "3x12", s: "squat" },
         { n: "Split Squat", t: "Separation", p: 0.20, r: "3x10", s: "squat" },
-        { n: "RDL (Barbell)", t: "Hamstring Hang", p: 0.50, r: "3x8", s: "deadlift" },
-        { n: "Stiff Leg DL", t: "Pure Stretch", p: 0.45, r: "3x10", s: "deadlift" },
-        { n: "Good Mornings", t: "Post. Chain", p: 0.40, r: "3x8", s: "squat" },
+        { n: "RDL (Barbell)", t: "Hamstring Hang", p: 0.50, r: "3x8", s: "deadlift", sw: ["Stiff Leg DL", "Good Mornings", "Hip Thrust"] },
+        { n: "Stiff Leg DL", t: "Pure Stretch", p: 0.45, r: "3x10", s: "deadlift", sw: ["RDL (Barbell)", "Good Mornings", "Hip Thrust"] },
+        { n: "Good Mornings", t: "Post. Chain", p: 0.40, r: "3x8", s: "squat", sw: ["RDL (Barbell)", "Stiff Leg DL", "Hip Thrust"] },
         { n: "Glute Ham Raise", t: "Knee Flexion", p: 0, r: "3xMax", s: "squat" },
         { n: "Leg Extensions", t: "Quad Detail", p: 0.25, r: "3x15", s: "squat" },
         { n: "Seated Ham Curl", t: "Inner Ham", p: 0.20, r: "3x15", s: "squat" },
-        { n: "Lying Ham Curl", t: "Outer Ham", p: 0.20, r: "3x12", s: "squat" }
+        { n: "Lying Ham Curl", t: "Outer Ham", p: 0.20, r: "3x12", s: "squat" },
+        { n: "Pendulum Squat", t: "Quad Isolation", p: 0.60, r: "3x10", s: "squat", sw: ["Hack Squat", "Leg Press", "Belt Squat"] }
     ],
     "Back Thickness/Width": [
-        { n: "Pendlay Row", t: "Explosive Back", p: 0.60, r: "4x6", s: "deadlift" },
-        { n: "Bent Over Row", t: "Gen Mass", p: 0.55, r: "3x10", s: "deadlift" },
+        { n: "Pendlay Row", t: "Explosive Back", p: 0.40, r: "4x6", s: "deadlift", sw: ["Bent Over Row", "Seal Row", "Snatch Grip Rows"] },
+        { n: "Bent Over Row", t: "Gen Mass", p: 0.38, r: "3x10", s: "deadlift", sw: ["Pendlay Row", "Seal Row", "Snatch Grip Rows"] },
         { n: "Vertical Row", t: "Rhomboid", p: 0.30, r: "3x12", s: "deadlift" },
-        { n: "Lat Pulldown", t: "Width", p: 0.40, r: "3x12", s: "deadlift" },
-        { n: "Chest Supp Row", t: "Mid-Back", p: 0.30, r: "3x12", s: "deadlift" },
-        { n: "Seal Row", t: "Lats Iso", p: 0.40, r: "4x10", s: "deadlift" }
+        { n: "Lat Pulldown", t: "Width", p: 0.25, r: "3x12", s: "deadlift", sw: ["Weighted Pull-ups", "Cable Row", "Neutral Grip Pulldown"] },
+        { n: "Chest Supp Row", t: "Mid-Back", p: 0.22, r: "3x12", s: "deadlift", sw: ["Seal Row", "Pendlay Row", "Snatch Grip Rows"] },
+        { n: "Seal Row", t: "Lats Iso", p: 0.30, r: "4x10", s: "deadlift", sw: ["Chest Supp Row", "Pendlay Row", "Snatch Grip Rows"] },
+        { n: "Snatch Grip Rows", t: "Back Thickness", p: 0.35, r: "3x8", s: "deadlift", sw: ["Pendlay Row", "Bent Over Row", "Seal Row"] },
+        { n: "Weighted Pull-ups", t: "Lat Width", p: 0.10, r: "3x6", s: "deadlift", sw: ["Lat Pulldown", "Cable Row", "Neutral Grip Pulldown"] }
     ],
     "Shoulders (3 Heads)": [
-        { n: "OHP (Standing)", t: "Mass", p: 0.80, r: "3x5", s: "ohp" },
-        { n: "Seated DB Press", t: "Front/Side", p: 0.35, r: "3x10", s: "ohp" },
-        { n: "Egyptian Lateral", t: "Side Delt (Cap)", p: 0.10, r: "4x15", s: "ohp" },
+        { n: "OHP (Standing)", t: "Mass", p: 0.80, r: "3x5", s: "ohp", sw: ["Seated DB Press", "Push Press", "Z Press"] },
+        { n: "Seated DB Press", t: "Front/Side", p: 0.35, r: "3x10", s: "ohp", sw: ["OHP (Standing)", "Arnold Press", "Lateral Raise"] },
+        { n: "Egyptian Lateral", t: "Side Delt (Cap)", p: 0.10, r: "4x15", s: "ohp", sw: ["Cable Lateral Raise", "DB Lateral Raise", "Upright Rows"] },
         { n: "Plate Raise", t: "Front Delt", p: 0, r: "3x12", s: "ohp" },
-        { n: "Face Pulls", t: "Rear Delt/Health", p: 0.15, r: "3x20", s: "bench" },
+        { n: "Face Pulls", t: "Rear Delt/Health", p: 0.10, r: "3x20", s: "bench", sw: ["Band Pull-Aparts", "Rear Delt Fly", "Reverse Pec Deck"] },
         { n: "Rear Delt Fly", t: "Rear Iso", p: 0.10, r: "3x15", s: "bench" },
         { n: "Upright Rows", t: "Traps/Side", p: 0.30, r: "3x12", s: "ohp" }
     ],
     "Arms (Bi/Tri)": [
-        { n: "Rope Pushdown", t: "Tricep Horseshoe", p: 0.25, r: "3x15", s: "bench" },
-        { n: "Skullcrushers", t: "Tricep Mass", p: 0.30, r: "3x10", s: "bench" },
+        { n: "Rope Pushdown", t: "Tricep Horseshoe", p: 0.25, r: "3x15", s: "bench", sw: ["V-Bar Pushdown", "Overhead Ext", "Weighted Dips"] },
+        { n: "Skullcrushers", t: "Tricep Mass", p: 0.25, r: "3x10", s: "bench", sw: ["Overhead Ext", "Close Grip Bench", "Rope Pushdown"] },
         { n: "Overhead Ext", t: "Tricep Long Head", p: 0.20, r: "3x12", s: "bench" },
-        { n: "Incline Curl", t: "Bicep Peak", p: 0.10, r: "3x12", s: "deadlift" },
-        { n: "Hammer Curl", t: "Forearm/Width", p: 0.15, r: "3x10", s: "deadlift" }
+        { n: "Incline Curl", t: "Bicep Peak", p: 0.05, r: "3x12", s: "deadlift", sw: ["Barbell Curl", "Cable Curl", "Preacher Curl"] },
+        { n: "Hammer Curl", t: "Forearm/Width", p: 0.07, r: "3x10", s: "deadlift", sw: ["Reverse Curl", "Cable Hammer Curl", "Zottman Curl"] }
     ],
     "Abs (Strength)": [
         { n: "Weighted Planks", t: "Core", p: 0, r: "3x45s", s: "squat" },
         { n: "Ab Wheel", t: "Stiffness", p: 0, r: "3x10", s: "squat" },
         { n: "Hanging Leg Raise", t: "Hip Flexor", p: 0, r: "3x12", s: "squat" },
-        { n: "Cable Crunch", t: "Flexion", p: 0.30, r: "4x15", s: "squat" },
-        { n: "Pallof Press", t: "Anti-Rotation", p: 0.10, r: "3x12", s: "deadlift" }
+        { n: "Cable Crunch", t: "Flexion", p: 0.15, r: "4x15", s: "squat" },
+        { n: "Pallof Press", t: "Anti-Rotation", p: 0.05, r: "3x12", s: "deadlift" }
     ]
 };
 
@@ -1732,11 +1737,15 @@ function generateProgram() {
                 mx = dMax;
             }
             else if (lift.n === "Incline DB Press" || lift.n === "Weighted Dips") {
-                finalIntens = 0.55 + (w * 0.02); fSets = 3; dReps = 12;
+                finalIntens = 0.45 + (w * 0.02); fSets = 3; dReps = 12;
                 mx = bMax;
             }
-            else if (lift.n === "Barbell Rows" || lift.n === "Lat Pulldown") {
-                finalIntens = 0.50; fSets = 4; dReps = 12;
+            else if (lift.n === "Barbell Rows") {
+                finalIntens = 0.35; fSets = 4; dReps = 12;
+                mx = dMax;
+            }
+            else if (lift.n === "Lat Pulldown") {
+                finalIntens = 0.25; fSets = 4; dReps = 12;
                 mx = dMax;
             }
             else if (["Arm Pump","Calves","Sled Drags"].includes(lift.n)) {
@@ -1866,11 +1875,11 @@ function generateProgram() {
             }
 
             // Back Day
-            if (lift.n === "Pendlay Row")         { finalIntens = 0.60; dReps = 6;  fSets = 4; }
-            if (lift.n === "Weighted Pull-ups")   { finalIntens = 0.30; dReps = 8;  fSets = 3; }
-            if (lift.n === "Lat Pulldown")        { finalIntens = 0.40; dReps = 12; fSets = 3; }
-            if (lift.n === "Chest Supported Row") { finalIntens = 0.30; dReps = 12; fSets = 3; }
-            if (lift.n === "Face Pulls")          { finalIntens = 0.15; dReps = 20; fSets = 3; }
+            if (lift.n === "Pendlay Row")         { finalIntens = 0.40; dReps = 6;  fSets = 4; }
+            if (lift.n === "Weighted Pull-ups")   { finalIntens = 0.10; dReps = 8;  fSets = 3; }
+            if (lift.n === "Lat Pulldown")        { finalIntens = 0.25; dReps = 12; fSets = 3; }
+            if (lift.n === "Chest Supported Row") { finalIntens = 0.22; dReps = 12; fSets = 3; }
+            if (lift.n === "Face Pulls")          { finalIntens = 0.10; dReps = 20; fSets = 3; }
 
             // OHP & Shoulder Day
             if (lift.n === "OHP (Strength)") {
@@ -1936,7 +1945,11 @@ function generateProgram() {
         let setRepStr = "";
         if (lift.isCustom) {
             setRepStr = String(lift.r).includes('x') ? lift.r : `${fSets} x ${dReps}`;
-            setRepStr += ` <span onclick="removeCustomLift(${lift.dbIndex})" style="cursor:pointer;color:red;margin-left:5px;">🗑️</span>`;
+            const _swapEx = findExerciseInLibrary(lift.n);
+            const _swapBtn = (_swapEx && _swapEx.sw && _swapEx.sw.length > 0)
+                ? ` <span onclick="openSwapSheet(${lift.dbIndex})" title="Swap exercise" style="cursor:pointer;margin-left:4px;opacity:0.75;font-size:13px;">🔄</span>`
+                : '';
+            setRepStr += `${_swapBtn} <span onclick="removeCustomLift(${lift.dbIndex})" style="cursor:pointer;color:red;margin-left:3px;">🗑️</span>`;
         } else {
             let finalS = setsDisplay ? setsDisplay : fSets;
             setRepStr = `${finalS}x${dReps}`;
@@ -2022,6 +2035,74 @@ window.removeCustomLift = function(index) {
     saveUserData();
     generateProgram();
     toast('Workout removed', 'info');
+};
+
+// ==========================================
+// SWAP FEATURE
+// ==========================================
+function findExerciseInLibrary(name) {
+    for (const cat of Object.values(smartLibrary)) {
+        for (const ex of cat) {
+            if (ex.n === name) return ex;
+        }
+    }
+    return null;
+}
+
+window.openSwapSheet = function(dbIndex) {
+    const lift = customLifts[dbIndex];
+    if (!lift) return;
+    const liftName = lift.n;
+    const ex = findExerciseInLibrary(liftName);
+    const swaps = ex && ex.sw;
+    if (!swaps || swaps.length === 0) {
+        toast('No swaps available for this exercise', 'info');
+        return;
+    }
+    const old = document.getElementById('swapSheetOverlay');
+    if (old) old.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'swapSheetOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:9500;display:flex;align-items:flex-end;';
+    overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+    let swapItems = swaps.map(s => {
+        const alt = findExerciseInLibrary(s);
+        const pctLabel = alt ? `<span style="color:#aaa;font-size:11px;margin-left:6px;">${Math.round(alt.p*100)}% of ${alt.s}</span>` : '';
+        return `<div onclick="executeSwap(${dbIndex},'${s.replace(/'/g,"\\'")}');document.getElementById('swapSheetOverlay').remove();"
+            style="padding:14px 16px;border-bottom:0.5px solid #2c2c2e;cursor:pointer;display:flex;align-items:center;gap:12px;color:#fff;font-size:0.95rem;transition:background 0.15s;" onmouseover="this.style.background='#2c2c2e'" onmouseout="this.style.background=''">
+            <span style="font-size:22px;">🔄</span>
+            <div><strong>${s}</strong>${pctLabel}</div>
+        </div>`;
+    }).join('');
+    overlay.innerHTML = `
+    <div style="background:#1c1c1e;border-radius:20px 20px 0 0;width:100%;max-height:65vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom);">
+        <div style="padding:14px 18px;border-bottom:0.5px solid #2c2c2e;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <div style="color:#aaa;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Swap Exercise</div>
+                <div style="color:#fff;font-weight:700;font-size:1rem;margin-top:2px;">${liftName}</div>
+            </div>
+            <span onclick="document.getElementById('swapSheetOverlay').remove()" style="color:#636366;cursor:pointer;font-size:24px;line-height:1;">✕</span>
+        </div>
+        ${swapItems}
+    </div>`;
+    document.body.appendChild(overlay);
+};
+
+window.executeSwap = function(dbIndex, newName) {
+    const newEx = findExerciseInLibrary(newName);
+    if (!newEx) {
+        toast(`${newName} — not in library. Add via Smart Library.`, 'info');
+        return;
+    }
+    const oldLift = customLifts[dbIndex];
+    const newLift = { n: newEx.n, p: newEx.p, r: newEx.r, s: newEx.s, t: newEx.t, dayIndex: oldLift ? oldLift.dayIndex : undefined };
+    if (dbIndex >= 0 && dbIndex < customLifts.length) {
+        customLifts.splice(dbIndex, 1, newLift);
+    }
+    saveCustomLifts();
+    saveUserData();
+    generateProgram();
+    toast(`Swapped to ${newName}`, 'success');
 };
 
 window.clearCustomLifts = function() {
