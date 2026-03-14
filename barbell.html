@@ -187,7 +187,7 @@ const BARS=[
     {l:"25kg Squat Bar",kg:25,lbs:55.1156}
 ];
 
-let S={tab:'calc',bi:0,pu:'kg',iu:'lbs',rp:[],ao:'mid',wu:false,gc:false,wl:'squat',ws:'standard'};
+let S={tab:'calc',bi:1,pu:'kg',iu:'kg',rp:[],ao:'mid',wu:false,gc:false,wl:'squat',ws:'standard'};
 let T=0;
 function P(){return S.pu==='kg'?KGP:LBSP}
 function B(){return BARS[S.bi]}
@@ -567,9 +567,9 @@ function rGoal(){
         else if (from === 'base') { btn.href = 'base.html'; btn.textContent = '← Back to Base Map'; }
     }
 
-    // Set unit
-    if (uVal === 'kg') { S.iu = 'kg'; S.pu = 'kg'; }
-    else { S.iu = 'lbs'; S.pu = 'lbs'; }
+    // Set input unit to match the program's weight — plates/bar keep their defaults (kg, 20kg)
+    if (uVal === 'kg') { S.iu = 'kg'; }
+    else if (uVal === 'lbs') { S.iu = 'lbs'; }
 
     // Store weight to inject after R() sets up the DOM state
     if (wVal && parseFloat(wVal) > 0) {
