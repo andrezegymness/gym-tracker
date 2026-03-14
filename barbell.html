@@ -72,7 +72,7 @@
 </head>
 <body>
 <div class="w">
-    <a href="index.html" class="bk">← Menu</a>
+    <a id="backBtn" href="index.html" class="bk">← Menu</a>
     <div class="hd"><div class="br">Dre Calibration</div><div class="ti">Barbell Loader</div></div>
     <div class="row" id="barSel"></div>
     <div class="row">
@@ -553,7 +553,39 @@ function rGoal(){
     out.innerHTML=html;
 }
 
+// Pre-load from URL params (when launched from a program)
+(function(){
+    const p = new URLSearchParams(location.search);
+    const wVal = p.get('weight');
+    const uVal = p.get('unit');
+    const from = p.get('from');
+
+    // Set back button
+    if (from) {
+        const btn = document.getElementById('backBtn');
+        if (from === 'andre') { btn.href = 'andre.html'; btn.textContent = '← Back to Andre Map'; }
+        else if (from === 'base') { btn.href = 'base.html'; btn.textContent = '← Back to Base Map'; }
+    }
+
+    // Set unit
+    if (uVal === 'kg') { S.iu = 'kg'; S.pu = 'kg'; }
+    else { S.iu = 'lbs'; S.pu = 'lbs'; }
+
+    // Store weight to inject after R() sets up the DOM state
+    if (wVal && parseFloat(wVal) > 0) {
+        S._preloadWeight = wVal;
+    }
+})();
+
 R();
+
+// Apply preloaded weight after R() has rendered
+if (S._preloadWeight) {
+    document.getElementById('tIn').value = S._preloadWeight;
+    rCalc();
+    rWU();
+    delete S._preloadWeight;
+}
 </script>
 <script src="pwa.js"></script>
 </body>

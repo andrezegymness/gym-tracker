@@ -2438,11 +2438,7 @@ function updatePtMovements() {
 }
 
 window.openPlateLoader = function(w) {
-    document.getElementById('plateModal').style.display='flex';
-    document.getElementById('plateTarget').innerText = w+" lbs";
-    let s=(w-45)/2, p=[45,25,10,5,2.5], r=[];
-    p.forEach(x=>{ while(s>=x){ r.push(x); s-=x; } });
-    document.getElementById('plateText').innerText = r.length ? r.join(' + ') + ' per side' : 'Bar only';
+    window.location.href = `barbell.html?weight=${encodeURIComponent(w)}&unit=lbs&from=base`;
 };
 
 window.adjustWeight = window.adjustWeight; // already defined above
