@@ -7,7 +7,7 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M",
@@ -257,6 +257,7 @@ let isFasted = false;
 let currentUserEmail = "";
 let customLifts = [];
 let modifiers = {};
+try { const _m = localStorage.getItem('baseMapModifiers'); if(_m) modifiers = JSON.parse(_m); } catch(e){}
 
 // ==========================================
 // TOAST — replaces all alert() calls
@@ -2136,7 +2137,10 @@ window.adjustWeight = function(liftName, originalLoad) {
         modifiers[liftName] = actual / originalLoad;
         toast(`${liftName} updated — scales by ${((actual/originalLoad)*100).toFixed(1)}%`);
     }
+    localStorage.setItem('baseMapModifiers', JSON.stringify(modifiers));
     saveUserData();
+    const _u = auth.currentUser;
+    if(_u) updateDoc(doc(db,'users',_u.uid), {modifiers}).catch(()=>{});
     generateProgram();
 };
 
@@ -2220,7 +2224,7 @@ async function loadUserData(email) {
             document.getElementById('benchInput').value = b||'';
             document.getElementById('deadliftInput').value = dl||'';
             document.getElementById('ohpInput').value = o||'';
-            if (d.modifiers) modifiers = d.modifiers;
+            if (d.modifiers) { modifiers = d.modifiers; localStorage.setItem('baseMapModifiers', JSON.stringify(modifiers)); }
             // FIX: load customLifts from cloud (merged with localStorage)
             if (d.customLifts && d.customLifts.length > 0) {
                 customLifts = d.customLifts;
@@ -2545,6 +2549,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUIState();
     loadLocalInputs();
     loadCustomLifts();
+    try { const _m = localStorage.getItem('baseMapModifiers'); if(_m) modifiers = JSON.parse(_m); } catch(e){}
     initLibraryMenu();
     injectRestTimer();
     updateBrandName();
