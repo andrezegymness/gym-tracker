@@ -1976,7 +1976,7 @@ function render() {
                     autoRegLabel = ` <span style='color:#ff9f0a;font-size:9px;'>↓${dropPct}% RPE</span>`;
                 }
                 if(modifier!==1.0 || overloadPct>0) { style="color:#ff4444;font-weight:bold;"; warn=" ⚠️"; }
-                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span>${warningLabel}${autoRegLabel} <span onclick="adjustWeight('${m.name}',${baseLoad})" style="cursor:pointer;font-size:12px;color:#aaa;margin-left:5px;">✎</span>`;
+                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span>${warningLabel}${autoRegLabel} <span onclick="event.stopPropagation();adjustWeight('${m.name}',${baseLoad})" style="cursor:pointer;font-size:12px;color:#aaa;margin-left:5px;">✎</span>`;
             } else {
                 loadDisplay = Math.round(m.pct*100)+"%";
             }

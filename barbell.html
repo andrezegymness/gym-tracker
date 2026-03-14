@@ -567,9 +567,9 @@ function rGoal(){
         else if (from === 'base') { btn.href = 'base.html'; btn.textContent = '← Back to Base Map'; }
     }
 
-    // Set unit
-    if (uVal === 'kg') { S.iu = 'kg'; S.pu = 'kg'; }
-    else { S.iu = 'lbs'; S.pu = 'lbs'; }
+    // Set input unit to match the program's weight — plates/bar keep their defaults (kg, 20kg)
+    if (uVal === 'kg') { S.iu = 'kg'; }
+    else if (uVal === 'lbs') { S.iu = 'lbs'; }
 
     // Store weight to inject after R() sets up the DOM state
     if (wVal && parseFloat(wVal) > 0) {
