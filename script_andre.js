@@ -2094,11 +2094,8 @@ window.openOverview = function() {
 // ==========================================
 window.openPlateCalc = function(w) {
     if(String(w).includes('%')) return;
-    document.getElementById('plateModal').style.display='flex';
-    const wt = parseFloat(w);
-    document.getElementById('plateTarget').innerText = wt+" "+state.unit;
-    document.getElementById('plateVisuals').innerHTML = getPlates(wt);
-    document.getElementById('plateText').innerText = "Per Side (45lb Bar)";
+    const unit = (state.unit || 'LBS').toLowerCase();
+    window.location.href = `barbell.html?weight=${encodeURIComponent(w)}&unit=${unit}&from=andre`;
 };
 
 window.openMeetPlanner = function() {
