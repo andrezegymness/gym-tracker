@@ -332,7 +332,7 @@ function rRev(){
             <div style="text-align:center"><div class="bn" style="color:#ffd60a">${(Math.round(lbs*10)/10).toFixed(1)}</div><div class="un">LBS</div></div>
         </div>
         <div style="font-size:11px;color:#636366;margin-top:4px">${ps} ${S.pu} per side · ${S.rp.length} plate${S.rp.length!==1?'s':''}</div>`;
-    T=lbs;
+    if(S.tab==='rev') T=lbs;
 }
 
 // ── SHARE IMAGE — 90s Retro Jagged Pattern ──
