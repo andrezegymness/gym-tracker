@@ -184,7 +184,7 @@ const LBSP=[
 const BARS=[
     {l:"45lb Standard",kg:20.4117,lbs:45},
     {l:"20kg Comp Barbell",kg:20,lbs:44.0924},
-    {l:"25kg Squat Bar",kg:25,lbs:55.1156}
+    {l:"25kg Squat Barbell",kg:25,lbs:55.1156}
 ];
 
 let S={tab:'calc',bi:0,pu:'kg',iu:'lbs',rp:[],ao:'mid',wu:false,gc:false,wl:'squat',ws:'standard'};
@@ -519,12 +519,23 @@ function rWU(){
     const el=document.getElementById('wuR');
     if(!T||T<=0){el.innerHTML='<div style="text-align:center;color:#48484a;font-size:12px;padding:16px">Enter a weight to see warm-ups</div>';return}
     const pr={standard:[{p:.505,r:'5'},{p:.608,r:'3'},{p:.72,r:'2'},{p:.834,r:'1'},{p:.93,r:'1'},{p:.97,r:'OPT'}],big:[{p:.45,r:'5'},{p:.68,r:'3'},{p:.84,r:'1'},{p:.92,r:'1'},{p:.97,r:'OPT'}],tight:[{p:.40,r:'8'},{p:.52,r:'5'},{p:.64,r:'3'},{p:.75,r:'2'},{p:.84,r:'1'},{p:.90,r:'1'},{p:.94,r:'1'},{p:.98,r:'OPT'}]};
-    const cu={squat:["Move fast.","Foot pressure.","Bracing.","BELT ON.","Max pressure.","Heavy feel.","Comp.","Opt."],bench:["Active lats.","Drive heels.","Tight arch.","Explode.","Comp pause.","Heavy feel.","Comp.","Opt."],deadlift:["Pull slack.","Chest up.","Lats.","BELT ON.","Comp speed.","Heavy feel.","Comp.","Opt."]};
+    const cu={squat:["Move fast, open hips.","Focus foot pressure.","Start bracing.","BELT ON.","Max pressure.","Final heavy feel.","Comp.","Opt."],bench:["Active lats.","Drive heels.","Tight arch.","Explode.","Comp pause.","Heavy feel.","Comp.","Opt."],deadlift:["Pull slack.","Chest up.","Lats tight.","BELT ON.","Comp speed.","Heavy feel.","Comp.","Opt."]};
+    const isKgBar = S.bi !== 0; // 20kg Comp Barbell or 25kg Squat Barbell
     el.innerHTML=pr[S.ws].map((s,i)=>{
-        const lb=Math.round((T*s.p)/5)*5;const kg=Math.round(lb*L*10)/10;
+        let primVal, primUnit, secVal, secUnit;
+        if (isKgBar) {
+            const workingKg = T * L;
+            const wuKg = Math.round((workingKg * s.p) / 2.5) * 2.5;
+            const wuLbs = Math.round(wuKg * K);
+            primVal = wuKg; primUnit = 'kg'; secVal = wuLbs; secUnit = 'lbs';
+        } else {
+            const wuLbs = Math.round((T * s.p) / 5) * 5;
+            const wuKg = Math.round(wuLbs * L * 10) / 10;
+            primVal = wuLbs; primUnit = 'lbs'; secVal = wuKg; secUnit = 'kg';
+        }
         const belt=(S.wl==='squat'&&s.p>=.70)||(S.wl==='deadlift'&&s.p>=.83);
         const rp=s.r==='OPT'?'Opt':s.r+'r';
-        return `<div class="wur"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:15px">${lb}</b> <span style="color:#636366;font-size:11px">${kg}kg</span>${belt?' <span style="background:#ff453a;color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:10px">BELT</span>':''}</div><div><span style="color:#0a84ff;font-weight:700;font-size:12px">${rp}</span> <span style="color:#48484a;font-size:10px">${Math.round(s.p*100)}%</span></div></div><div class="wuc">${cu[S.wl][i]||'Focus.'}</div></div>`;
+        return `<div class="wur"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:15px">${primVal}</b> <span style="color:#636366;font-size:11px">${primUnit} &nbsp;${secVal} ${secUnit}</span>${belt?' <span style="background:#ff453a;color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:10px">BELT</span>':''}</div><div><span style="color:#0a84ff;font-weight:700;font-size:12px">${rp}</span> <span style="color:#48484a;font-size:10px">${Math.round(s.p*100)}%</span></div></div><div class="wuc">${cu[S.wl][i]||'Focus.'}</div></div>`;
     }).join('');
 }
 
