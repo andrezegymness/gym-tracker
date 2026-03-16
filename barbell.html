@@ -480,18 +480,18 @@ function doShare(src){
     x.fillText('LB',W*0.72,wy+38);
 
     // Sets/Reps/Note
-    let infoY=wy+65;
+    let infoY=wy+82;
     if(sets||reps){
-        x.fillStyle='rgba(255,255,255,.7)';x.font='700 16px -apple-system,sans-serif';
+        x.fillStyle='rgba(255,255,255,.7)';x.font='700 36px -apple-system,sans-serif';
         let sr='';
         if(sets&&reps) sr=sets+'×'+reps;
         else if(sets) sr=sets+' sets';
         else if(reps) sr=reps+' reps';
         x.fillText(sr,W/2,infoY);
-        infoY+=22;
+        infoY+=44;
     }
     if(note){
-        x.fillStyle='rgba(255,255,255,.5)';x.font='500 14px -apple-system,sans-serif';
+        x.fillStyle='rgba(255,255,255,.5)';x.font='500 26px -apple-system,sans-serif';
         x.fillText(note,W/2,infoY);
     }
 
