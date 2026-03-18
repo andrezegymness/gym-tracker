@@ -8,7 +8,7 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M",
@@ -1524,6 +1524,7 @@ const inputs = {
     OHP:      document.getElementById('ohpInput')
 };
 let modifiers = {};
+try { const _m = localStorage.getItem('andreMapModifiers'); if(_m) modifiers = JSON.parse(_m); } catch(e){}
 
 // ==========================================
 // UTILITIES
@@ -1650,7 +1651,7 @@ async function loadFromCloud(uid) {
             if(d.completed)  state.completed  = d.completed;
             if(d.settings)   state.settings   = d.settings;
             if(d.accWeights) state.accWeights  = d.accWeights||{};
-            if(d.modifiers)  modifiers         = d.modifiers||{};
+            if(d.modifiers)  { modifiers = d.modifiers||{}; localStorage.setItem('andreMapModifiers', JSON.stringify(modifiers)); }
             // FIX: load customLifts from cloud and sync to localStorage
             if(d.customLifts && d.customLifts.length > 0) {
                 state.customLifts = d.customLifts;
@@ -1860,7 +1861,10 @@ window.adjustWeight = function(liftName, originalLoad) {
         toast(`${liftName} updated — scales by ${((actual/originalLoad)*100).toFixed(1)}%`);
     }
     state.modifiers = modifiers;
+    localStorage.setItem('andreMapModifiers', JSON.stringify(modifiers));
     saveToCloud();
+    const _u = auth.currentUser;
+    if(_u) updateDoc(doc(db,'users',_u.uid), {modifiers}).catch(()=>{});
     render();
 };
 
@@ -1976,7 +1980,7 @@ function render() {
                     autoRegLabel = ` <span style='color:#ff9f0a;font-size:9px;'>↓${dropPct}% RPE</span>`;
                 }
                 if(modifier!==1.0 || overloadPct>0) { style="color:#ff4444;font-weight:bold;"; warn=" ⚠️"; }
-                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span>${warningLabel}${autoRegLabel} <span onclick="adjustWeight('${m.name}',${baseLoad})" style="cursor:pointer;font-size:12px;color:#aaa;margin-left:5px;">✎</span>`;
+                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span>${warningLabel}${autoRegLabel} <span onclick="event.stopPropagation();adjustWeight('${m.name}',${baseLoad})" style="cursor:pointer;font-size:12px;color:#aaa;margin-left:5px;">✎</span>`;
             } else {
                 loadDisplay = Math.round(m.pct*100)+"%";
             }
@@ -2095,11 +2099,8 @@ window.openOverview = function() {
 // ==========================================
 window.openPlateCalc = function(w) {
     if(String(w).includes('%')) return;
-    document.getElementById('plateModal').style.display='flex';
-    const wt = parseFloat(w);
-    document.getElementById('plateTarget').innerText = wt+" "+state.unit;
-    document.getElementById('plateVisuals').innerHTML = getPlates(wt);
-    document.getElementById('plateText').innerText = "Per Side (45lb Bar)";
+    const unit = (state.unit || 'LBS').toLowerCase();
+    window.location.href = `barbell.html?weight=${encodeURIComponent(w)}&unit=${unit}&from=andre`;
 };
 
 window.openMeetPlanner = function() {

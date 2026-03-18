@@ -7,7 +7,7 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyB_1QW2BtfK5eZzakW858fg2UlAS5tZY7M",
@@ -257,6 +257,7 @@ let isFasted = false;
 let currentUserEmail = "";
 let customLifts = [];
 let modifiers = {};
+try { const _m = localStorage.getItem('baseMapModifiers'); if(_m) modifiers = JSON.parse(_m); } catch(e){}
 
 // ==========================================
 // TOAST — replaces all alert() calls
@@ -2141,7 +2142,10 @@ window.adjustWeight = function(liftName, originalLoad) {
         modifiers[liftName] = actual / originalLoad;
         toast(`${liftName} updated — scales by ${((actual/originalLoad)*100).toFixed(1)}%`);
     }
+    localStorage.setItem('baseMapModifiers', JSON.stringify(modifiers));
     saveUserData();
+    const _u = auth.currentUser;
+    if(_u) updateDoc(doc(db,'users',_u.uid), {modifiers}).catch(()=>{});
     generateProgram();
 };
 
@@ -2225,7 +2229,7 @@ async function loadUserData(email) {
             document.getElementById('benchInput').value = b||'';
             document.getElementById('deadliftInput').value = dl||'';
             document.getElementById('ohpInput').value = o||'';
-            if (d.modifiers) modifiers = d.modifiers;
+            if (d.modifiers) { modifiers = d.modifiers; localStorage.setItem('baseMapModifiers', JSON.stringify(modifiers)); }
             // FIX: load customLifts from cloud (merged with localStorage)
             if (d.customLifts && d.customLifts.length > 0) {
                 customLifts = d.customLifts;
@@ -2443,18 +2447,7 @@ function updatePtMovements() {
 }
 
 window.openPlateLoader = function(w) {
-    document.getElementById('plateModal').style.display='flex';
-    document.getElementById('plateTarget').innerText = w+" lbs";
-    let s=(w-45)/2, p=[45,25,10,5,2.5], r=[];
-    p.forEach(x=>{ while(s>=x){ r.push(x); s-=x; } });
-    document.getElementById('plateText').innerText = r.length ? r.join(' + ') + ' per side' : 'Bar only';
-    const steps=[{p:0.505,r:'5'},{p:0.608,r:'3'},{p:0.72,r:'2'},{p:0.834,r:'1'},{p:0.93,r:'1'},{p:0.97,r:'OPT'}];
-    let wuHtml='<div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;border-top:1px solid #333;padding-top:10px;">Warm-up</div>';
-    steps.forEach(step=>{
-        const ww=Math.round((w*step.p)/5)*5;
-        wuHtml+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #2a2a2a;font-size:13px;"><span style="font-weight:700">${ww} lbs</span><span style="color:#aaa">× ${step.r}</span><span style="color:#555;font-size:11px">${Math.round(step.p*100)}%</span></div>`;
-    });
-    document.getElementById('plateWarmup').innerHTML=wuHtml;
+    window.location.href = `barbell.html?weight=${encodeURIComponent(w)}&unit=lbs&from=base`;
 };
 
 window.adjustWeight = window.adjustWeight; // already defined above
@@ -2561,6 +2554,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUIState();
     loadLocalInputs();
     loadCustomLifts();
+    try { const _m = localStorage.getItem('baseMapModifiers'); if(_m) modifiers = JSON.parse(_m); } catch(e){}
     initLibraryMenu();
     injectRestTimer();
     updateBrandName();
