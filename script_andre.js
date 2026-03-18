@@ -1448,18 +1448,31 @@ function resolveSmartLift(lift, week) {
         else if(w===3){pct=0.90;reps="3";}
         else if(w===4){pct=0.75;reps="1";}
         else{pct=0.70;reps="3";}
-    }
-    if (lift.n && lift.n.includes("Snatch Grip RDL (Smart)")) {
+    } else if (lift.n && lift.n.includes("Snatch Grip RDL (Smart)")) {
         if(w===1){pct=0.45;reps="10";}
         else if(w===2){pct=0.50;reps="8";}
         else if(w===3){pct=0.55;reps="6";}
         else{pct=0;reps="OFF";}
-    }
-    if (lift.n && lift.n.includes("Incline Barbell Bench (Smart)")) {
+    } else if (lift.n && lift.n.includes("Incline Barbell Bench (Smart)")) {
         if(w===1){pct=0.65;reps="8";}
         else if(w===2){pct=0.70;reps="6";}
         else if(w===3){pct=0.75;reps="5";}
         else{pct=0.80;reps="4";}
+    } else {
+        // Generic auto-progression: build→taper→peak off→deload
+        if (w === 5) { pct = 0; return { pct, reps }; } // Peak week: skip
+        const offsetMap = {1:0, 2:0.025, 3:0.05, 4:-0.02, 6:0};
+        pct = lift.p + (offsetMap[w] !== undefined ? offsetMap[w] : 0);
+        const rStr = String(lift.r);
+        if (rStr.includes('x') && !rStr.includes('s')) {
+            const parts = rStr.split('x');
+            const bSets = parseInt(parts[0]), bReps = parseInt(parts[1]);
+            if (!isNaN(bSets) && !isNaN(bReps)) {
+                const wSets = w === 4 ? Math.max(2, bSets - 1) : bSets;
+                const rDropMap = {1:0, 2:1, 3:2, 4:2, 6:0};
+                reps = `${wSets}x${Math.max(1, bReps - (rDropMap[w] || 0))}`;
+            }
+        }
     }
     return { pct, reps };
 }

@@ -118,18 +118,30 @@ function resolveSmartLift(lift, weekIndex) {
         else if (w === 2) { pct = 0.90; reps = "3"; }
         else if (w === 3) { pct = 0.75; reps = "1"; }
         else { pct = 0.70; reps = "3"; }
-    }
-    if (lift.n.includes("Snatch Grip RDL (Smart)")) {
+    } else if (lift.n.includes("Snatch Grip RDL (Smart)")) {
         if (w === 0) { pct = 0.45; reps = "10"; }
         else if (w === 1) { pct = 0.50; reps = "8"; }
         else if (w === 2) { pct = 0.55; reps = "6"; }
         else { pct = 0; reps = "OFF"; }
-    }
-    if (lift.n.includes("Incline Barbell Bench (Smart)")) {
+    } else if (lift.n.includes("Incline Barbell Bench (Smart)")) {
         if (w === 0) { pct = 0.65; reps = "8"; }
         else if (w === 1) { pct = 0.70; reps = "6"; }
         else if (w === 2) { pct = 0.75; reps = "5"; }
         else { pct = 0.80; reps = "4"; }
+    } else {
+        // Generic auto-progression: build→peak→taper
+        const offsets = [0, 0.025, 0.05, -0.02];
+        pct = lift.p + (offsets[Math.min(w, 3)] || 0);
+        const rStr = String(lift.r);
+        if (rStr.includes('x') && !rStr.includes('s')) {
+            const parts = rStr.split('x');
+            const bSets = parseInt(parts[0]), bReps = parseInt(parts[1]);
+            if (!isNaN(bSets) && !isNaN(bReps)) {
+                const wSets = w >= 3 ? Math.max(2, bSets - 1) : bSets;
+                const rDrop = [0, 1, 2, 2][Math.min(w, 3)];
+                reps = `${wSets}x${Math.max(1, bReps - rDrop)}`;
+            }
+        }
     }
     return { pct, reps };
 }
@@ -1937,13 +1949,13 @@ function generateProgram() {
         if ((modifier!==1.0||overloadPct!==0) && baseWeight>0) { style="color:#ff4444;font-weight:bold;"; warning=" ⚠️"; }
 
         if (baseWeight > 0 && !weightDisplay) {
-            weightDisplay = `<strong style="${style}">${finalWeight} lbs${warning}</strong>${autoRegLabel}`;
+            weightDisplay = `<strong style="${style};cursor:pointer;" onclick="window.openPlateLoader(${finalWeight})">${finalWeight} lbs${warning}</strong>${autoRegLabel}`;
             weightDisplay += ` <span onclick="adjustWeight('${lift.n}',${baseWeight})" style="cursor:pointer;font-size:14px;margin-left:5px;color:#aaa;">✎</span>`;
         } else if(!weightDisplay) {
             weightDisplay = "See Notes";
         }
 
-        let btn = (finalWeight > 0) ? `<span onclick="window.openPlateLoader(${finalWeight})" style="cursor:pointer;color:#2196f3;margin-left:5px;">💿</span>` : '';
+        let btn = '';
 
         // Add rest timer button to each row
         let timerBtn = `<span onclick="startRestTimer(180)" title="Start 3min rest timer" style="cursor:pointer;margin-left:4px;opacity:0.6;font-size:12px;">⏱</span>`;
