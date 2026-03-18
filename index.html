@@ -58,6 +58,8 @@
         .gate-btn:nth-child(6) { animation-delay:0.3s; }
         .gate-btn:nth-child(7) { animation-delay:0.35s; }
         .gate-btn:nth-child(8) { animation-delay:0.4s; }
+        .gate-btn:nth-child(9) { animation-delay:0.45s; }
+        .gate-btn:nth-child(10) { animation-delay:0.5s; }
         @keyframes cardEnter { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
     </style>
     <script>
@@ -119,6 +121,13 @@
            style="border-color:rgba(48,209,88,0.25); color:#30d158;">
             Injury Pro <span style="font-size:0.55em;background:#30d158;color:#000;padding:1px 7px;border-radius:4px;margin-left:6px;vertical-align:middle;font-weight:700;">BETA</span>
             <span class="sub">Phase-Based Rehab · Periodized Recovery · Training Mods · Progress Memory</span>
+        </a>
+
+        <a href="custom.html" class="gate-btn"
+           style="border-color:rgba(100,210,255,0.3); color:#64d2ff;"
+           onclick="localStorage.setItem('last_program_page','custom.html')">
+            Build Your Own Program
+            <span class="sub">Custom Blocks · Set Your Goal · Strength / Size / Powerbuilding · Guided Setup</span>
         </a>
 
         <a href="admin.html" class="gate-btn" id="adminBtn"
