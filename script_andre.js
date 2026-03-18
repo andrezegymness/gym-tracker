@@ -1465,7 +1465,7 @@ function resolveSmartLift(lift, week) {
 }
 
 const andreAccessories = {
-  "Tuesday":   [ {name:"Close Grip Bench",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.72},{name:"Larsen Press",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.68},{name:"Tricep Pushdowns",sets:"3x12",weeks:[1,2,3,6]} ],
+  "Tuesday":   [ {name:"Close Grip Bench",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.72},{name:"Larsen Press",setsByWeek:{1:"3x6",2:"3x5",3:"3x4",4:"3x3",6:"3x6"},sets:"3x5",weeks:[1,2,3,4,6],base:'Bench',basePct:0.64},{name:"Tricep Pushdowns",sets:"3x12",weeks:[1,2,3,6]} ],
   "Wednesday": [ {name:"Leg Extensions",sets:"3x15",weeks:[1,2,3,4,6]},{name:"Pendulum Squat",sets:"3x8",weeks:[1,2,3,4,6]},{name:"Walking Lunges",sets:"3x12",weeks:[1,2,3,6]},{name:"Leg Press",sets:"4x10",weeks:[1,2,3,4,6]},{name:"GHR",sets:"3x8",weeks:[1,2,3,4,6]} ],
   "Thursday":  [ {name:"Pendlay Rows",sets:"4x6",weeks:[1,2,3,4,6]},{name:"Weighted Pull-ups",sets:"3x8",weeks:[1,2,3,4,6]},{name:"T-Bar Row (Chest Supp)",sets:"3x10",weeks:[1,2,3,4,6]},{name:"Face Pulls",sets:"4x15",weeks:[1,2,3,4,5,6]} ],
   "Friday":    [ {name:"DB Shoulder Press",sets:"4x10",weeks:[1,2,3,6]},{name:"DB Lateral Raise",sets:"4x15",weeks:[1,2,3,6]},{name:"Rear Delt Fly",sets:"4x15",weeks:[1,2,3,6]},{name:"Arnold Press",sets:"3x10",weeks:[1,2,3,6]} ],
@@ -2010,7 +2010,8 @@ function render() {
                     recHtml = `<span class="acc-rec">Rec: ${load} LBS</span>`;
                 }
                 const val = state.accWeights[accId] || '';
-                accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${val}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
+                const setStr = a.setsByWeek ? (a.setsByWeek[state.activeWeek] || a.sets) : a.sets;
+                accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${setStr}</span><input class="acc-input" value="${val}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
             });
             html += accHtml + `</div></div>`;
         }

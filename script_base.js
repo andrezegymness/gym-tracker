@@ -1855,7 +1855,12 @@ function generateProgram() {
                 else if (w === 2) { fSets=3; dReps=3; finalIntens = curPct - (sMod - 0.04); }
                 else if (w >= 3) { fSets=2; dReps=3; finalIntens = 0.70; }
             }
-            else if (lift.n === "Larsen Press")        { dReps = 3; finalIntens = 0.70; }
+            else if (lift.n === "Larsen Press") {
+                if      (w === 0) { fSets=3; dReps=6; finalIntens=0.65; }
+                else if (w === 1) { fSets=3; dReps=5; finalIntens=0.68; }
+                else if (w === 2) { fSets=3; dReps=4; finalIntens=0.70; }
+                else              { fSets=2; dReps=4; finalIntens=0.63; } // taper/peak
+            }
             else if (lift.n.includes("Close Grip"))    { dReps = 8; finalIntens = 0.75; }
             else if (lift.n === "Paused Bench")        { dReps = reps; }
             else if (lift.n.includes("Tempo"))         { finalIntens = currentTempoPct; dReps = 5; speedNote = "3-1-3 Tempo"; }
@@ -2443,6 +2448,13 @@ window.openPlateLoader = function(w) {
     let s=(w-45)/2, p=[45,25,10,5,2.5], r=[];
     p.forEach(x=>{ while(s>=x){ r.push(x); s-=x; } });
     document.getElementById('plateText').innerText = r.length ? r.join(' + ') + ' per side' : 'Bar only';
+    const steps=[{p:0.505,r:'5'},{p:0.608,r:'3'},{p:0.72,r:'2'},{p:0.834,r:'1'},{p:0.93,r:'1'},{p:0.97,r:'OPT'}];
+    let wuHtml='<div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;border-top:1px solid #333;padding-top:10px;">Warm-up</div>';
+    steps.forEach(step=>{
+        const ww=Math.round((w*step.p)/5)*5;
+        wuHtml+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #2a2a2a;font-size:13px;"><span style="font-weight:700">${ww} lbs</span><span style="color:#aaa">× ${step.r}</span><span style="color:#555;font-size:11px">${Math.round(step.p*100)}%</span></div>`;
+    });
+    document.getElementById('plateWarmup').innerHTML=wuHtml;
 };
 
 window.adjustWeight = window.adjustWeight; // already defined above
