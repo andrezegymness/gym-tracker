@@ -1856,7 +1856,12 @@ function generateProgram() {
                 else if (w === 2) { fSets=3; dReps=3; finalIntens = curPct - (sMod - 0.04); }
                 else if (w >= 3) { fSets=2; dReps=3; finalIntens = 0.70; }
             }
-            else if (lift.n === "Larsen Press")        { dReps = 3; finalIntens = 0.70; }
+            else if (lift.n === "Larsen Press") {
+                if      (w === 0) { fSets=3; dReps=6; finalIntens=0.65; }
+                else if (w === 1) { fSets=3; dReps=5; finalIntens=0.68; }
+                else if (w === 2) { fSets=3; dReps=4; finalIntens=0.70; }
+                else              { fSets=2; dReps=4; finalIntens=0.63; } // taper/peak
+            }
             else if (lift.n.includes("Close Grip"))    { dReps = 8; finalIntens = 0.75; }
             else if (lift.n === "Paused Bench")        { dReps = reps; }
             else if (lift.n.includes("Tempo"))         { finalIntens = currentTempoPct; dReps = 5; speedNote = "3-1-3 Tempo"; }
