@@ -295,6 +295,41 @@
         .saved-banner { background: rgba(48,209,88,0.12); border: 0.5px solid rgba(48,209,88,0.3); border-radius: 10px; padding: 10px 14px; font-size: 0.75rem; color: var(--green); display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
         @media print { .prog-header, .step-nav, .output-actions, .week-nav, .action-btn { display: none !important; } #program-output { display: block !important; } .week-section { display: block !important; } }
 
+        /* ─── MOBILE OUTPUT ─── */
+        @media (max-width: 520px) {
+            .output-header { padding: 16px 16px 12px; }
+            .output-title { font-size: 1.15rem; }
+            .output-sub { font-size: 0.7rem; line-height: 1.6; }
+            .overload-badge { display: block; margin: 6px 0 0; font-size: 0.65rem; }
+            .week-nav { gap: 6px; padding: 10px 16px; }
+            .week-tab { padding: 6px 10px; font-size: 0.62rem; }
+            .week-band { padding: 12px 16px 6px; }
+            .week-band-title { font-size: 0.9rem; }
+            .week-note { margin: 0 12px 12px; padding: 9px 12px; font-size: 0.72rem; }
+            .day-block { margin: 0 12px 18px; }
+            /* Hide % column on mobile — lifters care about weight, not the ratio */
+            .lifts-table th:nth-child(3),
+            .lifts-table td:nth-child(3) { display: none; }
+            .lifts-table th { padding: 8px 10px; font-size: 0.55rem; }
+            .lifts-table td { padding: 11px 10px; font-size: 0.78rem; }
+            .lift-name-cell { max-width: 130px; }
+            .lift-name-cell .session-label { font-size: 0.55rem; }
+            .sets-reps-cell { font-size: 0.82rem; white-space: nowrap; }
+            .weight-cell { font-size: 0.85rem; white-space: nowrap; }
+            .wu-toggle-btn { font-size: 0.8rem; }
+            .rest-cell { white-space: nowrap; }
+            .rest-badge { font-size: 0.6rem; padding: 2px 6px; }
+            .warmup-rows { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+            .warmup-row-item { flex-shrink: 0; }
+            .rpe-badge, .rir-badge { font-size: 0.6rem; padding: 2px 6px; }
+            .pct-badge { font-size: 0.68rem; }
+            .acc-display-container { padding: 10px 12px; }
+            .acc-section-title { font-size: 0.6rem; }
+            .output-actions { gap: 8px; padding: 12px 16px; }
+            .action-btn { padding: 10px 8px; font-size: 0.75rem; }
+            .week-band-right { gap: 3px; }
+        }
+
         /* ─── INTAKE QUIZ OVERLAY ─── */
         .intake-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500;
@@ -753,6 +788,7 @@
         <div id="week-sections"></div>
         <div class="output-actions">
             <button class="action-btn" onclick="editProgram()">✏️ Edit</button>
+            <button class="action-btn" onclick="newProgram()">🔄 New</button>
             <button class="action-btn primary" onclick="window.print()">🖨️ Print</button>
         </div>
     </div>
