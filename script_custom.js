@@ -1128,12 +1128,35 @@ function editProgram() {
     goToStep(1);
 }
 
+function newProgram() {
+    if (!confirm('Start a new program? Your current program will be cleared.')) return;
+    localStorage.removeItem('customProgram');
+    Object.keys(addedAccessories).forEach(k => delete addedAccessories[k]);
+    // Reset cfg
+    Object.assign(cfg, {
+        goal: null, experience: null, programType: null, phase: null, blocks: [], includeDeload: true,
+        lifts: {
+            squat:    { selected: false, max: 0, sets: 4, repKey: '4-6', frequency: 2 },
+            bench:    { selected: false, max: 0, sets: 4, repKey: '4-6', frequency: 3 },
+            deadlift: { selected: false, max: 0, sets: 3, repKey: '4-6', frequency: 1 },
+            ohp:      { selected: false, max: 0, sets: 3, repKey: '4-6', frequency: 2 }
+        }
+    });
+    document.getElementById('wizard').style.display = 'block';
+    document.getElementById('program-output').style.display = 'none';
+    // Clear all selected states in wizard
+    document.querySelectorAll('.choice-card.selected').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.btn-next').forEach(b => b.disabled = true);
+    goToStep(1);
+}
+
 // ─── SAVE / LOAD ─────────────────────────────────────────────────
 function saveCustomProgram(programData) {
     try {
         const save = {
             cfg: JSON.parse(JSON.stringify(cfg)),
             programData,
+            accessories: JSON.parse(JSON.stringify(addedAccessories)),
             savedAt: Date.now()
         };
         localStorage.setItem('customProgram', JSON.stringify(save));
@@ -1150,7 +1173,12 @@ function loadSavedProgram() {
         const save = JSON.parse(raw);
         if (!save.programData || !save.cfg) return false;
         Object.assign(cfg, save.cfg);
+        // Restore accessories
+        if (save.accessories) Object.assign(addedAccessories, save.accessories);
         renderProgram(save.programData);
+        const daysAgo = Math.floor((Date.now() - save.savedAt) / 86400000);
+        const when = daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo}d ago`;
+        showToast(`Program restored (saved ${when})`);
         return true;
     } catch (e) {
         return false;
@@ -1171,21 +1199,6 @@ function showToast(msg) {
 
 // ─── INIT ────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Check for saved program from URL param
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('load') === '1') {
-        if (loadSavedProgram()) return;
-    }
-
-    // Check if they have a recent saved program to resume
-    try {
-        const raw = localStorage.getItem('customProgram');
-        if (raw) {
-            const save = JSON.parse(raw);
-            const daysSince = (Date.now() - save.savedAt) / 86400000;
-            if (daysSince < 60) {
-                // Silently pre-fill cfg, user still goes through wizard unless they come from redirect
-            }
-        }
-    } catch (e) {}
+    // Always try to restore a saved program first — no ?load param needed
+    if (loadSavedProgram()) return;
 });
