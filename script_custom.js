@@ -24,19 +24,19 @@ const TOTAL_STEPS = 8;
 // ─── EXPERIENCE + PHASE DEFAULTS ─────────────────────────────────
 const PHASE_DEFAULTS = {
     novice: {
-        hypertrophy: { weeks: 4, startPct: 60, jump: 5,   repKey: '8-12', recSets: 3 },
-        strength:    { weeks: 4, startPct: 70, jump: 5,   repKey: '4-6',  recSets: 4 },
-        peaking:     { weeks: 3, startPct: 80, jump: 5,   repKey: '1-3',  recSets: 3 }
+        hypertrophy: { weeks: 4, startPct: 60, jump: 5,   repKey: '8-12', recSets: 3, rpe: '6–7',   rir: '2–4 RIR', restMain: 2,   restAcc: 1 },
+        strength:    { weeks: 4, startPct: 70, jump: 5,   repKey: '4-6',  recSets: 4, rpe: '7–8',   rir: '1–3 RIR', restMain: 3,   restAcc: 1.5 },
+        peaking:     { weeks: 3, startPct: 80, jump: 5,   repKey: '1-3',  recSets: 3, rpe: '8–9',   rir: '0–2 RIR', restMain: 4,   restAcc: 2 }
     },
     intermediate: {
-        hypertrophy: { weeks: 4, startPct: 60, jump: 2.5, repKey: '6-8',  recSets: 4 },
-        strength:    { weeks: 4, startPct: 75, jump: 2.5, repKey: '4-6',  recSets: 4 },
-        peaking:     { weeks: 4, startPct: 82, jump: 2.5, repKey: '1-3',  recSets: 3 }
+        hypertrophy: { weeks: 4, startPct: 60, jump: 2.5, repKey: '6-8',  recSets: 4, rpe: '6–7',   rir: '2–4 RIR', restMain: 2,   restAcc: 1 },
+        strength:    { weeks: 4, startPct: 75, jump: 2.5, repKey: '4-6',  recSets: 4, rpe: '7–8.5', rir: '1–3 RIR', restMain: 3,   restAcc: 1.5 },
+        peaking:     { weeks: 4, startPct: 82, jump: 2.5, repKey: '1-3',  recSets: 3, rpe: '8.5–9.5', rir: '0–1 RIR', restMain: 5, restAcc: 2 }
     },
     elite: {
-        hypertrophy: { weeks: 8, startPct: 65, jump: 1.5, repKey: '6-8',  recSets: 4 },
-        strength:    { weeks: 6, startPct: 80, jump: 2,   repKey: '3-5',  recSets: 4 },
-        peaking:     { weeks: 4, startPct: 85, jump: 1.5, repKey: '1-3',  recSets: 3 }
+        hypertrophy: { weeks: 8, startPct: 65, jump: 1.5, repKey: '6-8',  recSets: 4, rpe: '6–7',   rir: '2–4 RIR', restMain: 2,   restAcc: 1 },
+        strength:    { weeks: 6, startPct: 80, jump: 2,   repKey: '3-5',  recSets: 4, rpe: '7–8.5', rir: '1–2 RIR', restMain: 4,   restAcc: 1.5 },
+        peaking:     { weeks: 4, startPct: 85, jump: 1.5, repKey: '1-3',  recSets: 3, rpe: '8.5–9.5', rir: '0–1 RIR', restMain: 5, restAcc: 2 }
     }
 };
 
@@ -67,6 +67,63 @@ const LIFT_COLORS = {
 };
 
 const PHASE_LABELS = { hypertrophy: 'Hypertrophy', strength: 'Strength', peaking: 'Peaking' };
+
+// ─── PROGRESSIVE OVERLOAD LABELS ─────────────────────────────────
+const OVERLOAD_METHODS = {
+    novice:       { label: 'Weekly Load Progression', detail: '+5% per week — add weight every single session' },
+    intermediate: { label: 'Volume → Load Progression', detail: 'Add sets first (MEV→MRV), then increase weight next block' },
+    elite:        { label: 'Wave Loading', detail: '4-week wave cycles — step back every 3rd week to clear fatigue, then hit a new high' }
+};
+
+// ─── ACCESSORY DATABASE ───────────────────────────────────────────
+const ACCESSORY_DB = {
+    squat: [
+        { key: 'sq_pause',   n: 'Paused Squat (3s)',       target: 'Strength out of hole',       sets: 3, reps: 3,  restMin: 3   },
+        { key: 'sq_box',     n: 'Box Squat',               target: 'Hip drive / breaking floor', sets: 3, reps: 5,  restMin: 3   },
+        { key: 'sq_ssb',     n: 'SSB Squat',               target: 'Upper back / quad strength', sets: 3, reps: 5,  restMin: 3   },
+        { key: 'sq_tempo',   n: 'Tempo Squat (3s down)',   target: 'Control + muscle building',  sets: 3, reps: 4,  restMin: 2   },
+        { key: 'sq_bss',     n: 'Bulgarian Split Squat',   target: 'Quad balance / unilateral',  sets: 3, reps: 8,  restMin: 2   },
+        { key: 'sq_legpress',n: 'Leg Press',               target: 'Quad volume',                sets: 3, reps: 10, restMin: 1.5 },
+    ],
+    bench: [
+        { key: 'bp_cg',      n: 'Close Grip Bench',        target: 'Tricep lockout strength',    sets: 3, reps: 5,  restMin: 3   },
+        { key: 'bp_pause',   n: 'Paused Bench (2s)',       target: 'Off-chest drive',            sets: 3, reps: 4,  restMin: 3   },
+        { key: 'bp_spoto',   n: 'Spoto Press',             target: 'Mid-range strength',         sets: 3, reps: 4,  restMin: 2.5 },
+        { key: 'bp_db',      n: 'DB Bench Press',          target: 'Hypertrophy + stability',    sets: 3, reps: 10, restMin: 2   },
+        { key: 'bp_incline', n: 'Incline Bench Press',     target: 'Upper chest + strength',     sets: 3, reps: 6,  restMin: 2   },
+        { key: 'bp_tri',     n: 'Tricep Pushdown',         target: 'Tricep hypertrophy',         sets: 4, reps: 12, restMin: 1   },
+        { key: 'bp_face',    n: 'Face Pulls',              target: 'Shoulder health + rear delt',sets: 3, reps: 15, restMin: 1   },
+    ],
+    deadlift: [
+        { key: 'dl_rdl',     n: 'Romanian Deadlift',       target: 'Hamstring strength',         sets: 3, reps: 6,  restMin: 2   },
+        { key: 'dl_block',   n: 'Block Pull (3")',         target: 'Lockout strength',           sets: 3, reps: 4,  restMin: 4   },
+        { key: 'dl_deficit', n: 'Deficit Deadlift (2")',   target: 'Off-floor strength',         sets: 3, reps: 4,  restMin: 3   },
+        { key: 'dl_sldl',    n: 'Stiff Leg Deadlift',     target: 'Posterior chain volume',     sets: 3, reps: 8,  restMin: 2   },
+        { key: 'dl_gm',      n: 'Good Morning',           target: 'Lower back + hip hinge',     sets: 3, reps: 8,  restMin: 2   },
+        { key: 'dl_row',     n: 'Barbell Row',            target: 'Upper back bracing strength',sets: 3, reps: 8,  restMin: 2   },
+        { key: 'dl_curl',    n: 'Leg Curl',               target: 'Hamstring isolation',        sets: 4, reps: 12, restMin: 1   },
+    ],
+    ohp: [
+        { key: 'ohp_push',   n: 'Push Press',             target: 'Overhead power',             sets: 3, reps: 5,  restMin: 3   },
+        { key: 'ohp_db',     n: 'DB Shoulder Press',      target: 'Shoulder hypertrophy',       sets: 3, reps: 10, restMin: 2   },
+        { key: 'ohp_z',      n: 'Z Press',                target: 'Strict pressing strength',   sets: 3, reps: 5,  restMin: 2.5 },
+        { key: 'ohp_lat',    n: 'Lateral Raises',         target: 'Side delt + shoulder health',sets: 4, reps: 15, restMin: 1   },
+        { key: 'ohp_band',   n: 'Band Pull Apart',        target: 'Shoulder health / prehab',   sets: 3, reps: 20, restMin: 1   },
+    ],
+    general: [
+        { key: 'gen_plank',  n: 'Weighted Plank',         target: 'Core stability',             sets: 3, reps: 0, restMin: 1, isTime: true, seconds: 45 },
+        { key: 'gen_pallof', n: 'Pallof Press',           target: 'Anti-rotation core',         sets: 3, reps: 10, restMin: 1   },
+        { key: 'gen_back',   n: 'Back Extension',         target: 'Lower back / erectors',      sets: 3, reps: 15, restMin: 1.5 },
+        { key: 'gen_ab',     n: 'Weighted Ab Crunch',     target: 'Core strength',              sets: 3, reps: 15, restMin: 1   },
+    ]
+};
+
+// All accessories as a flat lookup by key
+const ACC_BY_KEY = {};
+Object.values(ACCESSORY_DB).flat().forEach(a => { ACC_BY_KEY[a.key] = a; });
+
+// Per-day added accessories: { 'w0-d0': [{ key, n, sets, reps, restMin }] }
+const addedAccessories = {};
 
 // ─── NAVIGATION ───────────────────────────────────────────────────
 // Step 4 is either 4a (single) or 4b (macrocycle)
@@ -103,6 +160,60 @@ function selectGoal(g) {
 
 function applyGoalFreqBadges() {
     // Update frequency badge hints on lift selection screen
+}
+
+// ─── INTAKE QUESTIONNAIRE ("I Don't Know") ────────────────────────
+const intakeAnswers = { q1: null, q2: null, q3: null };
+
+function showIntakeQuiz() {
+    document.getElementById('intake-overlay').style.display = 'flex';
+}
+
+function closeIntakeQuiz() {
+    document.getElementById('intake-overlay').style.display = 'none';
+}
+
+function intakeAnswer(q, val) {
+    intakeAnswers[q] = val;
+    document.querySelectorAll(`[data-q="${q}"]`).forEach(b => b.classList.remove('selected'));
+    document.querySelector(`[data-q="${q}"][data-val="${val}"]`)?.classList.add('selected');
+    const allAnswered = intakeAnswers.q1 && intakeAnswers.q2 && intakeAnswers.q3;
+    document.getElementById('intake-submit').disabled = !allAnswered;
+}
+
+function submitIntake() {
+    const { q1, q2, q3 } = intakeAnswers;
+    let exp, phase;
+
+    // Safety default: always start at Novice + Hypertrophy unless clearly more advanced
+    if (q1 === 'lt6mo') {
+        exp = 'novice'; phase = 'hypertrophy';
+    } else if (q1 === '6to12mo' && q2 === 'no') {
+        exp = 'novice'; phase = 'hypertrophy';
+    } else if (q1 === '6to12mo' && q2 !== 'no') {
+        exp = 'novice'; phase = 'strength';
+    } else if (q1 === '1to3yr') {
+        exp = 'intermediate'; phase = 'strength';
+    } else { // 3+yr
+        exp = 'elite'; phase = 'strength';
+    }
+
+    // Override goal from q3 if not yet set
+    if (!cfg.goal && q3) cfg.goal = q3;
+    if (q3 && !cfg.goal) {
+        cfg.goal = q3;
+        document.querySelectorAll('#step-1 .choice-card').forEach(c => c.classList.remove('selected'));
+        document.getElementById(`goal-${q3}`)?.classList.add('selected');
+        document.getElementById('goal-next').disabled = false;
+    }
+
+    selectExp(exp);
+    // Pre-flag the recommended starting phase for use in step 4
+    cfg._intakePhase = phase;
+    closeIntakeQuiz();
+
+    const expLabels = { novice: 'New Lifter', intermediate: 'Intermediate', elite: 'Experienced' };
+    showToast(`Profile set: ${expLabels[exp]} · Recommended start: ${PHASE_LABELS[phase]}`);
 }
 
 // ─── STEP 2: EXPERIENCE ───────────────────────────────────────────
@@ -539,7 +650,7 @@ function generateAndRender() {
 function generateProgramData() {
     const programWeeks = [];
 
-    cfg.blocks.forEach(block => {
+    cfg.blocks.forEach((block, blockIdx) => {
         const def = PHASE_DEFAULTS[cfg.experience][block.phase];
         const weekOffset = programWeeks.length;
 
@@ -554,16 +665,30 @@ function generateProgramData() {
                 days
             });
         }
+
+        // For macrocycle: insert a deload between every block transition
+        const isLastBlock = blockIdx === cfg.blocks.length - 1;
+        if (cfg.programType === 'macrocycle' && !isLastBlock) {
+            programWeeks.push({
+                weekNum: programWeeks.length + 1,
+                phase: 'deload',
+                pct: 60,
+                isDeload: true,
+                deloadLabel: `Transition Deload (${PHASE_LABELS[block.phase]} → ${PHASE_LABELS[cfg.blocks[blockIdx + 1].phase]})`,
+                days: buildDeloadDays()
+            });
+        }
     });
 
+    // Final deload (end of program or single block)
     if (cfg.includeDeload) {
-        const days = buildDeloadDays();
         programWeeks.push({
             weekNum: programWeeks.length + 1,
             phase: 'deload',
             pct: 60,
             isDeload: true,
-            days
+            deloadLabel: 'Final Deload',
+            days: buildDeloadDays()
         });
     }
 
@@ -681,17 +806,193 @@ function getLiftDisplayName(lift, isPrimary, phase, goal) {
 // ─── WEEK NOTE GENERATOR ──────────────────────────────────────────
 function getWeekNote(week, totalWeeks) {
     if (week.isDeload) {
-        return '🔋 Deload week. Reduce sets by ~50%. Keep the weight the same — the goal is to maintain the nervous system signal while clearing accumulated fatigue. You should feel noticeably fresher by day 3.';
+        const label = week.deloadLabel || 'Deload';
+        return `🔋 ${label}. Cut sets by ~50%. Keep intensity (weight) the same or 5% lighter — your goal is to maintain the nervous system signal while fatigue clears. You should feel noticeably fresher within 3–4 days. Do not go to failure on anything.`;
     }
+    const def = PHASE_DEFAULTS[cfg.experience]?.[week.phase];
+    const rpeText = def ? `Target RPE: <strong>${def.rpe}</strong> (${def.rir}) on working sets.` : '';
     const phaseName = PHASE_LABELS[week.phase] || week.phase;
+
     if (week.weekNum === 1) {
-        return `📦 Week 1 of the ${phaseName} block. Start conservative — this is your MEV (Minimum Effective Volume). Leave 2–3 reps in the tank. The goal is to sensitize your body to the stimulus, not exhaust it.`;
+        return `📦 Week 1 — ${phaseName} Block (MEV). Start conservative. ${rpeText} Leave reps in the tank. The goal is to sensitize your body to the stimulus, not exhaust it.`;
     }
     const isLastTrainingWeek = !week.isDeload && week.weekNum === totalWeeks - (cfg.includeDeload ? 1 : 0);
     if (isLastTrainingWeek) {
-        return `🔥 Final training week of the block. This is your MRV — maximum recoverable volume. Expect fatigue. Push through with good technique. Your strongest session is after the deload, not now.`;
+        return `🔥 Final training week — ${phaseName} (MRV). ${rpeText} Expect accumulated fatigue. Push through with clean technique. Your best performance comes after the deload, not this week.`;
     }
-    return `📈 Week ${week.weekNum}: Volume is ramping. Add one set compared to last week if prescribed. Focus on bar speed and quality reps over raw weight. If RPE feels 9+ on working sets, take note — you may be approaching your MRV early.`;
+    return `📈 Week ${week.weekNum} — ${phaseName}. Volume is ramping. ${rpeText} If RPE feels 9+ on working sets that were 7–8 last week, your MRV may be close. Don't add sets — maintain quality.`;
+}
+
+// ─── WARM-UP PROTOCOL ────────────────────────────────────────────
+function buildInlineWarmup(workingWeight, liftType) {
+    const sets = [];
+    const w = workingWeight;
+    // Always start with bar
+    if (w > 95) sets.push({ weight: 45, reps: 8, note: 'Bar' });
+    const warmupTargets = [
+        { pct: 0.40, reps: 5 },
+        { pct: 0.60, reps: 3 },
+        { pct: 0.75, reps: 2 },
+        { pct: 0.88, reps: 1 },
+    ];
+    warmupTargets.forEach(({ pct, reps }) => {
+        const wt = Math.round((w * pct) / 5) * 5;
+        if (wt < w && wt > 45) sets.push({ weight: wt, reps, note: `${Math.round(pct * 100)}%` });
+    });
+    sets.push({ weight: w, reps: '—', note: 'Working weight', isWork: true });
+
+    return `
+        <div class="warmup-mini">
+            <div class="warmup-mini-title">🔥 Warm-Up Protocol — ${workingWeight} lbs</div>
+            <div class="warmup-rows">
+                ${sets.map(s => `
+                    <div class="warmup-row-item ${s.isWork ? 'work-set' : ''}">
+                        <span class="wu-weight">${s.weight}</span>
+                        <span class="wu-x">×</span>
+                        <span class="wu-reps">${s.reps}</span>
+                        <span class="wu-note">${s.note}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// ─── ACCESSORY PICKER ────────────────────────────────────────────
+let _accPickerTarget = null; // { weekIdx, dayIdx, mainSets }
+
+function openAccessoryPicker(weekIdx, dayIdx, mainSets) {
+    _accPickerTarget = { weekIdx, dayIdx, mainSets };
+    const budget = getVolumeBudget(mainSets);
+    const used = (addedAccessories[`w${weekIdx}-d${dayIdx}`] || []).reduce((s, a) => s + a.sets, 0);
+    const remaining = Math.max(0, budget - used);
+
+    const modal = document.getElementById('acc-picker-modal');
+    document.getElementById('acc-budget-bar').innerHTML = `
+        <span>Accessory Budget: </span>
+        <strong style="color:${remaining > 0 ? 'var(--green)' : 'var(--red)'}">${remaining} sets remaining</strong>
+        <span style="color:var(--text-muted)"> of ${budget} (${mainSets} main sets × 60%)</span>
+    `;
+
+    // Build exercise list
+    const liftTypes = Object.keys(cfg.lifts).filter(l => cfg.lifts[l].selected);
+    const categories = [...liftTypes, 'general'];
+    const existing = (addedAccessories[`w${weekIdx}-d${dayIdx}`] || []).map(a => a.key);
+
+    document.getElementById('acc-exercise-list').innerHTML = categories.map(cat => {
+        const exs = ACCESSORY_DB[cat];
+        if (!exs) return '';
+        const catLabel = cat === 'general' ? 'Core & General' : capitalize(cat) + ' Accessories';
+        return `
+            <div class="acc-category">
+                <div class="acc-cat-title">${catLabel}</div>
+                ${exs.map(ex => `
+                    <div class="acc-exercise-row ${existing.includes(ex.key) ? 'added' : ''}" id="accrow-${ex.key}">
+                        <div class="acc-ex-info">
+                            <div class="acc-ex-name">${ex.n}</div>
+                            <div class="acc-ex-meta">${ex.sets}×${ex.isTime ? ex.seconds + 's' : ex.reps} · Rest ${formatRest(ex.restMin)} · ${ex.target}</div>
+                        </div>
+                        <button class="acc-add-btn ${existing.includes(ex.key) ? 'added' : ''}"
+                            onclick="toggleAccessory('${ex.key}')">
+                            ${existing.includes(ex.key) ? '✓ Added' : '+ Add'}
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }).join('');
+
+    modal.style.display = 'flex';
+}
+
+function closeAccessoryPicker() {
+    document.getElementById('acc-picker-modal').style.display = 'none';
+    if (_accPickerTarget !== null) {
+        refreshAccessoryDisplay(_accPickerTarget.weekIdx, _accPickerTarget.dayIdx, _accPickerTarget.mainSets);
+    }
+    _accPickerTarget = null;
+}
+
+function toggleAccessory(key) {
+    if (!_accPickerTarget) return;
+    const { weekIdx, dayIdx, mainSets } = _accPickerTarget;
+    const slotKey = `w${weekIdx}-d${dayIdx}`;
+    if (!addedAccessories[slotKey]) addedAccessories[slotKey] = [];
+
+    const existing = addedAccessories[slotKey].findIndex(a => a.key === key);
+    if (existing >= 0) {
+        addedAccessories[slotKey].splice(existing, 1);
+        document.getElementById(`accrow-${key}`)?.classList.remove('added');
+        document.querySelector(`#accrow-${key} .acc-add-btn`)?.classList.remove('added');
+        document.querySelector(`#accrow-${key} .acc-add-btn`).textContent = '+ Add';
+    } else {
+        const budget = getVolumeBudget(mainSets);
+        const used = addedAccessories[slotKey].reduce((s, a) => s + a.sets, 0);
+        const acc = ACC_BY_KEY[key];
+        if (used + acc.sets > budget) {
+            showToast(`Budget exceeded — max ${budget} accessory sets this day`);
+            return;
+        }
+        addedAccessories[slotKey].push({ ...acc });
+        document.getElementById(`accrow-${key}`)?.classList.add('added');
+        const btn = document.querySelector(`#accrow-${key} .acc-add-btn`);
+        if (btn) { btn.classList.add('added'); btn.textContent = '✓ Added'; }
+    }
+
+    // Update budget display
+    const used2 = addedAccessories[slotKey].reduce((s, a) => s + a.sets, 0);
+    const budget = getVolumeBudget(mainSets);
+    const remaining = Math.max(0, budget - used2);
+    document.getElementById('acc-budget-bar').innerHTML = `
+        <span>Accessory Budget: </span>
+        <strong style="color:${remaining > 0 ? 'var(--green)' : 'var(--red)'}">${remaining} sets remaining</strong>
+        <span style="color:var(--text-muted)"> of ${budget} (${mainSets} main sets × 60%)</span>
+    `;
+}
+
+function getVolumeBudget(mainSets) {
+    return Math.max(2, Math.min(6, Math.floor(mainSets * 0.6)));
+}
+
+function refreshAccessoryDisplay(weekIdx, dayIdx, mainSets) {
+    const slot = addedAccessories[`w${weekIdx}-d${dayIdx}`] || [];
+    const container = document.getElementById(`acc-display-w${weekIdx}-d${dayIdx}`);
+    if (!container) return;
+
+    const budget = getVolumeBudget(mainSets);
+    const used = slot.reduce((s, a) => s + a.sets, 0);
+    container.innerHTML = `
+        <div class="acc-section-header">
+            <span class="acc-section-title">Accessories</span>
+            <span class="acc-budget-pill">${used}/${budget} sets</span>
+            <button class="acc-open-btn" onclick="openAccessoryPicker(${weekIdx}, ${dayIdx}, ${mainSets})">
+                ${slot.length > 0 ? '✏️ Edit' : '+ Add Accessories'}
+            </button>
+        </div>
+        ${slot.length > 0 ? `
+            <table class="lifts-table" style="margin-top:8px">
+                <tbody>
+                    ${slot.map(a => `
+                        <tr>
+                            <td class="lift-name-cell" style="color:var(--text-muted)">${a.n}<span class="session-label">${a.target}</span></td>
+                            <td class="sets-reps-cell" style="color:var(--text-muted)">${a.sets}×${a.isTime ? a.seconds + 's' : a.reps}</td>
+                            <td class="pct-cell">—</td>
+                            <td class="weight-cell" style="color:var(--text-muted)">${formatRest(a.restMin)} rest</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        ` : '<div style="font-size:0.75rem;color:var(--text-muted);padding:8px 0">No accessories added · Budget: ' + budget + ' sets available</div>'}
+    `;
+}
+
+function formatRest(mins) {
+    if (mins >= 1) {
+        const m = Math.floor(mins);
+        const s = Math.round((mins - m) * 60);
+        return s > 0 ? `${m}:${String(s).padStart(2,'0')}` : `${m} min`;
+    }
+    return `${Math.round(mins * 60)}s`;
 }
 
 // ─── RENDERER ────────────────────────────────────────────────────
@@ -701,32 +1002,54 @@ function renderProgram(programData) {
     wizard.style.display = 'none';
     output.style.display = 'block';
 
-    // Title
+    // Title + overload method
     const exp = { novice: 'Novice', intermediate: 'Intermediate', elite: 'Elite' }[cfg.experience];
     const goalLabel = { strength: 'Strength', size: 'Size', both: 'Strength + Size' }[cfg.goal];
     const totalWeeks = programData.length;
+    const overload = OVERLOAD_METHODS[cfg.experience];
     document.getElementById('output-title').textContent = `${goalLabel} Program`;
-    document.getElementById('output-sub').textContent = `${exp} · ${cfg.programType === 'macrocycle' ? 'Full Macrocycle' : PHASE_LABELS[cfg.blocks[0].phase] + ' Block'} · ${totalWeeks} weeks`;
+    document.getElementById('output-sub').innerHTML = `
+        ${exp} · ${cfg.programType === 'macrocycle' ? 'Full Macrocycle' : PHASE_LABELS[cfg.blocks[0].phase] + ' Block'} · ${totalWeeks} weeks
+        <span class="overload-badge" title="${overload.detail}">📈 ${overload.label}</span>
+    `;
 
     // Week nav
     const navEl = document.getElementById('week-nav');
-    navEl.innerHTML = programData.map((week, i) => `
-        <button class="week-tab ${week.isDeload ? 'deload-tab' : ''} ${i === 0 ? 'active' : ''}"
-            onclick="showWeek(${i})" id="nav-tab-${i}">
-            ${week.isDeload ? '🔋 Deload' : `Wk ${week.weekNum}${week.phase !== programData[0].phase ? ` <span style="font-size:0.55em; opacity:0.6">${PHASE_LABELS[week.phase][0]}</span>` : ''}`}
-        </button>
-    `).join('');
+    navEl.innerHTML = programData.map((week, i) => {
+        const phaseFirst = programData[0].phase;
+        const phaseChanged = !week.isDeload && week.phase !== phaseFirst;
+        return `
+            <button class="week-tab ${week.isDeload ? 'deload-tab' : ''} ${i === 0 ? 'active' : ''}"
+                onclick="showWeek(${i})" id="nav-tab-${i}">
+                ${week.isDeload
+                    ? '🔋 DL'
+                    : `Wk${week.weekNum}${phaseChanged ? `<span style="font-size:0.5em;opacity:0.6;display:block">${PHASE_LABELS[week.phase][0].toUpperCase()}</span>` : ''}`}
+            </button>
+        `;
+    }).join('');
 
     // Week sections
     const sectionsEl = document.getElementById('week-sections');
-    sectionsEl.innerHTML = programData.map((week, i) => `
-        <div class="week-section ${i === 0 ? 'active' : ''}" id="week-section-${i}">
+    sectionsEl.innerHTML = programData.map((week, weekIdx) => {
+        const def = PHASE_DEFAULTS[cfg.experience]?.[week.phase];
+        const rpeDisplay = (!week.isDeload && def)
+            ? `<span class="rpe-badge">RPE ${def.rpe}</span><span class="rir-badge">${def.rir}</span>`
+            : '';
+        const mainSetsTotal = week.days.reduce((s, d) => s + d.lifts.reduce((ss, l) => ss + l.sets, 0), 0);
+
+        return `
+        <div class="week-section ${weekIdx === 0 ? 'active' : ''}" id="week-section-${weekIdx}">
             <div class="week-band">
-                <div class="week-band-title">${week.isDeload ? '🔋 Deload Week' : `Week ${week.weekNum} — ${PHASE_LABELS[week.phase] || 'Training'}`}</div>
-                <div class="week-band-sub">${week.isDeload ? 'Recovery' : `${week.pct}% Intensity`}</div>
+                <div class="week-band-title">${week.isDeload ? `🔋 ${week.deloadLabel || 'Deload'}` : `Week ${week.weekNum} — ${PHASE_LABELS[week.phase] || 'Training'}`}</div>
+                <div class="week-band-right">
+                    ${week.isDeload ? '<span style="color:var(--green);font-size:0.75rem;font-weight:700">Recovery</span>' : `<span class="pct-badge">${week.pct}%</span>${rpeDisplay}`}
+                </div>
             </div>
             <div class="week-note ${week.isDeload ? 'deload-note' : ''}">${getWeekNote(week, programData.length)}</div>
-            ${week.days.map(day => `
+            ${week.days.map((day, dayIdx) => {
+                const dayMainSets = day.lifts.reduce((s, l) => s + l.sets, 0);
+                const restMin = def ? def.restMain : 3;
+                return `
                 <div class="day-block">
                     <div class="day-title">${day.name}</div>
                     <table class="lifts-table">
@@ -736,10 +1059,13 @@ function renderProgram(programData) {
                                 <th>Sets × Reps</th>
                                 <th>%</th>
                                 <th>Weight</th>
+                                <th>Rest</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${day.lifts.map(lift => `
+                            ${day.lifts.map((lift, liftIdx) => {
+                                const warmupId = `wu-w${weekIdx}-d${dayIdx}-l${liftIdx}`;
+                                return `
                                 <tr>
                                     <td class="lift-name-cell">
                                         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${LIFT_COLORS[lift.type]};margin-right:8px;vertical-align:middle"></span>
@@ -748,18 +1074,45 @@ function renderProgram(programData) {
                                     </td>
                                     <td class="sets-reps-cell">${lift.sets}×${lift.reps}</td>
                                     <td class="pct-cell">${lift.pct}%</td>
-                                    <td class="weight-cell">${lift.weight} lbs</td>
+                                    <td class="weight-cell">
+                                        ${lift.weight} lbs
+                                        <button class="wu-toggle-btn" onclick="toggleWarmup('${warmupId}')" title="Show warm-up protocol">🔥</button>
+                                    </td>
+                                    <td class="rest-cell"><span class="rest-badge">${restMin >= 1 ? restMin + ' min' : Math.round(restMin * 60) + 's'}</span></td>
                                 </tr>
-                            `).join('')}
+                                <tr class="warmup-expand-row" id="${warmupId}" style="display:none">
+                                    <td colspan="5" style="padding:0 12px 12px">${buildInlineWarmup(lift.weight, lift.type)}</td>
+                                </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
+                    <div class="acc-display-container" id="acc-display-w${weekIdx}-d${dayIdx}"></div>
                 </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
-    `).join('');
+        `;
+    }).join('');
+
+    // Populate accessory displays
+    programData.forEach((week, weekIdx) => {
+        if (week.isDeload) return;
+        const def = PHASE_DEFAULTS[cfg.experience]?.[week.phase];
+        week.days.forEach((day, dayIdx) => {
+            const mainSets = day.lifts.reduce((s, l) => s + l.sets, 0);
+            refreshAccessoryDisplay(weekIdx, dayIdx, mainSets);
+        });
+    });
 
     output.scrollIntoView({ behavior: 'smooth' });
     showToast('Program generated and saved');
+}
+
+function toggleWarmup(id) {
+    const row = document.getElementById(id);
+    if (!row) return;
+    row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
 }
 
 function showWeek(idx) {
