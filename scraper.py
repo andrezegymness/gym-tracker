@@ -329,7 +329,8 @@ def main():
     df_out = (
         df.groupby(['Fan Model', 'Product URL'], sort=False)
           .apply(combine)
-          .reset_index(names=['Fan Model', 'Product URL', 'Parts List'])
+          .reset_index()
+          .rename(columns={0: 'Parts List'})
     )
     df_out.to_csv('WAC_ModernForms_Parts.csv', index=False)
     print(f"\n{'='*60}")
