@@ -1539,16 +1539,25 @@ window.exportToPDF = function() {
     // Remove interactive widgets
     clone.querySelectorAll('button, input, select, .rpe-picker, .rpe-widget, .acc-section, .acc-toggle, .acc-content').forEach(el => el.remove());
 
-    // Remove onclick spans (timers ⏱, PR 🏆, edit ✎, swap 🔄, delete 🗑)
-    clone.querySelectorAll('[onclick]').forEach(el => el.remove());
+    // Strip onclick attributes — keep the elements (weight <strong> needs its text),
+    // just remove interactivity
+    clone.querySelectorAll('[onclick]').forEach(el => el.removeAttribute('onclick'));
 
-    // Remove auto-reg / RPE adjustment labels (small colored spans with ↓ ↑)
+    // Remove interactive-only spans: timer ⏱, PR 🏆, edit ✎, swap 🔄, delete 🗑️
+    const REMOVE_EMOJIS = ['⏱','🏆','✎','🔄','🗑️'];
+    clone.querySelectorAll('span').forEach(el => {
+        const t = el.textContent.trim();
+        if(REMOVE_EMOJIS.some(e => t === e || t.startsWith(e + ' ') || t.startsWith(e + '\u00a0'))) el.remove();
+    });
+
+    // Remove auto-reg / RPE adjustment labels (spans with ↓ or ↑ and %)
     clone.querySelectorAll('span').forEach(el => {
         const t = el.textContent || '';
         if((t.includes('↓') || t.includes('↑')) && t.includes('%')) el.remove();
+        if(el.textContent.includes('RPE') && el.querySelector === undefined) el.remove();
     });
 
-    // Remove warning labels that are buttons/spans only (keep ⚠️ text if inside a td)
+    // Remove small font-size RPE/auto-reg labels
     clone.querySelectorAll('span[style*="font-size:9px"], span[style*="font-size:10px"]').forEach(el => {
         if(el.textContent.includes('RPE') || el.textContent.includes('↓') || el.textContent.includes('↑')) el.remove();
     });

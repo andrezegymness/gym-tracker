@@ -1349,6 +1349,8 @@ window.exportToPDF = function() {
     const total = (maxes.Squat||0)+(maxes.Bench||0)+(maxes.Deadlift||0);
     const allWeekNums = Object.keys(andreData).map(Number).sort((a,b)=>a-b);
     const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const dayIdxMap = {Monday:0,Tuesday:1,Wednesday:2,Thursday:3,Friday:4,Saturday:5};
+    const typeMap = {squat:'Squat',bench:'Bench',deadlift:'Deadlift',ohp:'OHP'};
 
     let weeksHtml = '';
     allWeekNums.forEach(wk => {
@@ -1360,6 +1362,8 @@ window.exportToPDF = function() {
             const exs = wkData[day];
             if(!exs || !exs.length) return;
             let rows = '';
+
+            // Main lifts
             exs.forEach(ex => {
                 const mx = maxes[ex.type] || 0;
                 const mod = modifiers[ex.name] || 1.0;
@@ -1367,6 +1371,48 @@ window.exportToPDF = function() {
                 const sr = (typeof ex.sets === 'string') ? ex.sets : `${ex.sets}\u00d7${ex.reps}`;
                 rows += `<tr><td>${ex.name}</td><td class="c">${sr}</td><td class="r">${w > 0 ? w + ' lbs' : '—'}</td></tr>`;
             });
+
+            // Custom lifts / smart accessories assigned to this day
+            const dayIdx = dayIdxMap[day];
+            state.customLifts.forEach(c => {
+                if(c.dayIndex !== dayIdx) return;
+                let finalPct, finalReps;
+                if(c.isAutoAcc && c.pctByWeek) {
+                    const wIdx = Math.min(wk - 1, c.pctByWeek.length - 1);
+                    finalPct = c.pctByWeek[wIdx] || 0;
+                    finalReps = c.repsByWeek ? c.repsByWeek[wIdx] : c.r;
+                    if(finalReps === 'OFF' || finalPct === 0) return;
+                } else {
+                    const res = resolveSmartLift(c, wk);
+                    finalPct = res.pct;
+                    finalReps = res.reps;
+                    if(wk === 6 && !c.isAutoAcc) finalPct *= 0.90;
+                }
+                if(finalPct <= 0 || finalReps === 'OFF') return;
+                const mx = maxes[typeMap[c.s]] || 0;
+                const mod = modifiers[c.n] || 1.0;
+                const w = mx > 0 ? Math.round((mx * finalPct * mod) / 5) * 5 : 0;
+                rows += `<tr class="sm"><td>${c.n}${c.isAutoAcc ? '' : ' \u2605'}</td><td class="c">${finalReps}</td><td class="r">${w > 0 ? w + ' lbs' : '—'}</td></tr>`;
+            });
+
+            // Built-in accessories (andreAccessories) — shown weeks 1-4 and deload (6)
+            const accList = andreAccessories[day];
+            if(accList && (wk < 5 || wk === 6)) {
+                const weekAccs = accList.filter(a => a.weeks.includes(wk));
+                if(weekAccs.length) {
+                    rows += `<tr><td colspan="3" class="acc-hdr">Accessories</td></tr>`;
+                    weekAccs.forEach(a => {
+                        const setStr = a.setsByWeek ? (a.setsByWeek[wk] || a.sets) : a.sets;
+                        let wText = '—';
+                        if(a.base && maxes[a.base] > 0) {
+                            const wIdx = wk === 6 ? 0 : wk - 1;
+                            wText = Math.round((maxes[a.base] * (a.basePct + (wIdx * 0.025))) / 5) * 5 + ' lbs';
+                        }
+                        rows += `<tr class="acc"><td>${a.name}</td><td class="c">${setStr}</td><td class="r">${wText}</td></tr>`;
+                    });
+                }
+            }
+
             daysHtml += `<div class="dc"><div class="dt">${day}</div><table>${rows}</table></div>`;
         });
         if(!daysHtml) return;
@@ -1392,6 +1438,9 @@ window.exportToPDF = function() {
         td{padding:1px 2px;border-bottom:1px solid #f0f0f0;font-size:7.5px;vertical-align:middle;}
         td.c{text-align:center;white-space:nowrap;}
         td.r{text-align:right;font-weight:700;color:#1565c0;white-space:nowrap;}
+        tr.sm td{color:#555;}
+        tr.acc td{color:#666;font-style:italic;}
+        td.acc-hdr{background:#e8f0fe;color:#1565c0;font-weight:700;font-style:normal;font-size:7px;padding:2px 2px 1px;border-bottom:1px solid #c5d4f5;}
         .ftr{margin-top:6px;text-align:center;color:#aaa;font-size:7px;border-top:1px solid #eee;padding-top:4px;}
     </style>
     </head><body>
