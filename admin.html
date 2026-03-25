@@ -173,6 +173,11 @@ async function loadAllUsers() {
                 programLabel: data.program || lb.program || '—'
             });
         });
+        // Deduplicate: some users have both an email-keyed doc (old) and a uid-keyed doc (new).
+        // Prefer the uid-keyed doc so admin edits reach the document the app actually reads.
+        const emailToUidDoc = {};
+        allUsers.forEach(u => { if(u.uid !== u.displayEmail && u.displayEmail !== '—') emailToUidDoc[u.displayEmail] = true; });
+        allUsers = allUsers.filter(u => !(u.uid === u.displayEmail && emailToUidDoc[u.uid]));
         allUsers.sort((a,b) => b.total - a.total);
         renderStats();
         renderUsers(allUsers);
@@ -221,8 +226,12 @@ function renderUsers(users) {
                 </div>
             </div>
             <div class="user-details">
-                <div class="edit-grid" style="grid-template-columns:1fr;margin-bottom:0;">
+                <div class="edit-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
                     <div class="edit-field"><label>Username</label><input type="text" id="eun${i}" value="${u.displayName}" onclick="this.select()" placeholder="Display name"></div>
+                    <div class="edit-field"><label>Program</label><select id="eprog${i}" style="background:#000;border:0.5px solid #38383a;color:#fff;padding:10px;border-radius:8px;font-size:0.9rem;width:100%;font-family:inherit;">
+                        <option value="andre" ${!(u.programLabel||'').toLowerCase().includes('base')?'selected':''}>Andre Map</option>
+                        <option value="base" ${(u.programLabel||'').toLowerCase().includes('base')?'selected':''}>Base Map</option>
+                    </select></div>
                 </div>
                 <div class="edit-grid">
                     <div class="edit-field"><label>Squat</label><input type="number" id="es${i}" value="${s}" onclick="this.select()"></div>
@@ -274,12 +283,13 @@ window.saveUser = async function(i) {
     const o=+(document.getElementById('eo'+i).value)||0;
     const ov=document.getElementById('eov'+i).value.trim();
     const newName=document.getElementById('eun'+i).value.trim();
+    const prog=document.getElementById('eprog'+i).value;
     try {
-        const userUpdate={maxes:{Squat:s,Bench:b,Deadlift:d,OHP:o},squat:s,bench:b,deadlift:d,ohp:o,s,b,d,o,adminOverrides:ov||''};
+        const userUpdate={maxes:{Squat:s,Bench:b,Deadlift:d,OHP:o},squat:s,bench:b,deadlift:d,ohp:o,s,b,d,o,program:prog,adminOverrides:ov||''};
         if(newName && newName !== u.displayName) userUpdate.name = newName;
         await setDoc(doc(db,"users",u.uid),userUpdate,{merge:true});
         const t=s+b+d;
-        const lbUpdate={squat:s,bench:b,deadlift:d,total:t,updatedAt:Date.now()};
+        const lbUpdate={squat:s,bench:b,deadlift:d,total:t,program:prog,updatedAt:Date.now()};
         if(newName && newName !== u.displayName) lbUpdate.name = newName;
         if(t>0) await setDoc(doc(db,"leaderboard",u.uid),lbUpdate,{merge:true});
         showToast('✅ '+(newName||u.displayName)+' saved');
