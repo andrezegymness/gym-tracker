@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own Program</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --accent: #64d2ff;
+            --accent-glow: rgba(100,210,255,0.15);
+            --bg: #000;
+            --surface: #1c1c1e;
+            --surface2: #2c2c2e;
+            --border: #38383a;
+            --text: #fff;
+            --text-sub: #636366;
+            --text-muted: #48484a;
+            --red: #ff453a;
+            --green: #30d158;
+            --orange: #ff9f0a;
+            --yellow: #ffd60a;
+            --purple: #bf5af2;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; min-height: 100vh; }
+
+        /* ─── HEADER ─── */
+        .prog-header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(0,0,0,0.92); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid var(--border);
+            padding: 14px 20px 0;
+        }
+        .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .back-btn {
+            color: var(--accent); font-size: 0.9rem; font-weight: 600;
+            text-decoration: none; display: flex; align-items: center; gap: 4px;
+        }
+        .back-btn:hover { opacity: 0.75; }
+        .header-title { font-size: 0.85rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
+        .step-counter { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+        .progress-track { height: 2px; background: var(--surface2); border-radius: 2px; }
+        .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s cubic-bezier(0.28,0.11,0.32,1); }
+
+        /* ─── WIZARD CONTAINER ─── */
+        .wizard-container { max-width: 600px; margin: 0 auto; padding: 28px 20px 80px; }
+
+        /* ─── STEP ─── */
+        .step { display: none; }
+        .step.active { display: block; animation: stepIn 0.3s cubic-bezier(0.28,0.11,0.32,1); }
+        @keyframes stepIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .step-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 6px; letter-spacing: -0.3px; }
+        .step-sub { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 24px; line-height: 1.5; }
+
+        /* ─── CHOICE CARDS ─── */
+        .choice-cards { display: flex; flex-direction: column; gap: 12px; }
+        .choice-card {
+            background: var(--surface); border: 1.5px solid var(--border);
+            border-radius: 16px; padding: 20px 22px; cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.28,0.11,0.32,1);
+            position: relative;
+        }
+        .choice-card:hover { background: var(--surface2); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,0,0,0.35); }
+        .choice-card.selected {
+            border-color: var(--accent); background: var(--accent-glow);
+            box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(100,210,255,0.12);
+        }
+        .choice-card-title { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .choice-card-sub { font-size: 0.72rem; color: var(--text-sub); font-weight: 400; line-height: 1.4; }
+        .choice-badge {
+            position: absolute; top: 14px; right: 14px;
+            background: var(--accent); color: #000;
+            font-size: 0.55rem; font-weight: 800; padding: 2px 8px;
+            border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .rec-badge { background: var(--green); color: #000; }
+
+        /* ─── EDUCATION DETAILS ─── */
+        .edu-block {
+            background: var(--surface); border: 0.5px solid var(--border);
+            border-radius: 12px; margin-top: 16px; overflow: hidden;
+        }
+        .edu-block summary {
+            padding: 14px 16px; cursor: pointer; font-size: 0.8rem;
+            font-weight: 700; color: var(--accent); text-transform: uppercase;
+            letter-spacing: 0.5px; list-style: none; display: flex;
+            align-items: center; gap: 8px; user-select: none;
+        }
+        .edu-block summary::before { content: '📚'; font-size: 0.9rem; }
+        .edu-block summary::after { content: '›'; margin-left: auto; font-size: 1.2rem; color: var(--text-muted); transition: transform 0.2s; }
+        .edu-block[open] summary::after { transform: rotate(90deg); }
+        .edu-content { padding: 0 16px 16px; font-size: 0.8rem; color: var(--text-sub); line-height: 1.65; }
+        .edu-content h4 { color: var(--text); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 4px; }
+        .edu-content p { margin-bottom: 8px; }
+        .edu-content .highlight { color: var(--accent); font-weight: 700; }
+        .edu-content ul { padding-left: 16px; margin-bottom: 8px; }
+        .edu-content ul li { margin-bottom: 4px; }
+
+        /* ─── PHASE CARDS ─── */
+        .phase-card {
+            background: var(--surface); border: 1.5px solid var(--border);
+            border-radius: 16px; margin-bottom: 12px; overflow: hidden; cursor: pointer;
+            transition: all 0.25s;
+        }
+        .phase-card:hover { border-color: #555; }
+        .phase-card.selected { border-color: var(--accent); background: var(--accent-glow); }
+        .phase-card-header { padding: 18px 20px; display: flex; align-items: center; gap: 14px; }
+        .phase-icon { font-size: 1.5rem; }
+        .phase-card-title { font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .phase-card-sub { font-size: 0.7rem; color: var(--text-sub); }
+        .phase-expand {
+            padding: 0 20px 16px;
+            font-size: 0.78rem; color: var(--text-sub); line-height: 1.6;
+            border-top: 0.5px solid var(--border); display: none;
+        }
+        .phase-card.expanded .phase-expand { display: block; }
+        .phase-expand-toggle { font-size: 0.7rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; display: block; padding: 6px 0 0; }
+        .phase-stat-row { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+        .phase-stat { flex: 1; min-width: 80px; background: var(--surface2); border-radius: 8px; padding: 8px 10px; }
+        .phase-stat-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .phase-stat-value { font-size: 0.85rem; font-weight: 800; color: var(--text); }
+
+        /* ─── NUMBER INPUT ─── */
+        .num-control { display: flex; align-items: center; gap: 0; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; width: fit-content; }
+        .num-btn { width: 44px; height: 44px; background: transparent; color: var(--accent); border: none; font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+        .num-btn:hover { background: var(--surface2); }
+        .num-val { width: 56px; height: 44px; background: transparent; color: var(--text); border: none; text-align: center; font-size: 1.1rem; font-weight: 800; font-family: inherit; -moz-appearance: textfield; }
+        .num-val::-webkit-outer-spin-button, .num-val::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+        /* ─── FORM ROWS ─── */
+        .form-section { margin-bottom: 28px; }
+        .form-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 10px; }
+        .form-hint { font-size: 0.7rem; color: var(--text-sub); margin-top: 6px; line-height: 1.45; }
+        .form-hint .rec { color: var(--green); font-weight: 700; }
+
+        /* ─── LIFT SELECT ─── */
+        .lift-select-grid { display: flex; flex-direction: column; gap: 10px; }
+        .lift-row {
+            background: var(--surface); border: 1.5px solid var(--border);
+            border-radius: 14px; padding: 16px 18px; transition: all 0.2s;
+        }
+        .lift-row.active { border-color: var(--accent); background: var(--accent-glow); }
+        .lift-row-top { display: flex; align-items: center; gap: 14px; margin-bottom: 0; }
+        .lift-checkbox { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+        .lift-name { font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; flex: 1; }
+        .lift-freq-badge { font-size: 0.65rem; color: var(--text-muted); background: var(--surface2); padding: 3px 8px; border-radius: 6px; font-weight: 600; white-space: nowrap; }
+        .lift-max-row { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
+        .lift-max-row label { font-size: 0.7rem; color: var(--text-sub); font-weight: 600; white-space: nowrap; }
+        .lift-max-input {
+            background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+            border-radius: 8px; padding: 8px 12px; font-size: 1rem; font-weight: 700;
+            width: 110px; font-family: inherit; text-align: center;
+        }
+        .lift-max-input:focus { outline: none; border-color: var(--accent); }
+
+        /* ─── CONFIGURE LIFTS ─── */
+        .lift-config-tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+        .lift-tab {
+            flex-shrink: 0; padding: 8px 16px; border-radius: 10px; border: 1.5px solid var(--border);
+            background: var(--surface); color: var(--text-sub); font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s;
+        }
+        .lift-tab.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+        .lift-config-panel { display: none; }
+        .lift-config-panel.active { display: block; animation: stepIn 0.2s ease; }
+        .config-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+        .config-row-label { flex: 1; }
+        .config-row-label .main { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; }
+        .config-row-label .sub { font-size: 0.7rem; color: var(--text-sub); }
+        .config-row-control { flex-shrink: 0; }
+
+        /* ─── REP RANGE SEGMENTED ─── */
+        .rep-seg { display: flex; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); }
+        .rep-seg-btn {
+            flex: 1; padding: 10px 4px; background: transparent; border: none;
+            color: var(--text-sub); font-size: 0.65rem; font-weight: 700; cursor: pointer;
+            text-align: center; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.3px;
+            border-right: 0.5px solid var(--border); line-height: 1.3;
+        }
+        .rep-seg-btn:last-child { border-right: none; }
+        .rep-seg-btn.selected { background: var(--accent); color: #000; }
+        .rep-seg-btn .rep-range { font-size: 0.8rem; font-weight: 900; display: block; }
+
+        /* ─── TOGGLE ─── */
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; margin-bottom: 12px; }
+        .toggle-row-text .main { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; }
+        .toggle-row-text .sub { font-size: 0.7rem; color: var(--text-sub); }
+        .toggle-switch { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+        .toggle-slider {
+            position: absolute; inset: 0; background: var(--surface2);
+            border-radius: 14px; cursor: pointer; transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute; width: 20px; height: 20px;
+            left: 4px; bottom: 4px; background: #fff; border-radius: 50%; transition: 0.3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); background: #000; }
+
+        /* ─── REVIEW TABLE ─── */
+        .review-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 20px; }
+        .review-table th { padding: 10px 8px; text-align: left; color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 0.5px solid var(--border); }
+        .review-table td { padding: 12px 8px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+        .review-table tr:last-child td { border-bottom: none; }
+        .lift-type-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
+
+        /* ─── NAV BUTTONS ─── */
+        .step-nav { display: flex; gap: 12px; margin-top: 32px; }
+        .btn-back {
+            flex: 0 0 auto; padding: 14px 20px; background: var(--surface);
+            border: 1.5px solid var(--border); border-radius: 14px; color: var(--text);
+            font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-back:hover { background: var(--surface2); }
+        .btn-next {
+            flex: 1; padding: 14px 20px; background: var(--accent);
+            border: none; border-radius: 14px; color: #000;
+            font-size: 0.95rem; font-weight: 900; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s;
+        }
+        .btn-next:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(100,210,255,0.3); }
+        .btn-next:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-generate {
+            flex: 1; padding: 16px; background: var(--accent);
+            border: none; border-radius: 14px; color: #000;
+            font-size: 1rem; font-weight: 900; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-generate:hover { opacity: 0.9; box-shadow: 0 8px 28px rgba(100,210,255,0.3); }
+
+        /* ─── PROGRAM OUTPUT ─── */
+        #program-output { display: none; padding: 0 0 80px; }
+        .output-header { padding: 24px 20px 16px; border-bottom: 0.5px solid var(--border); }
+        .output-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 4px; }
+        .output-sub { font-size: 0.75rem; color: var(--text-sub); }
+        .week-nav { display: flex; align-items: center; gap: 8px; padding: 14px 20px; border-bottom: 0.5px solid var(--border); overflow-x: auto; }
+        .week-tab {
+            flex-shrink: 0; padding: 7px 14px; border-radius: 10px;
+            border: 1.5px solid var(--border); background: var(--surface);
+            color: var(--text-sub); font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.3px; cursor: pointer; transition: all 0.2s;
+        }
+        .week-tab.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+        .week-tab.deload-tab { border-color: rgba(48,209,88,0.3); color: var(--green); }
+        .week-tab.deload-tab.active { background: rgba(48,209,88,0.1); }
+        .week-section { display: none; }
+        .week-section.active { display: block; }
+        .week-band { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 8px; }
+        .week-band-title { font-size: 1rem; font-weight: 800; }
+        .week-band-sub { font-size: 0.7rem; color: var(--text-sub); }
+        .week-note { margin: 0 20px 14px; background: var(--surface); border: 0.5px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 10px 14px; font-size: 0.75rem; color: var(--text-sub); line-height: 1.5; }
+        .week-note.deload-note { border-left-color: var(--green); }
+        .day-block { margin: 0 20px 20px; }
+        .day-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+        .lifts-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 14px; overflow: hidden; }
+        .lifts-table th { padding: 10px 12px; text-align: left; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: var(--surface2); }
+        .lifts-table td { padding: 13px 12px; font-size: 0.82rem; border-top: 0.5px solid var(--border); vertical-align: middle; }
+        .lifts-table tr:first-child td { border-top: none; }
+        .lift-name-cell { font-weight: 700; }
+        .lift-name-cell .session-label { display: block; font-size: 0.6rem; color: var(--text-muted); font-weight: 400; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .sets-reps-cell { font-weight: 800; font-size: 0.9rem; color: var(--accent); }
+        .pct-cell { color: var(--text-sub); font-size: 0.78rem; }
+        .weight-cell { font-weight: 800; font-size: 0.95rem; }
+        .output-actions { display: flex; gap: 10px; padding: 16px 20px; border-top: 0.5px solid var(--border); margin-top: 8px; }
+        .action-btn {
+            flex: 1; padding: 12px; background: var(--surface); border: 1.5px solid var(--border);
+            border-radius: 12px; color: var(--text); font-size: 0.8rem; font-weight: 700;
+            cursor: pointer; text-align: center; transition: all 0.2s; text-decoration: none; display: block;
+        }
+        .action-btn:hover { background: var(--surface2); }
+        .action-btn.primary { border-color: var(--accent); color: var(--accent); }
+
+        /* ─── MISC ─── */
+        .divider { height: 0.5px; background: var(--border); margin: 24px 0; }
+        .info-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+        .info-card-title { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .info-card-body { font-size: 0.78rem; color: var(--text-sub); line-height: 1.55; }
+        .volume-ramp-preview { display: flex; gap: 6px; margin-top: 14px; align-items: flex-end; }
+        .ramp-bar { flex: 1; background: var(--surface2); border-radius: 4px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; color: var(--text-muted); transition: all 0.3s; }
+        .ramp-bar.mev { background: rgba(100,210,255,0.15); color: var(--accent); }
+        .ramp-bar.mid { background: rgba(100,210,255,0.3); color: var(--accent); }
+        .ramp-bar.mrv { background: var(--accent); color: #000; }
+        .ramp-bar.deload-bar { background: rgba(48,209,88,0.2); color: var(--green); }
+        .ramp-label { font-size: 0.58rem; color: var(--text-muted); text-align: center; margin-top: 4px; }
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #2c2c2e; color: #fff; padding: 12px 20px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; border: 0.5px solid #48484a; white-space: nowrap; }
+        .toast.show { opacity: 1; }
+        .saved-banner { background: rgba(48,209,88,0.12); border: 0.5px solid rgba(48,209,88,0.3); border-radius: 10px; padding: 10px 14px; font-size: 0.75rem; color: var(--green); display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+        @media print { .prog-header, .step-nav, .output-actions, .week-nav, .action-btn { display: none !important; } #program-output { display: block !important; } .week-section { display: block !important; } }
+
+        /* ─── MOBILE OUTPUT ─── */
+        @media (max-width: 520px) {
+            .output-header { padding: 16px 16px 12px; }
+            .output-title { font-size: 1.15rem; }
+            .output-sub { font-size: 0.7rem; line-height: 1.6; }
+            .overload-badge { display: block; margin: 6px 0 0; font-size: 0.65rem; }
+            .week-nav { gap: 6px; padding: 10px 16px; }
+            .week-tab { padding: 6px 10px; font-size: 0.62rem; }
+            .week-band { padding: 12px 16px 6px; }
+            .week-band-title { font-size: 0.9rem; }
+            .week-note { margin: 0 12px 12px; padding: 9px 12px; font-size: 0.72rem; }
+            .day-block { margin: 0 12px 18px; }
+            /* Hide % column on mobile — lifters care about weight, not the ratio */
+            .lifts-table th:nth-child(3),
+            .lifts-table td:nth-child(3) { display: none; }
+            .lifts-table th { padding: 8px 10px; font-size: 0.55rem; }
+            .lifts-table td { padding: 11px 10px; font-size: 0.78rem; }
+            .lift-name-cell { max-width: 130px; }
+            .lift-name-cell .session-label { font-size: 0.55rem; }
+            .sets-reps-cell { font-size: 0.82rem; white-space: nowrap; }
+            .weight-cell { font-size: 0.85rem; white-space: nowrap; }
+            .wu-toggle-btn { font-size: 0.8rem; }
+            .rest-cell { white-space: nowrap; }
+            .rest-badge { font-size: 0.6rem; padding: 2px 6px; }
+            .warmup-rows { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+            .warmup-row-item { flex-shrink: 0; }
+            .rpe-badge, .rir-badge { font-size: 0.6rem; padding: 2px 6px; }
+            .pct-badge { font-size: 0.68rem; }
+            .acc-display-container { padding: 10px 12px; }
+            .acc-section-title { font-size: 0.6rem; }
+            .output-actions { gap: 8px; padding: 12px 16px; }
+            .action-btn { padding: 10px 8px; font-size: 0.75rem; }
+            .week-band-right { gap: 3px; }
+        }
+
+        /* ─── INTAKE QUIZ OVERLAY ─── */
+        .intake-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500;
+            display: flex; align-items: flex-end; justify-content: center;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .intake-card {
+            background: #1c1c1e; border-radius: 24px 24px 0 0; padding: 28px 24px 40px;
+            width: 100%; max-width: 600px; border-top: 0.5px solid #48484a;
+        }
+        .intake-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 4px; }
+        .intake-sub { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 24px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .intake-q { margin-bottom: 20px; }
+        .intake-q-label { font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+        .intake-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+        .intake-btn {
+            flex: 1; min-width: 100px; padding: 10px 12px; background: var(--surface2); border: 1.5px solid var(--border);
+            border-radius: 10px; color: var(--text-sub); font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; text-align: center; transition: all 0.2s; font-family: inherit;
+        }
+        .intake-btn:hover { border-color: #555; color: var(--text); }
+        .intake-btn.selected { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+        .intake-submit {
+            width: 100%; padding: 16px; background: var(--accent); border: none; border-radius: 14px;
+            color: #000; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: 20px;
+            text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; font-family: inherit;
+        }
+        .intake-submit:disabled { opacity: 0.35; cursor: not-allowed; }
+        .intake-submit:not(:disabled):hover { opacity: 0.9; }
+        .intake-close { width: 100%; padding: 12px; background: transparent; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; margin-top: 8px; font-family: inherit; }
+        .quiz-trigger-btn {
+            width: 100%; padding: 14px 20px; background: transparent; border: 1.5px dashed var(--border);
+            border-radius: 14px; color: var(--text-muted); font-size: 0.82rem; font-weight: 700;
+            cursor: pointer; text-align: center; transition: all 0.2s; margin-top: 4px; font-family: inherit;
+        }
+        .quiz-trigger-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ─── OUTPUT BADGES ─── */
+        .overload-badge {
+            display: inline-block; margin-left: 8px; background: rgba(100,210,255,0.12);
+            border: 0.5px solid rgba(100,210,255,0.3); color: var(--accent);
+            padding: 3px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 700;
+            vertical-align: middle; white-space: nowrap;
+        }
+        .rpe-badge {
+            display: inline-block; background: rgba(255,159,10,0.15); border: 0.5px solid rgba(255,159,10,0.3);
+            color: var(--orange); padding: 2px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;
+            margin-left: 6px; white-space: nowrap;
+        }
+        .rir-badge {
+            display: inline-block; background: rgba(255,159,10,0.08); color: var(--orange);
+            padding: 2px 8px; border-radius: 6px; font-size: 0.62rem; font-weight: 600;
+            margin-left: 4px; white-space: nowrap;
+        }
+        .pct-badge {
+            display: inline-block; color: var(--text-sub); font-size: 0.75rem; font-weight: 700;
+        }
+        .week-band-right { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+        .rest-cell { white-space: nowrap; }
+        .rest-badge {
+            display: inline-block; background: var(--surface2); border: 0.5px solid var(--border);
+            color: var(--text-muted); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700;
+        }
+
+        /* ─── WARM-UP INLINE ─── */
+        .wu-toggle-btn {
+            background: none; border: none; cursor: pointer; font-size: 0.9rem;
+            padding: 2px 4px; opacity: 0.5; transition: opacity 0.2s; vertical-align: middle; margin-left: 4px;
+        }
+        .wu-toggle-btn:hover { opacity: 1; }
+        .warmup-expand-row td { background: rgba(255,159,10,0.04); }
+        .warmup-mini { padding: 6px 0; }
+        .warmup-mini-title { font-size: 0.7rem; font-weight: 700; color: var(--orange); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .warmup-rows { display: flex; gap: 6px; flex-wrap: wrap; }
+        .warmup-row-item { display: flex; align-items: center; gap: 4px; background: var(--surface2); border-radius: 8px; padding: 6px 10px; font-size: 0.75rem; }
+        .warmup-row-item.work-set { background: rgba(100,210,255,0.1); border: 0.5px solid var(--accent); }
+        .wu-weight { font-weight: 900; font-size: 0.85rem; }
+        .wu-x { color: var(--text-muted); }
+        .wu-reps { font-weight: 700; min-width: 16px; text-align: center; }
+        .wu-note { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+
+        /* ─── ACCESSORY SECTION ─── */
+        .acc-display-container { margin: 8px 0 4px; padding: 12px 14px; background: rgba(255,255,255,0.02); border-radius: 0 0 12px 12px; border: 0.5px solid var(--border); border-top: none; }
+        .acc-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .acc-section-title { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+        .acc-budget-pill { font-size: 0.65rem; font-weight: 700; color: var(--green); background: rgba(48,209,88,0.12); padding: 2px 8px; border-radius: 6px; }
+        .acc-open-btn {
+            font-size: 0.7rem; font-weight: 700; color: var(--accent); background: none; border: none;
+            cursor: pointer; padding: 4px 8px; border-radius: 6px; border: 0.5px solid rgba(100,210,255,0.3);
+            transition: all 0.2s; font-family: inherit;
+        }
+        .acc-open-btn:hover { background: var(--accent-glow); }
+
+        /* ─── ACCESSORY PICKER MODAL ─── */
+        .acc-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 400;
+            display: flex; align-items: flex-end; justify-content: center;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .acc-modal-card {
+            background: #1c1c1e; border-radius: 24px 24px 0 0; padding: 0;
+            width: 100%; max-width: 600px; border-top: 0.5px solid #48484a;
+            max-height: 80vh; display: flex; flex-direction: column;
+        }
+        .acc-modal-header { padding: 20px 20px 12px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+        .acc-modal-title { font-size: 1.1rem; font-weight: 900; margin-bottom: 4px; }
+        .acc-budget-info { font-size: 0.75rem; margin-bottom: 4px; }
+        .acc-modal-close { float: right; background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; margin-top: -28px; }
+        .acc-exercise-list { overflow-y: auto; flex: 1; padding: 12px 20px 24px; }
+        .acc-category { margin-bottom: 20px; }
+        .acc-cat-title { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+        .acc-exercise-row {
+            display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+            background: var(--surface2); border-radius: 12px; margin-bottom: 8px;
+            border: 1.5px solid transparent; transition: border-color 0.2s;
+        }
+        .acc-exercise-row.added { border-color: var(--green); background: rgba(48,209,88,0.06); }
+        .acc-ex-info { flex: 1; }
+        .acc-ex-name { font-size: 0.88rem; font-weight: 700; margin-bottom: 2px; }
+        .acc-ex-meta { font-size: 0.68rem; color: var(--text-muted); }
+        .acc-add-btn {
+            flex-shrink: 0; padding: 7px 14px; background: var(--surface); border: 1.5px solid var(--border);
+            border-radius: 9px; color: var(--text-sub); font-size: 0.72rem; font-weight: 700;
+            cursor: pointer; white-space: nowrap; transition: all 0.2s; font-family: inherit;
+        }
+        .acc-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .acc-add-btn.added { border-color: var(--green); color: var(--green); background: rgba(48,209,88,0.1); }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="prog-header">
+        <div class="header-top">
+            <a href="index.html" class="back-btn">‹ Back</a>
+            <div class="header-title">Build Your Own</div>
+            <div class="step-counter" id="step-counter">Step 1 of 8</div>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-fill" style="width:12.5%"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ WIZARD ═══════════════════════ -->
+    <div class="wizard-container" id="wizard">
+
+        <!-- ── STEP 1: GOAL ── -->
+        <div class="step active" id="step-1">
+            <div class="step-title">What's Your Goal?</div>
+            <div class="step-sub">This shapes everything — rep ranges, percentages, how the blocks are structured, and what success looks like.</div>
+            <div class="choice-cards">
+                <div class="choice-card" id="goal-strength" onclick="selectGoal('strength')">
+                    <div class="choice-card-title">⚡ Strength</div>
+                    <div class="choice-card-sub">Powerlifting focus · Maximize your Squat, Bench & Deadlift · Competition prep or raw strength</div>
+                </div>
+                <div class="choice-card" id="goal-size" onclick="selectGoal('size')">
+                    <div class="choice-card-title">💪 Size</div>
+                    <div class="choice-card-sub">Powerbuilding hybrid · Big 3 as foundation · 6–10 rep main work · Higher volume · More accessories</div>
+                </div>
+                <div class="choice-card" id="goal-both" onclick="selectGoal('both')">
+                    <div class="choice-card-title">🏆 Both</div>
+                    <div class="choice-card-sub">Balanced strength + size · Moderate rep ranges · Builds the engine and the muscle simultaneously</div>
+                    <div class="choice-badge rec-badge">Popular</div>
+                </div>
+            </div>
+            <div class="step-nav">
+                <button class="btn-next" id="goal-next" disabled onclick="goToStep(2)">Continue</button>
+            </div>
+        </div>
+
+        <!-- ── STEP 2: EXPERIENCE ── -->
+        <div class="step" id="step-2">
+            <div class="step-title">Your Experience Level</div>
+            <div class="step-sub">This determines your default block lengths, weekly intensity jumps, and volume targets. Be honest — not sure? Use the quiz below.</div>
+            <div class="choice-cards">
+                <div class="choice-card" id="exp-novice" onclick="selectExp('novice')">
+                    <div class="choice-card-title">🌱 New to Lifting</div>
+                    <div class="choice-card-sub">Under 1 year · Can still add weight every week · Total macrocycle: 8–12 weeks · Aggressive 5% weekly jumps</div>
+                </div>
+                <div class="choice-card" id="exp-intermediate" onclick="selectExp('intermediate')">
+                    <div class="choice-card-title">📈 Getting Serious</div>
+                    <div class="choice-card-sub">1–3 years · Linear progression is slowing · Standard 12–16 week macrocycle · 2.5% weekly jumps</div>
+                </div>
+                <div class="choice-card" id="exp-elite" onclick="selectExp('elite')">
+                    <div class="choice-card-title">🔱 Experienced</div>
+                    <div class="choice-card-sub">3+ years · Progress measured in single-digit PRs · 16–24 week cycles · Wave loading · 1.5–2% micro-jumps</div>
+                </div>
+            </div>
+            <button class="quiz-trigger-btn" onclick="showIntakeQuiz()">
+                🤔 Not sure where you fit? Take the 30-second quiz →
+            </button>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goToStep(1)">Back</button>
+                <button class="btn-next" id="exp-next" disabled onclick="goToStep(3)">Continue</button>
+            </div>
+        </div>
+
+        <!-- ── STEP 3: SINGLE PHASE OR FULL MACROCYCLE ── -->
+        <div class="step" id="step-3">
+            <div class="step-title">Program Structure</div>
+            <div class="step-sub">A single block focuses on one goal. A full macrocycle chains all phases together, building you from the ground up.</div>
+            <div class="choice-cards">
+                <div class="choice-card" id="type-single" onclick="selectType('single')">
+                    <div class="choice-card-title">📦 Single Block</div>
+                    <div class="choice-card-sub">Pick one phase (Hypertrophy, Strength, or Peaking) and run it for a defined number of weeks. Best when you know where you are.</div>
+                </div>
+                <div class="choice-card" id="type-macrocycle" onclick="selectType('macrocycle')">
+                    <div class="choice-card-title">📅 Full Macrocycle</div>
+                    <div class="choice-card-sub">Auto-chains Hypertrophy → Strength → Peaking with correct lengths for your experience level. Best for competition prep or not knowing where to start.</div>
+                    <div class="choice-badge rec-badge">Recommended</div>
+                </div>
+            </div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goToStep(2)">Back</button>
+                <button class="btn-next" id="type-next" disabled onclick="onTypeNext()">Continue</button>
+            </div>
+        </div>
+
+        <!-- ── STEP 4A: PHASE SELECTION (single block only) ── -->
+        <div class="step" id="step-4a">
+            <div class="step-title">Choose Your Phase</div>
+            <div class="step-sub">Tap a phase to select it. Expand each one to read the science behind it.</div>
+
+            <div class="phase-card" id="phase-hypertrophy" onclick="selectPhase('hypertrophy', this)">
+                <div class="phase-card-header">
+                    <div class="phase-icon">🏗️</div>
+                    <div>
+                        <div class="phase-card-title">Hypertrophy (Volume) Block</div>
+                        <div class="phase-card-sub">Build the engine · 60–75% · Sets of 6–12 reps · High variation</div>
+                    </div>
+                </div>
+                <div class="phase-expand">
+                    <p>This is the foundation. The goal is to build muscle mass, increase work capacity, and address weak points. You're not trying to lift your heaviest weight — you're building the platform that makes your heaviest weight possible.</p>
+                    <div class="phase-stat-row">
+                        <div class="phase-stat"><div class="phase-stat-label">Intensity</div><div class="phase-stat-value">60–75%</div></div>
+                        <div class="phase-stat"><div class="phase-stat-label">Volume</div><div class="phase-stat-value">High</div></div>
+                        <div class="phase-stat"><div class="phase-stat-label">Reps</div><div class="phase-stat-value">6–12+</div></div>
+                    </div>
+                </div>
+                <span class="phase-expand-toggle" onclick="togglePhaseExpand(event, 'phase-hypertrophy')">▸ Learn more</span>
+            </div>
+
+            <div class="phase-card" id="phase-strength" onclick="selectPhase('strength', this)">
+                <div class="phase-card-header">
+                    <div class="phase-icon">⚙️</div>
+                    <div>
+                        <div class="phase-card-title">Strength Block</div>
+                        <div class="phase-card-sub">Translate size to power · 75–85% · Sets of 3–5 reps · Competition lifts focus</div>
+                    </div>
+                </div>
+                <div class="phase-expand">
+                    <p>Once you've built the muscle base, this block makes it strong. You bridge the gap between high volume and heavy singles. The weight is now heavy enough to drive neurological adaptation — your brain learns to recruit and coordinate more motor units.</p>
+                    <div class="phase-stat-row">
+                        <div class="phase-stat"><div class="phase-stat-label">Intensity</div><div class="phase-stat-value">75–85%</div></div>
+                        <div class="phase-stat"><div class="phase-stat-label">Volume</div><div class="phase-stat-value">Moderate</div></div>
+                        <div class="phase-stat"><div class="phase-stat-label">Reps</div><div class="phase-stat-value">3–5</div></div>
+                    </div>
+                </div>
+                <span class="phase-expand-toggle" onclick="togglePhaseExpand(event, 'phase-strength')">▸ Learn more</span>
+            </div>
+
+            <div class="phase-card" id="phase-peaking" onclick="selectPhase('peaking', this)">
+                <div class="phase-card-header">
+                    <div class="phase-icon">🎯</div>
+                    <div>
+                        <div class="phase-card-title">Peaking (Realization) Block</div>
+                        <div class="phase-card-sub">Express max strength · 85–95%+ · Singles, doubles, triples · Meet prep</div>
+                    </div>
+                </div>
+                <div class="phase-expand">
+                    <p>Neurological adaptation is the goal. You're training the CNS to handle maximal loads and practicing the precise skill of lifting heavy under competition standards. Volume is dramatically reduced so fatigue doesn't mask your true strength.</p>
+                    <div class="phase-stat-row">
+                        <div class="phase-stat"><div class="phase-stat-label">Intensity</div><div class="phase-stat-value">85–95%+</div></div>
+                        <div class="phase-stat"><div class="phase-stat-label">Volume</div><div class="phase-stat-value">Very Low</div></div>
+                        <div class="phase-stat"><div class="phase-stat-label">Reps</div><div class="phase-stat-value">1–3</div></div>
+                    </div>
+                </div>
+                <span class="phase-expand-toggle" onclick="togglePhaseExpand(event, 'phase-peaking')">▸ Learn more</span>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-back" onclick="goToStep(3)">Back</button>
+                <button class="btn-next" id="phase-next" disabled onclick="goToStep(5)">Continue</button>
+            </div>
+        </div>
+
+        <!-- ── STEP 4B: MACROCYCLE OVERVIEW ── -->
+        <div class="step" id="step-4b">
+            <div class="step-title">Your Macrocycle</div>
+            <div class="step-sub">Based on your experience level, here's the recommended structure. You'll adjust individual block lengths in the next steps.</div>
+            <div id="macrocycle-overview"></div>
+            <details class="edu-block" style="margin-top:16px">
+                <summary>Why these block lengths?</summary>
+                <div class="edu-content">
+                    <p>Block lengths aren't arbitrary — they reflect how long it takes your body to actually adapt at each stage. A novice can drive adaptation in 4 weeks because everything is new stimulus. An elite lifter needs 8–12 weeks in the hypertrophy block just to build enough new tissue to meaningfully move the needle.</p>
+                    <p>The key rule: <span class="highlight">you must earn your way into heavier training.</span> Skipping the hypertrophy block and jumping straight to peaking is like trying to build a skyscraper without a foundation. You'll hit your ceiling faster, and the ceiling will be lower.</p>
+                </div>
+            </details>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goToStep(3)">Back</button>
+                <button class="btn-next" onclick="goToStep(5)">Continue</button>
+            </div>
+        </div>
+
+        <!-- ── STEP 5: BLOCK DURATION ── -->
+        <div class="step" id="step-5">
+            <div class="step-title">Block Duration</div>
+            <div class="step-sub">Set the length for each phase. These are the science-backed defaults for your experience level — adjust if needed.</div>
+            <div id="duration-fields"></div>
+            <details class="edu-block">
+                <summary>How long should each block be?</summary>
+                <div class="edu-content">
+                    <h4>The Rule of Minimum Effective Volume</h4>
+                    <p>A block must be long enough to drive a real adaptation — but short enough that you don't plateau before it ends. Too short and you never fully stress the system. Too long and you plateau, get bored, and risk injury.</p>
+                    <h4>Novice (0–1 Year)</h4>
+                    <p>4 weeks per block is usually enough. Your body responds so quickly to new stimulus that you don't need the extra volume a longer block provides.</p>
+                    <h4>Intermediate (1–3 Years)</h4>
+                    <p>The sweet spot is 4–6 weeks per block. This is the standard 12-week meet prep cycle you see in most popular powerlifting programs.</p>
+                    <h4>Experienced (3+ Years)</h4>
+                    <p>6–12 weeks in hypertrophy, 6–8 in strength. The heavier the weight you move, the harder it is to drive change. You need more time in each phase to accumulate enough volume to force an adaptation.</p>
+                </div>
+            </details>
+            <div class="step-nav">
+                <button class="btn-back" id="dur-back-btn" onclick="goToStep(3)">Back</button>
+                <button class="btn-next" onclick="goToStep(6)">Continue</button>
+            </div>
+        </div>
+
+        <!-- ── STEP 6: LIFT SELECTION + MAXES ── -->
+        <div class="step" id="step-6">
+            <div class="step-title">Select Your Lifts</div>
+            <div class="step-sub">Pick the compound movements to include and enter your current training max for each. You can include any combination.</div>
+            <div class="lift-select-grid">
+                <div class="lift-row" id="lift-row-squat">
+                    <div class="lift-row-top">
+                        <input type="checkbox" class="lift-checkbox" id="cb-squat" onchange="toggleLift('squat')">
+                        <label class="lift-name" for="cb-squat">Squat</label>
+                        <span class="lift-freq-badge" id="freq-badge-squat">2× / week</span>
+                    </div>
+                    <div class="lift-max-row" id="max-row-squat" style="display:none">
+                        <label for="max-squat">Training Max (lbs)</label>
+                        <input type="number" class="lift-max-input" id="max-squat" placeholder="e.g. 315" min="45" max="1200" oninput="updateMax('squat', this.value)">
+                    </div>
+                </div>
+                <div class="lift-row" id="lift-row-bench">
+                    <div class="lift-row-top">
+                        <input type="checkbox" class="lift-checkbox" id="cb-bench" onchange="toggleLift('bench')">
+                        <label class="lift-name" for="cb-bench">Bench Press</label>
+                        <span class="lift-freq-badge" id="freq-badge-bench">3× / week</span>
+                    </div>
+                    <div class="lift-max-row" id="max-row-bench" style="display:none">
+                        <label for="max-bench">Training Max (lbs)</label>
+                        <input type="number" class="lift-max-input" id="max-bench" placeholder="e.g. 225" min="45" max="800" oninput="updateMax('bench', this.value)">
+                    </div>
+                </div>
+                <div class="lift-row" id="lift-row-deadlift">
+                    <div class="lift-row-top">
+                        <input type="checkbox" class="lift-checkbox" id="cb-deadlift" onchange="toggleLift('deadlift')">
+                        <label class="lift-name" for="cb-deadlift">Deadlift</label>
+                        <span class="lift-freq-badge" id="freq-badge-deadlift">1× / week</span>
+                    </div>
+                    <div class="lift-max-row" id="max-row-deadlift" style="display:none">
+                        <label for="max-deadlift">Training Max (lbs)</label>
+                        <input type="number" class="lift-max-input" id="max-deadlift" placeholder="e.g. 405" min="45" max="1500" oninput="updateMax('deadlift', this.value)">
+                    </div>
+                </div>
+                <div class="lift-row" id="lift-row-ohp">
+                    <div class="lift-row-top">
+                        <input type="checkbox" class="lift-checkbox" id="cb-ohp" onchange="toggleLift('ohp')">
+                        <label class="lift-name" for="cb-ohp">Overhead Press</label>
+                        <span class="lift-freq-badge" id="freq-badge-ohp">2× / week</span>
+                    </div>
+                    <div class="lift-max-row" id="max-row-ohp" style="display:none">
+                        <label for="max-ohp">Training Max (lbs)</label>
+                        <input type="number" class="lift-max-input" id="max-ohp" placeholder="e.g. 155" min="45" max="600" oninput="updateMax('ohp', this.value)">
+                    </div>
+                </div>
+            </div>
+            <details class="edu-block" style="margin-top:16px">
+                <summary>Frequency recommendations — why these numbers?</summary>
+                <div class="edu-content">
+                    <h4>Bench Press: 3–4× per week (High Frequency)</h4>
+                    <p>The upper body recovers fast and the bench is a highly technical skill. More practice means a better groove. Even a massive 440 lb bench creates far less CNS fatigue than a heavy squat or pull, so you can train it often.</p>
+                    <h4>Squat: 2× per week (Moderate Frequency)</h4>
+                    <p>The squat damages too much tissue to train 3× per week at high intensity, but once a week leaves you feeling "rusty." Two days — one primary, one secondary variation — is the sweet spot for elite lifters.</p>
+                    <h4>Deadlift: 1× per week (Low Frequency)</h4>
+                    <p>Pulling near-maximal weight creates massive spinal loading and CNS drain. Many elite pullers only compete-style deadlift once every 7–14 days, using lighter variations (RDLs, block pulls) for the remaining volume.</p>
+                    <h4>OHP: 2× per week</h4>
+                    <p>Moderate — enough frequency to build the pressing pattern and shoulder health, not so much that it competes with your bench recovery.</p>
+                </div>
+            </details>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goToStep(5)">Back</button>
+                <button class="btn-next" id="lift-next" disabled onclick="buildConfigStep()">Continue</button>
+            </div>
+        </div>
+
+        <!-- ── STEP 7: CONFIGURE EACH LIFT ── -->
+        <div class="step" id="step-7">
+            <div class="step-title">Configure Your Lifts</div>
+            <div class="step-sub">Sets, rep range, and frequency. The recommended values are pre-filled for your goal and phase — understand them before changing them.</div>
+            <div class="lift-config-tabs" id="config-tabs"></div>
+            <div id="config-panels"></div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goToStep(6)">Back</button>
+                <button class="btn-next" onclick="goToStep(8)">Continue</button>
+            </div>
+        </div>
+
+        <!-- ── STEP 8: DELOAD + GENERATE ── -->
+        <div class="step" id="step-8">
+            <div class="step-title">Final Setup</div>
+            <div class="step-sub">One last decision, then we build your program.</div>
+
+            <div class="toggle-row" style="margin-bottom:16px">
+                <div class="toggle-row-text">
+                    <div class="main">Include Deload Week</div>
+                    <div class="sub">Auto-added at the end of the block. Volume drops ~50%, intensity is maintained.</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="deload-toggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <details class="edu-block" style="margin-bottom:24px">
+                <summary>Why deloading isn't optional</summary>
+                <div class="edu-content">
+                    <h4>Fatigue Masks Fitness</h4>
+                    <p>Heavy training builds up a massive fatigue debt — in your muscles, connective tissue, and CNS. That fatigue is physically masking your actual strength. When you train hard for 4–6 weeks straight, you're not operating at your true capacity.</p>
+                    <h4>The Supercompensation Effect</h4>
+                    <p>A properly timed deload lets the fatigue clear while the adaptations you built remain. You come back the following week <span class="highlight">noticeably stronger</span> than you were on your heaviest training day. This isn't theory — it's what every elite lifter experiences before a competition.</p>
+                    <h4>Recommendation</h4>
+                    <p>For most people: cut sets by 50%, keep weight the same or slightly lighter, and focus on quality movement. 5–7 days is enough. Don't go full couch mode — you want your nervous system primed, not cold.</p>
+                </div>
+            </details>
+
+            <div id="program-review-summary"></div>
+
+            <div class="step-nav">
+                <button class="btn-back" onclick="goToStep(7)">Back</button>
+                <button class="btn-generate" onclick="generateAndRender()">
+                    ⚡ Generate Program
+                </button>
+            </div>
+        </div>
+
+    </div><!-- /wizard -->
+
+    <!-- ═══════════════════════ PROGRAM OUTPUT ═══════════════════════ -->
+    <div id="program-output">
+        <div class="output-header">
+            <div class="output-title" id="output-title">My Custom Program</div>
+            <div class="output-sub" id="output-sub"></div>
+        </div>
+        <div class="week-nav" id="week-nav"></div>
+        <div id="week-sections"></div>
+        <div class="output-actions">
+            <button class="action-btn" onclick="editProgram()">✏️ Edit</button>
+            <button class="action-btn" onclick="newProgram()">🔄 New</button>
+            <button class="action-btn primary" onclick="window.print()">🖨️ Print</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════ INTAKE QUIZ OVERLAY ═══════════════ -->
+    <div class="intake-overlay" id="intake-overlay" style="display:none" onclick="if(event.target===this)closeIntakeQuiz()">
+        <div class="intake-card">
+            <div class="intake-title">Quick Assessment</div>
+            <div class="intake-sub">3 questions · 30 seconds · We'll slot you in safely</div>
+
+            <div class="intake-q">
+                <div class="intake-q-label">1. How long have you been training consistently?</div>
+                <div class="intake-choices">
+                    <button class="intake-btn" data-q="q1" data-val="lt6mo" onclick="intakeAnswer('q1','lt6mo')">Under 6 months</button>
+                    <button class="intake-btn" data-q="q1" data-val="6to12mo" onclick="intakeAnswer('q1','6to12mo')">6–12 months</button>
+                    <button class="intake-btn" data-q="q1" data-val="1to3yr" onclick="intakeAnswer('q1','1to3yr')">1–3 years</button>
+                    <button class="intake-btn" data-q="q1" data-val="3plusyr" onclick="intakeAnswer('q1','3plusyr')">3+ years</button>
+                </div>
+            </div>
+
+            <div class="intake-q">
+                <div class="intake-q-label">2. Do you have an approximate 1 Rep Max for Squat, Bench, or Deadlift?</div>
+                <div class="intake-choices">
+                    <button class="intake-btn" data-q="q2" data-val="yes" onclick="intakeAnswer('q2','yes')">Yes, I've tested it</button>
+                    <button class="intake-btn" data-q="q2" data-val="approx" onclick="intakeAnswer('q2','approx')">Rough idea</button>
+                    <button class="intake-btn" data-q="q2" data-val="no" onclick="intakeAnswer('q2','no')">Not really</button>
+                </div>
+            </div>
+
+            <div class="intake-q">
+                <div class="intake-q-label">3. What matters most to you right now?</div>
+                <div class="intake-choices">
+                    <button class="intake-btn" data-q="q3" data-val="strength" onclick="intakeAnswer('q3','strength')">Get as strong as possible</button>
+                    <button class="intake-btn" data-q="q3" data-val="size" onclick="intakeAnswer('q3','size')">Build muscle / look better</button>
+                    <button class="intake-btn" data-q="q3" data-val="both" onclick="intakeAnswer('q3','both')">Both equally</button>
+                </div>
+            </div>
+
+            <button class="intake-submit" id="intake-submit" disabled onclick="submitIntake()">Set My Profile →</button>
+            <button class="intake-close" onclick="closeIntakeQuiz()">Cancel — I'll pick manually</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════ ACCESSORY PICKER MODAL ═══════════════ -->
+    <div class="acc-modal-overlay" id="acc-picker-modal" style="display:none" onclick="if(event.target===this)closeAccessoryPicker()">
+        <div class="acc-modal-card">
+            <div class="acc-modal-header">
+                <button class="acc-modal-close" onclick="closeAccessoryPicker()">×</button>
+                <div class="acc-modal-title">Add Accessories</div>
+                <div class="acc-budget-info" id="acc-budget-bar"></div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px">
+                    Accessories should not exceed 50–60% of your main lift set count. Quality over quantity.
+                </div>
+            </div>
+            <div class="acc-exercise-list" id="acc-exercise-list"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script src="pwa.js"></script>
+    <script src="script_custom.js"></script>
+</body>
+</html>

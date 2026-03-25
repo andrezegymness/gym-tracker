@@ -1448,24 +1448,37 @@ function resolveSmartLift(lift, week) {
         else if(w===3){pct=0.90;reps="3";}
         else if(w===4){pct=0.75;reps="1";}
         else{pct=0.70;reps="3";}
-    }
-    if (lift.n && lift.n.includes("Snatch Grip RDL (Smart)")) {
+    } else if (lift.n && lift.n.includes("Snatch Grip RDL (Smart)")) {
         if(w===1){pct=0.45;reps="10";}
         else if(w===2){pct=0.50;reps="8";}
         else if(w===3){pct=0.55;reps="6";}
         else{pct=0;reps="OFF";}
-    }
-    if (lift.n && lift.n.includes("Incline Barbell Bench (Smart)")) {
+    } else if (lift.n && lift.n.includes("Incline Barbell Bench (Smart)")) {
         if(w===1){pct=0.65;reps="8";}
         else if(w===2){pct=0.70;reps="6";}
         else if(w===3){pct=0.75;reps="5";}
         else{pct=0.80;reps="4";}
+    } else {
+        // Generic auto-progression: build→taper→peak off→deload
+        if (w === 5) { pct = 0; return { pct, reps }; } // Peak week: skip
+        const offsetMap = {1:0, 2:0.025, 3:0.05, 4:-0.02, 6:0};
+        pct = lift.p + (offsetMap[w] !== undefined ? offsetMap[w] : 0);
+        const rStr = String(lift.r);
+        if (rStr.includes('x') && !rStr.includes('s')) {
+            const parts = rStr.split('x');
+            const bSets = parseInt(parts[0]), bReps = parseInt(parts[1]);
+            if (!isNaN(bSets) && !isNaN(bReps)) {
+                const wSets = w === 4 ? Math.max(2, bSets - 1) : bSets;
+                const rDropMap = {1:0, 2:1, 3:2, 4:2, 6:0};
+                reps = `${wSets}x${Math.max(1, bReps - (rDropMap[w] || 0))}`;
+            }
+        }
     }
     return { pct, reps };
 }
 
 const andreAccessories = {
-  "Tuesday":   [ {name:"Close Grip Bench",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.72},{name:"Larsen Press",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.68},{name:"Tricep Pushdowns",sets:"3x12",weeks:[1,2,3,6]} ],
+  "Tuesday":   [ {name:"Close Grip Bench",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.72},{name:"Larsen Press",setsByWeek:{1:"3x6",2:"3x5",3:"3x4",4:"3x3",6:"3x6"},sets:"3x5",weeks:[1,2,3,4,6],base:'Bench',basePct:0.64},{name:"Tricep Pushdowns",sets:"3x12",weeks:[1,2,3,6]} ],
   "Wednesday": [ {name:"Leg Extensions",sets:"3x15",weeks:[1,2,3,4,6]},{name:"Pendulum Squat",sets:"3x8",weeks:[1,2,3,4,6]},{name:"Walking Lunges",sets:"3x12",weeks:[1,2,3,6]},{name:"Leg Press",sets:"4x10",weeks:[1,2,3,4,6]},{name:"GHR",sets:"3x8",weeks:[1,2,3,4,6]} ],
   "Thursday":  [ {name:"Pendlay Rows",sets:"4x6",weeks:[1,2,3,4,6]},{name:"Weighted Pull-ups",sets:"3x8",weeks:[1,2,3,4,6]},{name:"T-Bar Row (Chest Supp)",sets:"3x10",weeks:[1,2,3,4,6]},{name:"Face Pulls",sets:"4x15",weeks:[1,2,3,4,5,6]} ],
   "Friday":    [ {name:"DB Shoulder Press",sets:"4x10",weeks:[1,2,3,6]},{name:"DB Lateral Raise",sets:"4x15",weeks:[1,2,3,6]},{name:"Rear Delt Fly",sets:"4x15",weeks:[1,2,3,6]},{name:"Arnold Press",sets:"3x10",weeks:[1,2,3,6]} ],
@@ -2014,7 +2027,8 @@ function render() {
                     recHtml = `<span class="acc-rec">Rec: ${load} LBS</span>`;
                 }
                 const val = state.accWeights[accId] || '';
-                accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${val}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
+                const setStr = a.setsByWeek ? (a.setsByWeek[state.activeWeek] || a.sets) : a.sets;
+                accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${setStr}</span><input class="acc-input" value="${val}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
             });
             html += accHtml + `</div></div>`;
         }

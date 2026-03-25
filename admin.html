@@ -221,6 +221,9 @@ function renderUsers(users) {
                 </div>
             </div>
             <div class="user-details">
+                <div class="edit-grid" style="grid-template-columns:1fr;margin-bottom:0;">
+                    <div class="edit-field"><label>Username</label><input type="text" id="eun${i}" value="${u.displayName}" onclick="this.select()" placeholder="Display name"></div>
+                </div>
                 <div class="edit-grid">
                     <div class="edit-field"><label>Squat</label><input type="number" id="es${i}" value="${s}" onclick="this.select()"></div>
                     <div class="edit-field"><label>Bench</label><input type="number" id="eb${i}" value="${b}" onclick="this.select()"></div>
@@ -270,11 +273,16 @@ window.saveUser = async function(i) {
     const d=+(document.getElementById('ed'+i).value)||0;
     const o=+(document.getElementById('eo'+i).value)||0;
     const ov=document.getElementById('eov'+i).value.trim();
+    const newName=document.getElementById('eun'+i).value.trim();
     try {
-        await setDoc(doc(db,"users",u.uid),{maxes:{Squat:s,Bench:b,Deadlift:d,OHP:o},squat:s,bench:b,deadlift:d,ohp:o,s,b,d,o,adminOverrides:ov||''},{merge:true});
+        const userUpdate={maxes:{Squat:s,Bench:b,Deadlift:d,OHP:o},squat:s,bench:b,deadlift:d,ohp:o,s,b,d,o,adminOverrides:ov||''};
+        if(newName && newName !== u.displayName) userUpdate.name = newName;
+        await setDoc(doc(db,"users",u.uid),userUpdate,{merge:true});
         const t=s+b+d;
-        if(t>0) await setDoc(doc(db,"leaderboard",u.uid),{squat:s,bench:b,deadlift:d,total:t,updatedAt:Date.now()},{merge:true});
-        showToast('✅ '+u.displayName+' saved');
+        const lbUpdate={squat:s,bench:b,deadlift:d,total:t,updatedAt:Date.now()};
+        if(newName && newName !== u.displayName) lbUpdate.name = newName;
+        if(t>0) await setDoc(doc(db,"leaderboard",u.uid),lbUpdate,{merge:true});
+        showToast('✅ '+(newName||u.displayName)+' saved');
         loadAllUsers();
     } catch(e) { showToast('❌ '+e.message,'err'); }
 };
