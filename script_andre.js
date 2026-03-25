@@ -1342,42 +1342,69 @@ window.applyAccPrescription = function(lift) {
 };
 
 // ==========================================
-// PDF EXPORT — NEW FEATURE
+// PDF EXPORT
 // ==========================================
 window.exportToPDF = function() {
     const maxes = state.maxes;
     const total = (maxes.Squat||0)+(maxes.Bench||0)+(maxes.Deadlift||0);
+    const allWeekNums = Object.keys(andreData).map(Number).sort((a,b)=>a-b);
+    const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    let weeksHtml = '';
+    allWeekNums.forEach(wk => {
+        const wkData = andreData[wk];
+        if(!wkData) return;
+        const label = wk === 6 ? `WEEK ${wk} — DELOAD` : `WEEK ${wk}`;
+        let daysHtml = '';
+        dayOrder.forEach(day => {
+            const exs = wkData[day];
+            if(!exs || !exs.length) return;
+            let rows = '';
+            exs.forEach(ex => {
+                const mx = maxes[ex.type] || 0;
+                const mod = modifiers[ex.name] || 1.0;
+                const w = mx > 0 ? Math.round((mx * ex.pct * mod) / 5) * 5 : 0;
+                const sr = (typeof ex.sets === 'string') ? ex.sets : `${ex.sets}\u00d7${ex.reps}`;
+                rows += `<tr><td>${ex.name}</td><td class="c">${sr}</td><td class="r">${w > 0 ? w + ' lbs' : '—'}</td></tr>`;
+            });
+            daysHtml += `<div class="dc"><div class="dt">${day}</div><table>${rows}</table></div>`;
+        });
+        if(!daysHtml) return;
+        weeksHtml += `<div class="ws"><div class="wt">${label}</div><div class="dg">${daysHtml}</div></div>`;
+    });
+
     const win = window.open('', '_blank');
-    const grid = document.getElementById('programContent');
     win.document.write(`<!DOCTYPE html><html><head>
-        <title>Andre Map Wave — Week ${state.activeWeek}</title>
-        <style>
-            *{margin:0;padding:0;box-sizing:border-box;}
-            body{font-family:Arial,sans-serif;font-size:11px;color:#000;background:#fff;padding:20px;}
-            .header{text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:10px;}
-            h1{font-size:18px;font-weight:900;}
-            .meta{display:flex;justify-content:center;gap:20px;margin-top:6px;color:#555;font-size:11px;}
-            .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-            table{width:100%;border-collapse:collapse;margin-top:4px;}
-            th,td{padding:3px 5px;border-bottom:1px solid #eee;font-size:10px;}
-            th{background:#1565c0;color:#fff;text-align:left;}
-            td:last-child{text-align:right;font-weight:bold;color:#1565c0;}
-            .day-card{border:1px solid #ccc;border-radius:6px;padding:8px;break-inside:avoid;}
-            .day-title{font-weight:900;font-size:12px;color:#1565c0;margin-bottom:6px;border-bottom:1px solid #ddd;padding-bottom:4px;}
-            .footer{margin-top:20px;text-align:center;color:#999;font-size:10px;border-top:1px solid #ddd;padding-top:10px;}
-            @media print{.grid{grid-template-columns:repeat(2,1fr);}}
-        </style>
+    <title>Andre Map Wave — Full Program</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        @page{size:landscape;margin:0.4in;}
+        body{font-family:Arial,sans-serif;font-size:8px;color:#000;background:#fff;padding:8px;}
+        .hdr{text-align:center;margin-bottom:8px;border-bottom:2px solid #000;padding-bottom:6px;}
+        .hdr h1{font-size:14px;font-weight:900;letter-spacing:1px;}
+        .meta{display:flex;justify-content:center;gap:24px;margin-top:3px;color:#444;font-size:8px;}
+        .ws{margin-bottom:8px;page-break-inside:avoid;}
+        .wt{font-size:10px;font-weight:900;color:#fff;background:#1565c0;padding:2px 8px;margin-bottom:4px;}
+        .dg{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;}
+        .dc{border:1px solid #ccc;border-radius:3px;padding:4px;}
+        .dt{font-weight:900;font-size:8px;color:#1565c0;border-bottom:1px solid #ddd;padding-bottom:2px;margin-bottom:3px;text-transform:uppercase;}
+        table{width:100%;border-collapse:collapse;}
+        td{padding:1px 2px;border-bottom:1px solid #f0f0f0;font-size:7.5px;vertical-align:middle;}
+        td.c{text-align:center;white-space:nowrap;}
+        td.r{text-align:right;font-weight:700;color:#1565c0;white-space:nowrap;}
+        .ftr{margin-top:6px;text-align:center;color:#aaa;font-size:7px;border-top:1px solid #eee;padding-top:4px;}
+    </style>
     </head><body>
-    <div class="header">
-        <h1>ANDRE MAP WAVE — Week ${state.activeWeek}</h1>
+    <div class="hdr">
+        <h1>ANDRE MAP WAVE — FULL PROGRAM</h1>
         <div class="meta">
-            <span>S: ${maxes.Squat} | B: ${maxes.Bench} | D: ${maxes.Deadlift} | OHP: ${maxes.OHP}</span>
+            <span>Squat: ${maxes.Squat} lbs &nbsp;|&nbsp; Bench: ${maxes.Bench} lbs &nbsp;|&nbsp; Deadlift: ${maxes.Deadlift} lbs &nbsp;|&nbsp; OHP: ${maxes.OHP} lbs</span>
             <span>Total: ${total} lbs</span>
             <span>Printed: ${new Date().toLocaleDateString()}</span>
         </div>
     </div>
-    <div>${grid ? grid.innerHTML : '<p>No program loaded.</p>'}</div>
-    <div class="footer">Andre's Calibrations &copy; 2026</div>
+    ${weeksHtml}
+    <div class="ftr">Andre's Calibrations &copy; 2026</div>
     </body></html>`);
     win.document.close();
     setTimeout(() => win.print(), 500);

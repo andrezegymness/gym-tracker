@@ -1517,8 +1517,7 @@ window.applyAccPrescription = function(lift) {
 };
 
 // ==========================================
-// PDF EXPORT — NEW FEATURE
-// Uses browser print for clean PDF output
+// PDF EXPORT
 // ==========================================
 window.exportToPDF = function() {
     const sMax = parseFloat(document.getElementById('squatInput').value) || 0;
@@ -1528,44 +1527,75 @@ window.exportToPDF = function() {
     const total = sMax + bMax + dMax;
     const mode = document.getElementById('dashMode').value;
 
-    const win = window.open('', '_blank');
     const grid = document.getElementById('dashboardGrid');
+    if(!grid){ toast('No program loaded.','info'); return; }
 
+    // Clone and clean — strip all interactive widgets
+    const clone = grid.cloneNode(true);
+
+    // Show all mobile-hidden weeks
+    clone.querySelectorAll('[style*="display:none"]').forEach(el => { el.style.display = ''; });
+
+    // Remove interactive widgets
+    clone.querySelectorAll('button, input, select, .rpe-picker, .rpe-widget, .acc-section, .acc-toggle, .acc-content').forEach(el => el.remove());
+
+    // Remove onclick spans (timers ⏱, PR 🏆, edit ✎, swap 🔄, delete 🗑)
+    clone.querySelectorAll('[onclick]').forEach(el => el.remove());
+
+    // Remove auto-reg / RPE adjustment labels (small colored spans with ↓ ↑)
+    clone.querySelectorAll('span').forEach(el => {
+        const t = el.textContent || '';
+        if((t.includes('↓') || t.includes('↑')) && t.includes('%')) el.remove();
+    });
+
+    // Remove warning labels that are buttons/spans only (keep ⚠️ text if inside a td)
+    clone.querySelectorAll('span[style*="font-size:9px"], span[style*="font-size:10px"]').forEach(el => {
+        if(el.textContent.includes('RPE') || el.textContent.includes('↓') || el.textContent.includes('↑')) el.remove();
+    });
+
+    const win = window.open('', '_blank');
     win.document.write(`<!DOCTYPE html><html><head>
-        <title>Base Map Linear — ${new Date().toLocaleDateString()}</title>
-        <style>
-            * { margin:0; padding:0; box-sizing:border-box; }
-            body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
-            .header { text-align:center; margin-bottom:20px; border-bottom:2px solid #000; padding-bottom:10px; }
-            .header h1 { font-size:20px; font-weight:900; }
-            .header .meta { display:flex; justify-content:center; gap:30px; margin-top:8px; color:#555; font-size:11px; }
-            .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
-            .week-card { border:1px solid #ccc; border-radius:6px; padding:10px; break-inside:avoid; }
-            .week-title { font-weight:900; font-size:13px; border-bottom:1px solid #ddd; padding-bottom:5px; margin-bottom:8px; color:#1565c0; }
-            .day-block { margin-bottom:8px; }
-            .day-name { font-weight:bold; font-size:10px; color:#555; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.5px; }
-            table { width:100%; border-collapse:collapse; }
-            td { padding:2px 4px; border-bottom:1px solid #f0f0f0; vertical-align:top; }
-            td:last-child { text-align:right; font-weight:bold; color:#1565c0; }
-            .footer { margin-top:20px; text-align:center; color:#999; font-size:10px; border-top:1px solid #ddd; padding-top:10px; }
-            @media print { body { padding:10px; } .grid { grid-template-columns:repeat(2, 1fr); } }
-        </style>
+    <title>Base Map Linear — Full Program</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        @page{size:landscape;margin:0.4in;}
+        body{font-family:Arial,sans-serif;font-size:8px;color:#000 !important;background:#fff !important;padding:8px;}
+        .hdr{text-align:center;margin-bottom:8px;border-bottom:2px solid #000;padding-bottom:6px;}
+        .hdr h1{font-size:14px;font-weight:900;letter-spacing:1px;color:#000;}
+        .meta{display:flex;justify-content:center;gap:24px;margin-top:3px;color:#444;font-size:8px;}
+        /* Force all dark theme overrides to white/black */
+        *{background:#fff !important;color:#000 !important;border-color:#ddd !important;}
+        /* Week cards grid */
+        #dashboardGrid{display:grid !important;grid-template-columns:repeat(4,1fr) !important;gap:6px !important;}
+        .program-card{border:1px solid #ccc !important;border-radius:4px;padding:6px !important;break-inside:avoid;}
+        h3{color:#1565c0 !important;font-size:10px !important;font-weight:900 !important;border-bottom:1px solid #ddd !important;padding-bottom:3px !important;margin-bottom:4px !important;}
+        h3 span{color:#666 !important;font-size:8px !important;}
+        /* Day headers */
+        div[style*="font-weight:bold"]{color:#333 !important;font-size:8px !important;font-weight:700 !important;border-bottom:1px solid #eee !important;padding-bottom:2px !important;margin-bottom:3px !important;}
+        table{width:100%;border-collapse:collapse;}
+        td{padding:1px 3px !important;border-bottom:1px solid #f5f5f5 !important;font-size:7.5px !important;vertical-align:middle !important;}
+        td:first-child{color:#000 !important;}
+        td:nth-child(2){text-align:center !important;color:#555 !important;}
+        td:last-child{text-align:right !important;font-weight:700 !important;color:#1565c0 !important;}
+        strong{color:#1565c0 !important;}
+        .ftr{margin-top:6px;text-align:center;color:#aaa !important;font-size:7px;border-top:1px solid #eee;padding-top:4px;}
+    </style>
     </head><body>
-    <div class="header">
+    <div class="hdr">
         <h1>BASE MAP LINEAR — ${mode.toUpperCase().replace(/_/g,' ')}</h1>
         <div class="meta">
-            <span>S: ${sMax} | B: ${bMax} | D: ${dMax} | OHP: ${oMax}</span>
+            <span>Squat: ${sMax} lbs &nbsp;|&nbsp; Bench: ${bMax} lbs &nbsp;|&nbsp; Deadlift: ${dMax} lbs &nbsp;|&nbsp; OHP: ${oMax} lbs</span>
             <span>Total: ${total} lbs</span>
-            <span>Generated: ${new Date().toLocaleDateString()}</span>
+            <span>Printed: ${new Date().toLocaleDateString()}</span>
         </div>
     </div>
-    <div class="grid">${grid ? grid.innerHTML : '<p>No program loaded.</p>'}</div>
-    <div class="footer">Andre's Calibrations &copy; 2026 — Printed from Base Map Linear</div>
+    ${clone.outerHTML}
+    <div class="ftr">Andre's Calibrations &copy; 2026</div>
     </body></html>`);
 
     win.document.close();
-    setTimeout(() => { win.print(); }, 500);
-    toast('Opening print dialog for PDF export...', 'info');
+    setTimeout(() => win.print(), 500);
+    toast('Opening print dialog…', 'info');
 };
 
 // ==========================================
