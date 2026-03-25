@@ -275,7 +275,7 @@ window.saveUser = async function(i) {
     const ov=document.getElementById('eov'+i).value.trim();
     const newName=document.getElementById('eun'+i).value.trim();
     try {
-        const userUpdate={maxes:{Squat:s,Bench:b,Deadlift:d,OHP:o},squat:s,bench:b,deadlift:d,ohp:o,adminOverrides:ov||''};
+        const userUpdate={maxes:{Squat:s,Bench:b,Deadlift:d,OHP:o},squat:s,bench:b,deadlift:d,ohp:o,s,b,d,o,adminOverrides:ov||''};
         if(newName && newName !== u.displayName) userUpdate.name = newName;
         await setDoc(doc(db,"users",u.uid),userUpdate,{merge:true});
         const t=s+b+d;
