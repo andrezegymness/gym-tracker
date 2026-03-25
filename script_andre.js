@@ -1463,51 +1463,187 @@ window.exportToPDF = function() {
 // ==========================================
 // ANDRE MAP DATA
 // ==========================================
+// isBackDown:true entries use: adjustedPct = basePct + (activeWeek-1)*0.025
+// basePct is back-calculated so the formula yields the correct pct for that week
 const andreData = {
   1: {
-    "Monday":    [ {name:"Pause Squat",sets:2,reps:2,pct:0.701,type:"Squat"},{name:"Pause Squat",sets:1,reps:3,pct:0.721,type:"Squat"},{name:"Pause Squat",sets:2,reps:2,pct:0.74,type:"Squat"},{name:"Deadlift",sets:1,reps:3,pct:0.732,type:"Deadlift"},{name:"Deadlift",sets:2,reps:3,pct:0.841,type:"Deadlift"},{name:"OHP",sets:3,reps:4,pct:0.75,type:"OHP"} ],
-    "Tuesday":   [ {name:"Bench",sets:1,reps:3,pct:0.733,type:"Bench"},{name:"Bench",sets:4,reps:3,pct:0.844,type:"Bench"},{name:"Floor Press",sets:5,reps:5,pct:0.756,type:"Bench"} ],
-    "Wednesday": [ {name:"Squat",sets:1,reps:3,pct:0.727,type:"Squat"},{name:"Squat",sets:2,reps:3,pct:0.799,type:"Squat"},{name:"Squat",sets:1,reps:3,pct:0.838,type:"Squat"} ],
-    "Thursday":  [ {name:"Bench",sets:2,reps:2,pct:0.756,type:"Bench"},{name:"Bench",sets:1,reps:3,pct:0.844,type:"Bench"},{name:"Bench",sets:2,reps:2,pct:0.8,type:"Bench"},{name:"AMRAP Bench",sets:1,reps:"AMRAP",pct:0.8,type:"Bench"} ],
-    "Friday":    [ {name:"Squat",sets:1,reps:2,pct:0.753,type:"Squat"},{name:"Squat",sets:2,reps:2,pct:0.799,type:"Squat"},{name:"Squat (Heavy)",sets:1,reps:1,pct:0.903,type:"Squat"},{name:"OHP",sets:4,reps:8,pct:0.68,type:"OHP"} ],
-    "Saturday":  [ {name:"Bench (Heavy)",sets:2,reps:1,pct:0.933,type:"Bench"},{name:"Bench",sets:3,reps:4,pct:0.756,type:"Bench"},{name:"Pause Deadlift",sets:1,reps:3,pct:0.682,type:"Deadlift"},{name:"Pause Deadlift",sets:2,reps:3,pct:0.791,type:"Deadlift"} ]
+    "Monday": [
+      {name:"Pause Squat",sets:2,reps:2,pct:0.77,type:"Squat"},
+      {name:"Pause Squat (Back Down)",sets:2,reps:3,pct:0.751,isBackDown:true,basePct:0.751,type:"Squat"},
+      {name:"Deadlift",sets:2,reps:3,pct:0.841,type:"Deadlift"},
+      {name:"Deadlift (Back Down)",sets:2,reps:3,pct:0.732,isBackDown:true,basePct:0.732,type:"Deadlift"},
+      {name:"OHP",sets:3,reps:4,pct:0.75,type:"OHP"}
+    ],
+    "Tuesday": [
+      {name:"Bench",sets:4,reps:3,pct:0.844,type:"Bench"},
+      {name:"Bench (Back Down)",sets:2,reps:3,pct:0.733,isBackDown:true,basePct:0.733,type:"Bench"}
+    ],
+    "Wednesday": [
+      {name:"Squat",sets:1,reps:3,pct:0.838,type:"Squat"},
+      {name:"Squat (Back Down)",sets:3,reps:3,pct:0.799,isBackDown:true,basePct:0.799,type:"Squat"}
+    ],
+    "Thursday": [
+      {name:"Bench",sets:1,reps:3,pct:0.844,type:"Bench"},
+      {name:"Bench (Back Down)",sets:3,reps:2,pct:0.80,isBackDown:true,basePct:0.80,type:"Bench"},
+      {name:"AMRAP Bench",sets:1,reps:"AMRAP",pct:0.80,type:"Bench"}
+    ],
+    "Friday": [
+      {name:"Squat (Heavy)",sets:1,reps:1,pct:0.903,type:"Squat"},
+      {name:"Squat (Back Down)",sets:3,reps:2,pct:0.799,isBackDown:true,basePct:0.799,type:"Squat"},
+      {name:"OHP",sets:4,reps:8,pct:0.68,type:"OHP"}
+    ],
+    "Saturday": [
+      {name:"Bench (Heavy) (Optional)",sets:2,reps:1,pct:0.933,type:"Bench"},
+      {name:"Bench (Back Down)",sets:4,reps:4,pct:0.756,isBackDown:true,basePct:0.756,type:"Bench"},
+      {name:"Pause Deadlift",sets:2,reps:3,pct:0.791,type:"Deadlift"},
+      {name:"Pause Deadlift (Back Down)",sets:2,reps:3,pct:0.682,isBackDown:true,basePct:0.682,type:"Deadlift"}
+    ]
   },
   2: {
-    "Monday":    [ {name:"Squat",sets:1,reps:3,pct:0.753,type:"Squat"},{name:"Squat",sets:1,reps:5,pct:0.773,type:"Squat"},{name:"Squat",sets:1,reps:4,pct:0.831,type:"Squat"},{name:"Deadlift",sets:1,reps:3,pct:0.732,type:"Deadlift"},{name:"Deadlift",sets:2,reps:3,pct:0.811,type:"Deadlift"},{name:"Deadlift",sets:1,reps:3,pct:0.866,type:"Deadlift"},{name:"OHP",sets:3,reps:4,pct:0.79,type:"OHP"} ],
-    "Tuesday":   [ {name:"Bench",sets:1,reps:5,pct:0.767,type:"Bench"},{name:"Bench",sets:3,reps:4,pct:0.811,type:"Bench"},{name:"Floor Press",sets:5,reps:5,pct:0.778,type:"Bench"} ],
-    "Wednesday": [ {name:"Pause Squat",sets:2,reps:2,pct:0.708,type:"Squat"},{name:"Pause Squat",sets:1,reps:2,pct:0.734,type:"Squat"},{name:"Pause Squat",sets:1,reps:2,pct:0.753,type:"Squat"} ],
-    "Thursday":  [ {name:"Bench",sets:1,reps:3,pct:0.856,type:"Bench"},{name:"Bench",sets:2,reps:2,pct:0.8,type:"Bench"},{name:"AMRAP Bench",sets:1,reps:"AMRAP",pct:0.8,type:"Bench"} ],
-    "Friday":    [ {name:"Squat",sets:1,reps:3,pct:0.753,type:"Squat"},{name:"Squat",sets:1,reps:5,pct:0.825,type:"Squat"},{name:"Squat",sets:2,reps:5,pct:0.799,type:"Squat"},{name:"OHP",sets:4,reps:8,pct:0.72,type:"OHP"} ],
-    "Saturday":  [ {name:"Bench",sets:4,reps:5,pct:0.822,type:"Bench"},{name:"Pause Deadlift",sets:2,reps:2,pct:0.749,type:"Deadlift"},{name:"Pause Deadlift",sets:1,reps:2,pct:0.810,type:"Deadlift"} ]
+    "Monday": [
+      {name:"Squat",sets:1,reps:4,pct:0.831,type:"Squat"},
+      {name:"Squat (Back Down)",sets:2,reps:5,pct:0.773,isBackDown:true,basePct:0.748,type:"Squat"},
+      {name:"Deadlift",sets:1,reps:3,pct:0.866,type:"Deadlift"},
+      {name:"Deadlift (Back Down)",sets:3,reps:3,pct:0.811,isBackDown:true,basePct:0.786,type:"Deadlift"},
+      {name:"OHP",sets:3,reps:4,pct:0.79,type:"OHP"}
+    ],
+    "Tuesday": [
+      {name:"Bench",sets:3,reps:4,pct:0.811,type:"Bench"},
+      {name:"Bench (Back Down)",sets:2,reps:5,pct:0.767,isBackDown:true,basePct:0.742,type:"Bench"}
+    ],
+    "Wednesday": [
+      {name:"Pause Squat",sets:1,reps:2,pct:0.783,type:"Squat"},
+      {name:"Pause Squat (Back Down)",sets:2,reps:2,pct:0.764,isBackDown:true,basePct:0.739,type:"Squat"}
+    ],
+    "Thursday": [
+      {name:"Bench",sets:1,reps:3,pct:0.856,type:"Bench"},
+      {name:"Bench (Back Down)",sets:3,reps:2,pct:0.80,isBackDown:true,basePct:0.775,type:"Bench"},
+      {name:"AMRAP Bench",sets:1,reps:"AMRAP",pct:0.80,type:"Bench"}
+    ],
+    "Friday": [
+      {name:"Squat",sets:1,reps:5,pct:0.825,type:"Squat"},
+      {name:"Squat (Back Down)",sets:3,reps:5,pct:0.799,isBackDown:true,basePct:0.774,type:"Squat"},
+      {name:"OHP",sets:4,reps:8,pct:0.72,type:"OHP"}
+    ],
+    "Saturday": [
+      {name:"Bench",sets:4,reps:5,pct:0.822,type:"Bench"},
+      {name:"Pause Deadlift",sets:1,reps:2,pct:0.810,type:"Deadlift"},
+      {name:"Pause Deadlift (Back Down)",sets:3,reps:2,pct:0.749,isBackDown:true,basePct:0.724,type:"Deadlift"}
+    ]
   },
   3: {
-    "Monday":    [ {name:"Squat",sets:1,reps:3,pct:0.753,type:"Squat"},{name:"Squat",sets:2,reps:2,pct:0.753,type:"Squat"},{name:"Squat",sets:1,reps:2,pct:0.779,type:"Squat"},{name:"Deadlift",sets:1,reps:3,pct:0.732,type:"Deadlift"},{name:"Deadlift",sets:1,reps:3,pct:0.89,type:"Deadlift"},{name:"OHP",sets:3,reps:4,pct:0.83,type:"OHP"} ],
-    "Tuesday":   [ {name:"Bench",sets:2,reps:7,pct:0.756,type:"Bench"},{name:"Bench",sets:2,reps:6,pct:0.8,type:"Bench"},{name:"Floor Press",sets:5,reps:5,pct:0.789,type:"Bench"} ],
-    "Wednesday": [ {name:"Squat",sets:1,reps:7,pct:0.76,type:"Squat"},{name:"Squat",sets:2,reps:6,pct:0.799,type:"Squat"} ],
-    "Thursday":  [ {name:"Bench",sets:4,reps:5,pct:0.7,type:"Bench"} ],
-    "Friday":    [ {name:"Pause Squat",sets:1,reps:2,pct:0.753,type:"Squat"},{name:"Pause Squat",sets:3,reps:2,pct:0.727,type:"Squat"},{name:"OHP",sets:4,reps:8,pct:0.76,type:"OHP"} ],
-    "Saturday":  [ {name:"Bench (Heavy)",sets:2,reps:1,pct:0.933,type:"Bench"},{name:"Pause Deadlift",sets:2,reps:2,pct:0.791,type:"Deadlift"},{name:"Pause Deadlift",sets:1,reps:3,pct:0.688,type:"Deadlift"} ]
+    "Monday": [
+      {name:"Squat",sets:1,reps:2,pct:0.799,type:"Squat"},
+      {name:"Squat (Back Down)",sets:3,reps:2,pct:0.773,isBackDown:true,basePct:0.723,type:"Squat"},
+      {name:"Deadlift",sets:1,reps:3,pct:0.89,type:"Deadlift"},
+      {name:"Deadlift (Back Down)",sets:2,reps:3,pct:0.732,isBackDown:true,basePct:0.682,type:"Deadlift"},
+      {name:"OHP",sets:3,reps:4,pct:0.83,type:"OHP"}
+    ],
+    "Tuesday": [
+      {name:"Bench",sets:2,reps:6,pct:0.80,type:"Bench"},
+      {name:"Bench (Back Down)",sets:3,reps:7,pct:0.756,isBackDown:true,basePct:0.706,type:"Bench"}
+    ],
+    "Wednesday": [
+      {name:"Squat",sets:2,reps:6,pct:0.819,type:"Squat"},
+      {name:"Squat (Back Down)",sets:2,reps:7,pct:0.78,isBackDown:true,basePct:0.73,type:"Squat"}
+    ],
+    "Thursday": [
+      {name:"Bench",sets:4,reps:5,pct:0.70,type:"Bench"}
+    ],
+    "Friday": [
+      {name:"Pause Squat",sets:1,reps:2,pct:0.783,type:"Squat"},
+      {name:"Pause Squat (Back Down)",sets:4,reps:2,pct:0.757,isBackDown:true,basePct:0.707,type:"Squat"},
+      {name:"OHP",sets:4,reps:8,pct:0.76,type:"OHP"}
+    ],
+    "Saturday": [
+      {name:"Bench (Heavy) (Optional)",sets:2,reps:1,pct:0.933,type:"Bench"},
+      {name:"Pause Deadlift",sets:2,reps:2,pct:0.791,type:"Deadlift"},
+      {name:"Pause Deadlift (Back Down)",sets:2,reps:3,pct:0.688,isBackDown:true,basePct:0.638,type:"Deadlift"}
+    ]
   },
   4: {
-    "Monday":    [ {name:"Squat",sets:1,reps:4,pct:0.753,type:"Squat"},{name:"Squat",sets:1,reps:4,pct:0.773,type:"Squat"},{name:"Squat (Heavy)",sets:1,reps:4,pct:0.903,type:"Squat"},{name:"Squat (Backoff)",sets:1,reps:4,pct:0.87,type:"Squat"},{name:"Deadlift",sets:1,reps:3,pct:0.732,type:"Deadlift"},{name:"Deadlift",sets:2,reps:3,pct:0.738,type:"Deadlift"},{name:"OHP",sets:3,reps:4,pct:0.87,type:"OHP"} ],
-    "Wednesday": [ {name:"Squat",sets:1,reps:2,pct:0.753,type:"Squat"},{name:"Squat",sets:2,reps:2,pct:0.792,type:"Squat"},{name:"Bench",sets:1,reps:4,pct:0.756,type:"Bench"},{name:"Bench",sets:1,reps:4,pct:0.8,type:"Bench"},{name:"Bench",sets:1,reps:4,pct:0.867,type:"Bench"} ],
-    "Friday":    [ {name:"Squat",sets:1,reps:3,pct:0.903,type:"Squat"},{name:"Squat",sets:1,reps:3,pct:0.942,type:"Squat"},{name:"OHP",sets:4,reps:8,pct:0.80,type:"OHP"} ],
-    "Saturday":  [ {name:"Bench",sets:2,reps:2,pct:0.756,type:"Bench"},{name:"Bench",sets:1,reps:3,pct:0.8,type:"Bench"},{name:"Bench (Peak)",sets:1,reps:1,pct:0.989,type:"Bench"},{name:"Pause Deadlift",sets:1,reps:3,pct:0.682,type:"Deadlift"},{name:"Pause Deadlift",sets:1,reps:1,pct:0.840,type:"Deadlift"} ]
+    "Monday": [
+      {name:"Squat (Heavy)",sets:1,reps:4,pct:0.903,type:"Squat"},
+      {name:"Squat (Back Down)",sets:2,reps:4,pct:0.87,isBackDown:true,basePct:0.795,type:"Squat"},
+      {name:"Deadlift",sets:2,reps:3,pct:0.738,type:"Deadlift"},
+      {name:"Deadlift (Back Down)",sets:2,reps:3,pct:0.732,isBackDown:true,basePct:0.657,type:"Deadlift"},
+      {name:"OHP",sets:3,reps:4,pct:0.87,type:"OHP"}
+    ],
+    "Tuesday": [
+      {name:"🟥 ACTIVE RECOVERY REST DAY",sets:"",reps:"",pct:0,type:"Bench",isActiveRecovery:true},
+      {name:"Bench",sets:2,reps:10,pct:0.50,type:"Bench"},
+      {name:"OHP",sets:2,reps:10,pct:0.40,type:"OHP"}
+    ],
+    "Wednesday": [
+      {name:"Squat",sets:2,reps:2,pct:0.792,type:"Squat"},
+      {name:"Squat (Back Down)",sets:2,reps:2,pct:0.753,isBackDown:true,basePct:0.678,type:"Squat"},
+      {name:"Bench",sets:1,reps:4,pct:0.867,type:"Bench"},
+      {name:"Bench (Back Down)",sets:2,reps:4,pct:0.80,isBackDown:true,basePct:0.725,type:"Bench"}
+    ],
+    "Thursday": [
+      {name:"🟥 ACTIVE RECOVERY REST DAY",sets:"",reps:"",pct:0,type:"Squat",isActiveRecovery:true},
+      {name:"Squat",sets:2,reps:10,pct:0.50,type:"Squat"},
+      {name:"Deadlift",sets:2,reps:8,pct:0.45,type:"Deadlift"}
+    ],
+    "Friday": [
+      {name:"Squat",sets:1,reps:3,pct:0.942,type:"Squat"},
+      {name:"Squat (Back Down)",sets:2,reps:3,pct:0.903,isBackDown:true,basePct:0.828,type:"Squat"},
+      {name:"OHP",sets:4,reps:8,pct:0.80,type:"OHP"}
+    ],
+    "Saturday": [
+      {name:"Bench (Peak) (Optional)",sets:1,reps:1,pct:0.989,type:"Bench"},
+      {name:"Bench (Back Down)",sets:2,reps:3,pct:0.80,isBackDown:true,basePct:0.725,type:"Bench"},
+      {name:"Pause Deadlift",sets:1,reps:1,pct:0.840,type:"Deadlift"},
+      {name:"Pause Deadlift (Back Down)",sets:2,reps:3,pct:0.682,isBackDown:true,basePct:0.607,type:"Deadlift"}
+    ]
   },
   5: {
-    "Monday":    [ {name:"Bench",sets:1,reps:2,pct:0.6,type:"Bench"},{name:"Bench",sets:2,reps:2,pct:0.7,type:"Bench"},{name:"Bench",sets:2,reps:2,pct:0.744,type:"Bench"},{name:"Deadlift",sets:1,reps:3,pct:0.732,type:"Deadlift"},{name:"Deadlift (Heavy)",sets:1,reps:3,pct:0.909,type:"Deadlift"},{name:"OHP (Recovery)",sets:3,reps:5,pct:0.60,type:"OHP"} ],
-    "Wednesday": [ {name:"Squat (Peak)",sets:1,reps:2,pct:0.929,type:"Squat"},{name:"Squat (Max Effort)",sets:1,reps:2,pct:0.961,type:"Squat"},{name:"Bench",sets:1,reps:3,pct:0.889,type:"Bench"} ],
-    "Friday":    [ {name:"Squat",sets:2,reps:2,pct:0.753,type:"Squat"},{name:"Squat",sets:4,reps:2,pct:0.799,type:"Squat"} ],
-    "Saturday":  [ {name:"Bench",sets:2,reps:2,pct:0.756,type:"Bench"},{name:"Bench",sets:4,reps:2,pct:0.8,type:"Bench"},{name:"Pause Deadlift",sets:1,reps:3,pct:0.682,type:"Deadlift"},{name:"Pause Deadlift",sets:2,reps:3,pct:0.791,type:"Deadlift"} ]
+    "Monday": [
+      {name:"Deadlift (Heavy)",sets:1,reps:3,pct:0.909,type:"Deadlift"},
+      {name:"Deadlift (Back Down)",sets:2,reps:3,pct:0.732,isBackDown:true,basePct:0.632,type:"Deadlift"},
+      {name:"Bench",sets:2,reps:2,pct:0.744,type:"Bench"},
+      {name:"Bench (Back Down)",sets:3,reps:2,pct:0.70,isBackDown:true,basePct:0.60,type:"Bench"},
+      {name:"OHP (Recovery)",sets:3,reps:5,pct:0.60,type:"OHP"}
+    ],
+    "Tuesday": [
+      {name:"🟥 ACTIVE RECOVERY REST DAY",sets:"",reps:"",pct:0,type:"Bench",isActiveRecovery:true},
+      {name:"Bench",sets:2,reps:10,pct:0.50,type:"Bench"},
+      {name:"OHP",sets:2,reps:10,pct:0.40,type:"OHP"}
+    ],
+    "Wednesday": [
+      {name:"Squat (Max Effort)",sets:1,reps:2,pct:0.961,type:"Squat"},
+      {name:"Squat (Peak)",sets:1,reps:2,pct:0.929,type:"Squat"},
+      {name:"Bench",sets:1,reps:3,pct:0.889,type:"Bench"}
+    ],
+    "Thursday": [
+      {name:"🟥 ACTIVE RECOVERY REST DAY",sets:"",reps:"",pct:0,type:"Squat",isActiveRecovery:true},
+      {name:"Squat",sets:2,reps:10,pct:0.50,type:"Squat"},
+      {name:"Deadlift",sets:2,reps:8,pct:0.45,type:"Deadlift"}
+    ],
+    "Friday": [
+      {name:"Squat",sets:4,reps:2,pct:0.799,type:"Squat"},
+      {name:"Squat (Back Down)",sets:3,reps:2,pct:0.753,isBackDown:true,basePct:0.653,type:"Squat"}
+    ],
+    "Saturday": [
+      {name:"Bench",sets:4,reps:2,pct:0.80,type:"Bench"},
+      {name:"Bench (Back Down)",sets:3,reps:2,pct:0.756,isBackDown:true,basePct:0.656,type:"Bench"},
+      {name:"Pause Deadlift",sets:2,reps:3,pct:0.791,type:"Deadlift"},
+      {name:"Pause Deadlift (Back Down)",sets:3,reps:3,pct:0.682,isBackDown:true,basePct:0.582,type:"Deadlift"}
+    ]
   }
 };
 
-// Deload auto-generated from Week 1
+// Deload auto-generated from Week 1 at 90% intensity
 andreData[6] = {};
 Object.keys(andreData[1]).forEach(d => {
     andreData[6][d] = andreData[1][d]
-        .filter(e => !(e.sets===5 && e.reps===5))
-        .map(e => ({ ...e, name:`Tempo ${e.type}`, pct: e.pct*0.95 }));
+        .filter(e => !e.isActiveRecovery)
+        .map(e => ({
+            ...e,
+            name: `Tempo ${e.type}`,
+            pct: parseFloat((e.pct * 0.90).toFixed(3)),
+            basePct: e.basePct ? parseFloat((e.basePct * 0.90).toFixed(3)) : undefined
+        }));
 });
 
 // ==========================================
@@ -1554,7 +1690,7 @@ function resolveSmartLift(lift, week) {
 }
 
 const andreAccessories = {
-  "Tuesday":   [ {name:"Close Grip Bench",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.72},{name:"Larsen Press",setsByWeek:{1:"3x6",2:"3x5",3:"3x4",4:"3x3",6:"3x6"},sets:"3x5",weeks:[1,2,3,4,6],base:'Bench',basePct:0.64},{name:"Tricep Pushdowns",sets:"3x12",weeks:[1,2,3,6]} ],
+  "Tuesday":   [ {name:"Larsen Press",setsByWeek:{1:"3x6",2:"3x5",3:"3x4",4:"3x3",6:"3x6"},sets:"3x5",weeks:[1,2,3,4,6],base:'Bench',basePct:0.64} ],
   "Wednesday": [ {name:"Leg Extensions",sets:"3x15",weeks:[1,2,3,4,6]},{name:"Pendulum Squat",sets:"3x8",weeks:[1,2,3,4,6]},{name:"Walking Lunges",sets:"3x12",weeks:[1,2,3,6]},{name:"Leg Press",sets:"4x10",weeks:[1,2,3,4,6]},{name:"GHR",sets:"3x8",weeks:[1,2,3,4,6]} ],
   "Thursday":  [ {name:"Pendlay Rows",sets:"4x6",weeks:[1,2,3,4,6]},{name:"Weighted Pull-ups",sets:"3x8",weeks:[1,2,3,4,6]},{name:"T-Bar Row (Chest Supp)",sets:"3x10",weeks:[1,2,3,4,6]},{name:"Face Pulls",sets:"4x15",weeks:[1,2,3,4,5,6]} ],
   "Friday":    [ {name:"DB Shoulder Press",sets:"4x10",weeks:[1,2,3,6]},{name:"DB Lateral Raise",sets:"4x15",weeks:[1,2,3,6]},{name:"Rear Delt Fly",sets:"4x15",weeks:[1,2,3,6]},{name:"Arnold Press",sets:"3x10",weeks:[1,2,3,6]} ],
@@ -1976,6 +2112,10 @@ function render() {
         if(b.innerText.includes(`Week ${state.activeWeek}`) || (state.activeWeek===6 && b.innerText.includes('Deload'))) b.classList.add('active');
     });
 
+    // Red theme for peak weeks 4 & 5
+    const isPeakWeek = state.activeWeek === 4 || state.activeWeek === 5;
+    document.body.classList.toggle('peak-week', isPeakWeek);
+
     const cont = document.getElementById('programContent');
     if(!cont) return;
     cont.innerHTML = '';
@@ -2025,6 +2165,12 @@ function render() {
             const uid = `Andre-${state.activeWeek}-${day}-${i}`;
             const max = state.maxes[m.type] || 0;
 
+            // Active Recovery banner row — no weight/sets rendering
+            if(m.isActiveRecovery) {
+                html += `<tr><td colspan="3" style="text-align:center;background:rgba(198,40,40,0.15);color:#ff6b6b;font-weight:700;font-size:11px;padding:7px 4px;letter-spacing:0.5px;border-radius:3px;">${m.name}</td></tr>`;
+                return;
+            }
+
             let setRepStr = "";
             if(m.isCustom) {
                 setRepStr = String(m.reps).includes('x') ? m.reps : `${m.sets} x ${m.reps}`;
@@ -2038,8 +2184,16 @@ function render() {
             }
 
             let adjustedPct = m.pct;
+            // Back down linear progression: +2.5%/week from basePct (week 1 baseline)
+            if(m.isBackDown && m.basePct) {
+                if(state.activeWeek === 6) {
+                    adjustedPct = parseFloat((m.basePct * 0.90).toFixed(3));
+                } else {
+                    adjustedPct = parseFloat((m.basePct + (state.activeWeek - 1) * 0.025).toFixed(3));
+                }
+            }
             let warningLabel = "";
-            const isPauseDL = m.name === "Pause Deadlift";
+            const isPauseDL = m.name === "Pause Deadlift" || m.name === "Pause Deadlift (Back Down)";
 
             if(m.name==="Deadlift" || m.name==="Deadlift (Heavy)" || isPauseDL) {
                 let currentReps = dlReps;
@@ -2069,7 +2223,8 @@ function render() {
                     autoRegLabel = ` <span style='color:#ff9f0a;font-size:9px;'>↓${dropPct}% RPE</span>`;
                 }
                 if(modifier!==1.0 || overloadPct>0) { style="color:#ff4444;font-weight:bold;"; warn=" ⚠️"; }
-                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span>${warningLabel}${autoRegLabel} <span onclick="event.stopPropagation();adjustWeight('${m.name}',${baseLoad})" style="cursor:pointer;font-size:12px;color:#aaa;margin-left:5px;">✎</span>`;
+                const pctLabel = `<span style="font-size:10px;color:#888;margin-left:4px;">(${Math.round(adjustedPct*100)}%)</span>`;
+                loadDisplay = `<span style="${style}">${finalLoad} LBS${warn}</span>${pctLabel}${warningLabel}${autoRegLabel} <span onclick="event.stopPropagation();adjustWeight('${m.name}',${baseLoad})" style="cursor:pointer;font-size:12px;color:#aaa;margin-left:5px;">✎</span>`;
             } else {
                 loadDisplay = Math.round(m.pct*100)+"%";
             }
