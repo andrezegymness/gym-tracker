@@ -199,12 +199,12 @@ function submitIntake() {
     }
 
     // Override goal from q3 if not yet set
-    if (!cfg.goal && q3) cfg.goal = q3;
-    if (q3 && !cfg.goal) {
+    if (!cfg.goal && q3) {
         cfg.goal = q3;
         document.querySelectorAll('#step-1 .choice-card').forEach(c => c.classList.remove('selected'));
         document.getElementById(`goal-${q3}`)?.classList.add('selected');
-        document.getElementById('goal-next').disabled = false;
+        const nextBtn = document.getElementById('goal-next');
+        if (nextBtn) nextBtn.disabled = false;
     }
 
     selectExp(exp);
@@ -923,8 +923,8 @@ function toggleAccessory(key) {
     if (existing >= 0) {
         addedAccessories[slotKey].splice(existing, 1);
         document.getElementById(`accrow-${key}`)?.classList.remove('added');
-        document.querySelector(`#accrow-${key} .acc-add-btn`)?.classList.remove('added');
-        document.querySelector(`#accrow-${key} .acc-add-btn`).textContent = '+ Add';
+        const removeBtn = document.querySelector(`#accrow-${key} .acc-add-btn`);
+        if (removeBtn) { removeBtn.classList.remove('added'); removeBtn.textContent = '+ Add'; }
     } else {
         const budget = getVolumeBudget(mainSets);
         const used = addedAccessories[slotKey].reduce((s, a) => s + a.sets, 0);
