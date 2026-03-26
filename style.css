@@ -211,6 +211,25 @@ header {
   box-shadow: 0 2px 12px rgba(48, 209, 88, 0.3);
 }
 
+/* ── PEAK WEEK (Weeks 4 & 5) RED THEME ── */
+.peak-week .nav-btn.active {
+  background: #c62828;
+  box-shadow: 0 2px 12px rgba(198, 40, 40, 0.45);
+}
+.peak-week .day-header {
+  background: linear-gradient(135deg, #7f0000 0%, #c62828 100%);
+  color: #fff;
+}
+.peak-week .day-container {
+  border-color: rgba(198, 40, 40, 0.35);
+  box-shadow: 0 0 0 1px rgba(198, 40, 40, 0.2);
+}
+.peak-week .load-cell { color: #ff5252; }
+.peak-week tr.row-Squat { border-left-color: #e53935; }
+.peak-week tr.row-Bench { border-left-color: #e53935; }
+.peak-week tr.row-Deadlift { border-left-color: #e53935; }
+.peak-week tr.row-OHP { border-left-color: #e53935; }
+
 /* ── INPUT SYSTEM ── */
 .control-panel {
   background: var(--bg-card);
