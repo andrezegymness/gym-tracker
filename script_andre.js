@@ -1573,8 +1573,8 @@ const andreData = {
       {name:"Bench",sets:1,reps:3,pct:0.756,type:"Bench"},
       {name:"Bench",sets:1,reps:2,pct:0.822,type:"Bench"},
       {name:"Bench",sets:1,reps:2,pct:0.878,type:"Bench"},
-      {name:"Bench (Peak)",sets:1,reps:1,pct:0.933,type:"Bench"},
-      {name:"Bench (Backoff)",sets:2,reps:3,pct:0.856,type:"Bench"}
+      {name:"Bench (Peak)",sets:1,reps:2,pct:0.911,type:"Bench"},
+      {name:"Bench (Back Down)",sets:2,reps:3,pct:0.856,isBackDown:true,basePct:0.781,type:"Bench"}
     ],
     "Wednesday": [
       {name:"Squat",sets:2,reps:2,pct:0.792,type:"Squat"},
@@ -1605,8 +1605,8 @@ const andreData = {
     "Tuesday": [
       {name:"Bench",sets:1,reps:2,pct:0.756,type:"Bench"},
       {name:"Bench",sets:1,reps:2,pct:0.822,type:"Bench"},
-      {name:"Bench (Peak)",sets:1,reps:2,pct:0.928,type:"Bench"},
-      {name:"Bench (Max Effort)",sets:1,reps:1,pct:0.967,type:"Bench"}
+      {name:"Bench",sets:1,reps:2,pct:0.878,type:"Bench"},
+      {name:"Bench (Max Effort)",sets:1,reps:2,pct:0.944,type:"Bench"}
     ],
     "Wednesday": [
       {name:"Squat (Max Effort)",sets:1,reps:2,pct:0.961,type:"Squat"},
@@ -2152,9 +2152,16 @@ function render() {
         const accList = andreAccessories[day];
         const showAcc = accList && (state.activeWeek < 5 || state.activeWeek === 6);
 
+        // Peak week: flag days and sets for labeling
+        const dayHasPeak = isPeakWeek && exs.some(e => e.pct >= 0.90);
+        const dayIsActiveRecovery = isPeakWeek && !dayHasPeak && exs.length > 0;
+
         const card = document.createElement('div');
         card.className = 'day-container';
-        let head = `<div class="day-header"><span>${day}</span></div>`;
+        const arBadge = dayIsActiveRecovery
+            ? `<span style="font-size:9px;color:#ff6b6b;font-weight:700;letter-spacing:0.5px;margin-left:8px;vertical-align:middle;">ACTIVE RECOVERY · DO NOT PUSH</span>`
+            : '';
+        let head = `<div class="day-header"><span>${day}${arBadge}</span></div>`;
         let html = `<table>`;
 
         exs.forEach((m, i) => {
@@ -2234,8 +2241,20 @@ function render() {
             const isMainLift = ['Squat','Bench','Deadlift','Pause Squat','Pause Deadlift'].includes(m.name);
             const prBtn = (isMainLift && finalLoad > 0) ? `<span onclick="logPR('${m.name}',${finalLoad},${typeof m.reps==='number'?m.reps:1})" title="Log as PR" style="cursor:pointer;font-size:13px;margin-left:4px;opacity:0.7;">🏆</span>` : '';
 
+            // Peak week sub-labels
+            let peakSubLabel = '';
+            if (isPeakWeek && !m.isCustom) {
+                if (m.isBackDown) {
+                    peakSubLabel = `<span style="font-size:9px;color:#888;margin-left:5px;font-weight:600;">BACK-OFF</span>`;
+                } else if (m.pct > 0 && m.pct < 0.90 && dayHasPeak) {
+                    peakSubLabel = `<span style="font-size:9px;color:#ff9f0a;margin-left:5px;font-weight:600;">WARM-UP</span>`;
+                } else if (m.pct > 0 && m.pct < 0.90 && dayIsActiveRecovery) {
+                    peakSubLabel = `<span style="font-size:9px;color:#ff6b6b;margin-left:5px;font-weight:600;">ACTIVE RECOVERY</span>`;
+                }
+            }
+
             html += `<tr class="row-${m.type} ${state.completed[uid]?'completed':''}" onclick="toggleComplete('${uid}')">
-                <td>${m.name}<br>${rpePicker}</td>
+                <td>${m.name}${peakSubLabel}<br>${rpePicker}</td>
                 <td>${setRepStr}</td>
                 <td class="load-cell" onclick="event.stopPropagation();openPlateCalc('${finalLoad}')">${loadDisplay}${timerBtn}${prBtn}</td>
             </tr>`;
