@@ -1414,15 +1414,19 @@ const andreData = {
   },
   4: {
     "Monday":    [ {name:"Squat",sets:1,reps:4,pct:0.753,type:"Squat"},{name:"Squat",sets:1,reps:4,pct:0.773,type:"Squat"},{name:"Squat (Heavy)",sets:1,reps:4,pct:0.903,type:"Squat"},{name:"Squat (Backoff)",sets:1,reps:4,pct:0.87,type:"Squat"},{name:"Deadlift",sets:1,reps:3,pct:0.732,type:"Deadlift"},{name:"Deadlift",sets:2,reps:3,pct:0.738,type:"Deadlift"},{name:"OHP",sets:3,reps:4,pct:0.87,type:"OHP"} ],
+    "Tuesday":   [ {name:"Bench",sets:1,reps:3,pct:0.756,type:"Bench"},{name:"Bench",sets:1,reps:2,pct:0.822,type:"Bench"},{name:"Bench",sets:1,reps:2,pct:0.878,type:"Bench"},{name:"Bench (Peak)",sets:1,reps:1,pct:0.933,type:"Bench"},{name:"Bench (Backoff)",sets:2,reps:3,pct:0.856,type:"Bench"} ],
     "Wednesday": [ {name:"Squat",sets:1,reps:2,pct:0.753,type:"Squat"},{name:"Squat",sets:2,reps:2,pct:0.792,type:"Squat"},{name:"Bench",sets:1,reps:4,pct:0.756,type:"Bench"},{name:"Bench",sets:1,reps:4,pct:0.8,type:"Bench"},{name:"Bench",sets:1,reps:4,pct:0.867,type:"Bench"} ],
+    "Thursday":  [],
     "Friday":    [ {name:"Squat",sets:1,reps:3,pct:0.903,type:"Squat"},{name:"Squat",sets:1,reps:3,pct:0.942,type:"Squat"},{name:"OHP",sets:4,reps:8,pct:0.80,type:"OHP"} ],
-    "Saturday":  [ {name:"Bench",sets:2,reps:2,pct:0.756,type:"Bench"},{name:"Bench",sets:1,reps:3,pct:0.8,type:"Bench"},{name:"Bench (Peak)",sets:1,reps:1,pct:0.989,type:"Bench"},{name:"Pause Deadlift",sets:1,reps:3,pct:0.682,type:"Deadlift"},{name:"Pause Deadlift",sets:1,reps:1,pct:0.840,type:"Deadlift"} ]
+    "Saturday":  [ {name:"Bench (Recovery)",sets:3,reps:5,pct:0.70,type:"Bench"},{name:"Pause Deadlift",sets:1,reps:3,pct:0.682,type:"Deadlift"},{name:"Pause Deadlift",sets:1,reps:1,pct:0.840,type:"Deadlift"} ]
   },
   5: {
     "Monday":    [ {name:"Bench",sets:1,reps:2,pct:0.6,type:"Bench"},{name:"Bench",sets:2,reps:2,pct:0.7,type:"Bench"},{name:"Bench",sets:2,reps:2,pct:0.744,type:"Bench"},{name:"Deadlift",sets:1,reps:3,pct:0.732,type:"Deadlift"},{name:"Deadlift (Heavy)",sets:1,reps:3,pct:0.909,type:"Deadlift"},{name:"OHP (Recovery)",sets:3,reps:5,pct:0.60,type:"OHP"} ],
+    "Tuesday":   [ {name:"Bench",sets:1,reps:2,pct:0.756,type:"Bench"},{name:"Bench",sets:1,reps:2,pct:0.822,type:"Bench"},{name:"Bench (Peak)",sets:1,reps:2,pct:0.928,type:"Bench"},{name:"Bench (Max Effort)",sets:1,reps:1,pct:0.967,type:"Bench"} ],
     "Wednesday": [ {name:"Squat (Peak)",sets:1,reps:2,pct:0.929,type:"Squat"},{name:"Squat (Max Effort)",sets:1,reps:2,pct:0.961,type:"Squat"},{name:"Bench",sets:1,reps:3,pct:0.889,type:"Bench"} ],
+    "Thursday":  [ {name:"Romanian Deadlift (Light)",sets:3,reps:10,pct:0.40,type:"Deadlift"},{name:"Banded Face Pulls",sets:4,reps:20,pct:0,type:"Bench"} ],
     "Friday":    [ {name:"Squat",sets:2,reps:2,pct:0.753,type:"Squat"},{name:"Squat",sets:4,reps:2,pct:0.799,type:"Squat"} ],
-    "Saturday":  [ {name:"Bench",sets:2,reps:2,pct:0.756,type:"Bench"},{name:"Bench",sets:4,reps:2,pct:0.8,type:"Bench"},{name:"Pause Deadlift",sets:1,reps:3,pct:0.682,type:"Deadlift"},{name:"Pause Deadlift",sets:2,reps:3,pct:0.791,type:"Deadlift"} ]
+    "Saturday":  [ {name:"Bench (Recovery)",sets:3,reps:4,pct:0.65,type:"Bench"},{name:"Pause Deadlift",sets:1,reps:3,pct:0.682,type:"Deadlift"},{name:"Pause Deadlift",sets:2,reps:3,pct:0.791,type:"Deadlift"} ]
   }
 };
 
@@ -2023,8 +2027,12 @@ function render() {
                 let recHtml = '';
                 if(a.base && state.maxes[a.base] > 0) {
                     let w = state.activeWeek===6 ? 0 : state.activeWeek-1;
-                    let load = Math.round((state.maxes[a.base]*(a.basePct+(w*0.025)))/5)*5;
-                    recHtml = `<span class="acc-rec">Rec: ${load} LBS</span>`;
+                    // Peak weeks (4-5): drop accessories to blood-flow weight (~75% of base), not progressive high
+                    let accPct = (state.activeWeek === 4 || state.activeWeek === 5)
+                        ? a.basePct * 0.75
+                        : a.basePct + (w * 0.025);
+                    let load = Math.round((state.maxes[a.base] * accPct) / 5) * 5;
+                    recHtml = `<span class="acc-rec">Rec: ${load} LBS${state.activeWeek >= 4 ? ' 🩸' : ''}</span>`;
                 }
                 const val = state.accWeights[accId] || '';
                 const setStr = a.setsByWeek ? (a.setsByWeek[state.activeWeek] || a.sets) : a.sets;
