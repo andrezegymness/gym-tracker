@@ -1736,7 +1736,8 @@ const state = {
     accWeights: {},
     notes: {},
     settings: { bw: '' },
-    customLifts: []
+    customLifts: [],
+    dlReps: 3
 };
 const inputs = {
     Squat:    document.getElementById('squatInput'),
@@ -1872,6 +1873,7 @@ async function loadFromCloud(uid) {
             if(d.completed)  state.completed  = d.completed;
             if(d.settings)   state.settings   = d.settings;
             if(d.accWeights) state.accWeights  = d.accWeights||{};
+            if(d.dlReps)     { state.dlReps = d.dlReps; const dlEl = document.getElementById('dlRepInput'); if(dlEl) dlEl.value = d.dlReps; }
             if(d.modifiers)  { modifiers = d.modifiers||{}; localStorage.setItem('andreMapModifiers', JSON.stringify(modifiers)); }
             // FIX: load customLifts from cloud and sync to localStorage
             if(d.customLifts && d.customLifts.length > 0) {
@@ -2099,7 +2101,7 @@ function render() {
     if(totalEl) totalEl.innerText = total;
     if(dotsEl)  dotsEl.innerText  = calculateDots(total, state.settings.bw);
 
-    const dlReps     = parseInt((document.getElementById('dlRepInput') || {value:'3'}).value) || 3;
+    const dlReps     = parseInt((document.getElementById('dlRepInput') || {value: String(state.dlReps||3)}).value) || state.dlReps || 3;
     const overloadPct = parseFloat((document.getElementById('overloadInput') || {value:'0'}).value) || 0;
 
     // Highlight active week nav button
@@ -2291,6 +2293,18 @@ function render() {
         }
         cont.appendChild(card);
     });
+
+    // Show "Clear Program" button when on Week 5
+    if(state.activeWeek === 5) {
+        const clearBtn = document.createElement('div');
+        clearBtn.style.cssText = 'margin:24px auto 8px;text-align:center;';
+        clearBtn.innerHTML = `
+            <button onclick="clearProgram()" style="background:linear-gradient(135deg,#ff453a,#ff6b35);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.3px;box-shadow:0 4px 16px rgba(255,69,58,0.35);">
+                🔄 Complete Program &amp; Reset All Workouts
+            </button>
+            <p style="color:#636366;font-size:11px;margin-top:8px;">Unmarks all completed workouts and restarts from Week 1</p>`;
+        cont.appendChild(clearBtn);
+    }
 }
 
 // ==========================================
@@ -2596,7 +2610,7 @@ function init() {
     });
 
     const dlRep = document.getElementById('dlRepInput');
-    if(dlRep) dlRep.addEventListener('change', () => render());
+    if(dlRep) dlRep.addEventListener('change', () => { state.dlReps = parseInt(dlRep.value) || 3; saveToCloud(); render(); });
     const overload = document.getElementById('overloadInput');
     if(overload) overload.addEventListener('change', () => render());
 
@@ -2654,6 +2668,14 @@ function init() {
 
     window.setWeek       = n => { state.activeWeek=n; saveToCloud(); render(); };
     window.toggleComplete= id => { state.completed[id]=!state.completed[id]; saveToCloud(); render(); };
+    window.clearProgram  = () => {
+        if(!confirm('Reset the entire program? This will unmark all completed workouts and go back to Week 1.')) return;
+        state.completed = {};
+        state.activeWeek = 1;
+        saveToCloud();
+        render();
+        toast('Program reset — starting fresh from Week 1!');
+    };
     window.toggleAcc     = day => { state.accOpen=state.accOpen||{}; state.accOpen[day]=!state.accOpen[day]; render(); };
     window.updateAccWeight=(id,val) => { state.accWeights[id]=val; saveToCloud(); };
 
