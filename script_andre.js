@@ -1648,7 +1648,11 @@ async function loadFromCloud(uid) {
             }
             if(d.activeWeek) state.activeWeek = d.activeWeek;
             if(d.completed)  state.completed  = d.completed;
-            if(d.settings)   state.settings   = d.settings;
+            // Merge (don't replace): local settings already reflect this device's
+            // most recent choice (restored from localStorage before this cloud call
+            // resolves). If cloud hasn't caught up yet, local wins so a rep-count
+            // change never gets silently reverted by a stale cloud read.
+            if(d.settings)   state.settings   = { ...d.settings, ...state.settings };
             if(d.accWeights) state.accWeights  = d.accWeights||{};
             if(d.modifiers)  modifiers         = d.modifiers||{};
             // FIX: load customLifts from cloud and sync to localStorage
@@ -1666,6 +1670,16 @@ async function loadFromCloud(uid) {
                 const nameField = document.getElementById('userName');
                 if(nameField) nameField.value = state.settings.userName;
                 updateBrandName();
+            }
+            if(state.settings.dlReps) {
+                const dlRepEl = document.getElementById('dlRepInput');
+                if(dlRepEl) dlRepEl.value = state.settings.dlReps;
+                localStorage.setItem('andreMapDlReps', state.settings.dlReps);
+            }
+            if(state.settings.overloadPct) {
+                const overloadEl = document.getElementById('overloadInput');
+                if(overloadEl) overloadEl.value = state.settings.overloadPct;
+                localStorage.setItem('andreMapOverloadPct', state.settings.overloadPct);
             }
             render();
             toast('Data synced ✓');
@@ -1855,6 +1869,20 @@ function render() {
         const accList = andreAccessories[day];
         const showAcc = accList && (state.activeWeek < 5 || state.activeWeek === 6);
 
+        // Reorder Deadlift rows so the heaviest (top) set always renders first,
+        // ahead of the lighter back-down/ramp set — and flag it for a "TOP SET" label.
+        {
+            const dlNames = ["Deadlift", "Deadlift (Heavy)", "Pause Deadlift"];
+            const dlIdx = [];
+            exs.forEach((m, idx) => { if (dlNames.includes(m.name)) dlIdx.push(idx); });
+            if (dlIdx.length > 0) {
+                const dlRows = dlIdx.map(idx => exs[idx]);
+                dlRows.sort((a, b) => b.pct - a.pct);
+                dlRows.forEach((row, i) => { row.isTopSet = (i === 0); });
+                dlIdx.forEach((idx, i) => { exs[idx] = dlRows[i]; });
+            }
+        }
+
         const card = document.createElement('div');
         card.className = 'day-container';
         let head = `<div class="day-header"><span>${day}</span></div>`;
@@ -1927,7 +1955,7 @@ function render() {
             const prBtn = (isMainLift && finalLoad > 0) ? `<span onclick="logPR('${m.name}',${finalLoad},${typeof m.reps==='number'?m.reps:1})" title="Log as PR" style="cursor:pointer;font-size:13px;margin-left:4px;opacity:0.7;">🏆</span>` : '';
 
             html += `<tr class="row-${m.type} ${state.completed[uid]?'completed':''}" onclick="toggleComplete('${uid}')">
-                <td>${m.name}<br>${rpePicker}</td>
+                <td>${m.name}${m.isTopSet ? ' <span style="background:#2196f3;color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:4px;margin-left:4px;letter-spacing:0.3px;vertical-align:middle;">TOP SET</span>' : ''}<br>${rpePicker}</td>
                 <td>${setRepStr}</td>
                 <td class="load-cell" onclick="event.stopPropagation();openPlateCalc('${finalLoad}')">${loadDisplay}${timerBtn}${prBtn}</td>
             </tr>`;
@@ -1998,6 +2026,19 @@ window.openOverview = function() {
                     }
                 }
             });
+
+            // Reorder Deadlift rows so the top set renders first, same as main view
+            {
+                const ov_dlNames = ["Deadlift", "Deadlift (Heavy)", "Pause Deadlift"];
+                const ov_dlIdx = [];
+                dailyLifts.forEach((m, idx) => { if (ov_dlNames.includes(m.name)) ov_dlIdx.push(idx); });
+                if (ov_dlIdx.length > 0) {
+                    const ov_dlRows = ov_dlIdx.map(idx => dailyLifts[idx]);
+                    ov_dlRows.sort((a, b) => b.pct - a.pct);
+                    ov_dlRows.forEach((row, i) => { row.isTopSet = (i === 0); });
+                    ov_dlIdx.forEach((idx, i) => { dailyLifts[idx] = ov_dlRows[i]; });
+                }
+            }
 
             if(dailyLifts.length > 0) {
                 weekHtml += `<div style="margin-top:8px;"><div style="font-size:0.9em;font-weight:bold;color:#aaa;">${day}</div><ul style="list-style:none;padding:0;margin:0;font-size:0.85em;">`;
@@ -2281,9 +2322,26 @@ function init() {
     });
 
     const dlRep = document.getElementById('dlRepInput');
-    if(dlRep) dlRep.addEventListener('change', () => render());
+    if(dlRep) dlRep.addEventListener('change', () => {
+        state.settings.dlReps = dlRep.value;
+        localStorage.setItem('andreMapDlReps', dlRep.value);
+        saveToCloud();
+        render();
+    });
     const overload = document.getElementById('overloadInput');
-    if(overload) overload.addEventListener('change', () => render());
+    if(overload) overload.addEventListener('change', () => {
+        state.settings.overloadPct = overload.value;
+        localStorage.setItem('andreMapOverloadPct', overload.value);
+        saveToCloud();
+        render();
+    });
+
+    // Restore last-used rep/overload selection (localStorage first for instant paint,
+    // cloud value in loadFromCloud will only fill in if this device has no local value)
+    const storedDlReps = localStorage.getItem('andreMapDlReps');
+    if(storedDlReps && dlRep) { dlRep.value = storedDlReps; state.settings.dlReps = storedDlReps; }
+    const storedOverload = localStorage.getItem('andreMapOverloadPct');
+    if(storedOverload && overload) { overload.value = storedOverload; state.settings.overloadPct = storedOverload; }
 
     onAuthStateChanged(auth, user => {
         if(user) {
