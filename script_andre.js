@@ -1883,6 +1883,20 @@ function render() {
             }
         }
 
+        // Same treatment for Squat rows — heaviest set first, labeled "TOP SET",
+        // lighter back-off/ramp sets after. No rep-changer for squats, just ordering.
+        {
+            const sqNames = ["Squat", "Squat (Heavy)", "Squat (Backoff)", "Squat (Max Effort)", "Squat (Peak)", "Pause Squat"];
+            const sqIdx = [];
+            exs.forEach((m, idx) => { if (sqNames.includes(m.name)) sqIdx.push(idx); });
+            if (sqIdx.length > 0) {
+                const sqRows = sqIdx.map(idx => exs[idx]);
+                sqRows.sort((a, b) => b.pct - a.pct);
+                sqRows.forEach((row, i) => { row.isTopSet = (i === 0); });
+                sqIdx.forEach((idx, i) => { exs[idx] = sqRows[i]; });
+            }
+        }
+
         const card = document.createElement('div');
         card.className = 'day-container';
         let head = `<div class="day-header"><span>${day}</span></div>`;
@@ -2040,6 +2054,19 @@ window.openOverview = function() {
                 }
             }
 
+            // Same for Squat rows, same as main view
+            {
+                const ov_sqNames = ["Squat", "Squat (Heavy)", "Squat (Backoff)", "Squat (Max Effort)", "Squat (Peak)", "Pause Squat"];
+                const ov_sqIdx = [];
+                dailyLifts.forEach((m, idx) => { if (ov_sqNames.includes(m.name)) ov_sqIdx.push(idx); });
+                if (ov_sqIdx.length > 0) {
+                    const ov_sqRows = ov_sqIdx.map(idx => dailyLifts[idx]);
+                    ov_sqRows.sort((a, b) => b.pct - a.pct);
+                    ov_sqRows.forEach((row, i) => { row.isTopSet = (i === 0); });
+                    ov_sqIdx.forEach((idx, i) => { dailyLifts[idx] = ov_sqRows[i]; });
+                }
+            }
+
             if(dailyLifts.length > 0) {
                 weekHtml += `<div style="margin-top:8px;"><div style="font-size:0.9em;font-weight:bold;color:#aaa;">${day}</div><ul style="list-style:none;padding:0;margin:0;font-size:0.85em;">`;
                 dailyLifts.forEach(m => {
@@ -2062,8 +2089,9 @@ window.openOverview = function() {
                     let mod = modifiers[m.name]||1.0;
                     if(mod!==1.0) load = Math.round((load*mod)/5)*5;
                     let setRep = String(ov_reps).includes('x') ? ov_reps : `${ov_sets}x${ov_reps}`;
+                    const ov_badge = m.isTopSet ? ' <span style="background:#2196f3;color:#fff;font-size:8px;font-weight:800;padding:1px 5px;border-radius:3px;margin-left:4px;letter-spacing:0.3px;">TOP</span>' : '';
                     weekHtml += `<li style="display:flex;justify-content:space-between;border-bottom:1px solid #333;padding:2px 0;">
-                        <span>${m.name}</span>
+                        <span>${m.name}${ov_badge}</span>
                         <span style="color:#2196f3;">${setRep} @ ${load>0?load:Math.round(m.pct*100)+'%'}</span>
                     </li>`;
                 });
