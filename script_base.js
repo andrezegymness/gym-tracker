@@ -805,6 +805,75 @@ function buildRPEPicker(liftId) {
     return `<div id="rpe-badge-${safeId}" style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${badge}<span style="color:#333;font-size:10px;">|</span>${dots}</div>`;
 }
 
+function getLoggedRPE(liftId) {
+    const log = getRPELog();
+    const today = new Date().toLocaleDateString('en-US');
+    return (log[today] && log[today][liftId]) || null;
+}
+
+// ==========================================
+// SHARE WORKOUT — plain-text export for
+// pasting to a friend or an AI assistant
+// ==========================================
+function buildWorkoutText(w, days) {
+    const u = 'LBS';
+    const weekLabel = `Week ${w+1}`;
+    let lines = [];
+    lines.push(`🏋️ ANDRE'S CALIBRATIONS — Base Map Linear`);
+    lines.push(`${weekLabel} • ${new Date().toLocaleDateString()}`);
+    lines.push('');
+    days.forEach(dayName => {
+        const data = (window.workoutExport && window.workoutExport[w] && window.workoutExport[w][dayName]) || [];
+        lines.push(`── ${dayName} ──`);
+        if(data.length === 0) lines.push('(rest day / no lifts)');
+        data.forEach(m => {
+            const loadStr = m.load > 0 ? `${m.load} ${u}` : (m.pct > 0 ? `${Math.round(m.pct*100)}%` : 'See Notes');
+            const rpeStr = m.rpe ? ` (RPE ${m.rpe})` : '';
+            lines.push(`• ${m.name}: ${m.setRep} @ ${loadStr}${rpeStr}`);
+        });
+        lines.push('');
+    });
+    lines.push(`Sent from Andre's Calibrations`);
+    return lines.join('\n');
+}
+
+function fallbackCopyText(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); toast('📋 Workout copied — paste it to a friend or AI'); }
+    catch(e) { toast('Could not copy — try again', 'error'); }
+    document.body.removeChild(ta);
+}
+
+function shareOrCopy(text, title) {
+    if(navigator.share) {
+        navigator.share({ title, text }).catch(err => {
+            if(err && err.name === 'AbortError') return;
+            fallbackCopyText(text);
+        });
+    } else if(navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => toast('📋 Workout copied — paste it to a friend or AI')).catch(() => fallbackCopyText(text));
+    } else {
+        fallbackCopyText(text);
+    }
+}
+
+window.shareWorkoutDay = function(w, dayName) {
+    const text = buildWorkoutText(w, [dayName]);
+    shareOrCopy(text, `${dayName} — Week ${w+1} Workout`);
+};
+
+window.shareWorkoutWeek = function(w) {
+    const days = (window.workoutExport && window.workoutExport[w]) ? Object.keys(window.workoutExport[w]) : [];
+    if(days.length === 0) { toast('Load a program first', 'error'); return; }
+    const text = buildWorkoutText(w, days);
+    shareOrCopy(text, `Week ${w+1} Workout — Base Map Linear`);
+};
+
 // ==========================================
 // RPE AUTO-REGULATION ENGINE
 // ==========================================
@@ -1688,6 +1757,7 @@ function generateProgram() {
 
   let html = '';
   const fastedMult = isFasted ? 0.935 : 1.0;
+  window.workoutExport = {};
 
   for (let w = 0; w < numW; w++) {
     let mod = (mode === 'maintenance' ? w * maintProg : w * standardProg);
@@ -1703,8 +1773,9 @@ function generateProgram() {
     if(mode === 'peak_push' && w === 4) headerColor = '#FFD700';
 
     html += `<div class="program-card ${activeClass}" style="background:var(--surface,#1e1e1e);padding:15px;border-radius:8px;margin-bottom:15px;border:1px solid var(--border,#333);${styleDef}">
-                <h3 style="color:${headerColor};border-bottom:1px solid var(--border,#444);padding-bottom:5px;">
-                    Week ${w+1} <span style="font-size:0.8em;color:var(--text-muted,#aaa);">(${Math.round((curPct+overloadPct)*100*fastedMult)}%)</span>
+                <h3 style="color:${headerColor};border-bottom:1px solid var(--border,#444);padding-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
+                    <span>Week ${w+1} <span style="font-size:0.8em;color:var(--text-muted,#aaa);">(${Math.round((curPct+overloadPct)*100*fastedMult)}%)</span></span>
+                    <span onclick="shareWorkoutWeek(${w})" style="cursor:pointer;font-size:14px;" title="Share this week's workout">📤</span>
                 </h3>`;
 
     userProgram[w].days.forEach((day, dIdx) => {
@@ -1748,8 +1819,14 @@ function generateProgram() {
           }
       });
 
+      if(!window.workoutExport[w]) window.workoutExport[w] = {};
+      window.workoutExport[w][day.name] = [];
+
       html += `<div style="margin-top:10px;background:var(--surface2,#222);padding:8px;border-radius:5px;">
-                <div style="font-size:0.9em;font-weight:bold;color:var(--text,#ddd);border-bottom:1px solid var(--border,#444);margin-bottom:5px;">${day.name}</div>
+                <div style="font-size:0.9em;font-weight:bold;color:var(--text,#ddd);border-bottom:1px solid var(--border,#444);margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
+                    <span>${day.name}</span>
+                    <span onclick="shareWorkoutDay(${w},'${day.name}')" style="cursor:pointer;font-weight:normal;font-size:13px;" title="Share this day's workout">📤</span>
+                </div>
                 <table style="width:100%;font-size:13px;border-collapse:collapse;">`;
 
       activeLifts.forEach(lift => {
@@ -2028,6 +2105,14 @@ function generateProgram() {
                  <td style="padding:4px 0;text-align:center;color:#2196f3;">${setRepStr}</td>
                  <td style="padding:4px 0;text-align:right;">${weightDisplay} ${btn}${timerBtn}${prBtn}</td>
                 </tr>`;
+
+        window.workoutExport[w][day.name].push({
+            name: lift.n,
+            setRep: setRepStr.replace(/<[^>]+>/g,'').trim(),
+            load: finalWeight,
+            pct: effectivePct,
+            rpe: getLoggedRPE(liftId)
+        });
       });
       html += `</table></div>`;
     });

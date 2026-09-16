@@ -460,6 +460,86 @@ function buildRPEPicker(liftId) {
     return `<div id="rpe-badge-${safeId}" style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${badge}<span style="color:#333;font-size:10px;">|</span>${dots}</div>`;
 }
 
+function getLoggedRPE(liftId) {
+    const log = getRPELog();
+    const today = new Date().toLocaleDateString('en-US');
+    return (log[today] && log[today][liftId]) || null;
+}
+
+// ==========================================
+// SHARE WORKOUT — plain-text export for
+// pasting to a friend or an AI assistant
+// ==========================================
+function buildWorkoutText(days) {
+    const u = state.unit || 'LBS';
+    const maxes = state.maxes;
+    const weekLabel = state.activeWeek === 6 ? 'Deload Week' : `Week ${state.activeWeek}`;
+    let lines = [];
+    lines.push(`🏋️ ANDRE'S CALIBRATIONS — Andre Map Wave`);
+    lines.push(`${weekLabel} • ${new Date().toLocaleDateString()}`);
+    lines.push(`Maxes — Squat ${maxes.Squat||0} / Bench ${maxes.Bench||0} / Deadlift ${maxes.Deadlift||0} / OHP ${maxes.OHP||0} (${u})`);
+    lines.push('');
+    days.forEach(day => {
+        const data = window.workoutExport && window.workoutExport[day];
+        if(!data) return;
+        lines.push(`── ${day} ──`);
+        if(data.main.length === 0) lines.push('(rest day / no lifts)');
+        data.main.forEach(m => {
+            const loadStr = m.load > 0 ? `${m.load} ${u}` : `${Math.round(m.pct*100)}%`;
+            const check = m.completed ? ' ✅' : '';
+            const rpeStr = m.rpe ? ` (RPE ${m.rpe})` : '';
+            lines.push(`• ${m.name}: ${m.setRep} @ ${loadStr}${check}${rpeStr}`);
+        });
+        if(data.acc.length > 0) {
+            lines.push('Accessories:');
+            data.acc.forEach(a => {
+                const w = a.weight ? `${a.weight} ${u} logged` : (a.recommended ? `Rec ${a.recommended} ${u}` : 'no weight logged');
+                lines.push(`   - ${a.name} (${a.sets}): ${w}`);
+            });
+        }
+        lines.push('');
+    });
+    lines.push(`Sent from Andre's Calibrations`);
+    return lines.join('\n');
+}
+
+function fallbackCopyText(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); toast('📋 Workout copied — paste it to a friend or AI'); }
+    catch(e) { toast('Could not copy — try again', 'error'); }
+    document.body.removeChild(ta);
+}
+
+function shareOrCopy(text, title) {
+    if(navigator.share) {
+        navigator.share({ title, text }).catch(err => {
+            if(err && err.name === 'AbortError') return;
+            fallbackCopyText(text);
+        });
+    } else if(navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => toast('📋 Workout copied — paste it to a friend or AI')).catch(() => fallbackCopyText(text));
+    } else {
+        fallbackCopyText(text);
+    }
+}
+
+window.shareWorkoutDay = function(day) {
+    const text = buildWorkoutText([day]);
+    shareOrCopy(text, `${day} Workout — Andre's Calibrations`);
+};
+
+window.shareWorkoutWeek = function() {
+    const days = window.workoutExport ? Object.keys(window.workoutExport) : [];
+    if(days.length === 0) { toast('Load a program first', 'error'); return; }
+    const text = buildWorkoutText(days);
+    shareOrCopy(text, `Week ${state.activeWeek} Workout — Andre's Calibrations`);
+};
+
 // ==========================================
 // RPE AUTO-REGULATION ENGINE
 // Modes: OFF, set-to-set, session-to-session
@@ -1832,6 +1912,7 @@ function render() {
     const cont = document.getElementById('programContent');
     if(!cont) return;
     cont.innerHTML = '';
+    window.workoutExport = {};
 
     let weekData = andreData[state.activeWeek] || andreData[1];
     if(!weekData) return;
@@ -1897,9 +1978,11 @@ function render() {
             }
         }
 
+        window.workoutExport[day] = { main: [], acc: [] };
+
         const card = document.createElement('div');
         card.className = 'day-container';
-        let head = `<div class="day-header"><span>${day}</span></div>`;
+        let head = `<div class="day-header"><span>${day}</span><span onclick="event.stopPropagation();shareWorkoutDay('${day}')" style="cursor:pointer;font-size:14px;" title="Share this day's workout">📤</span></div>`;
         let html = `<table>`;
 
         exs.forEach((m, i) => {
@@ -1973,6 +2056,15 @@ function render() {
                 <td>${setRepStr}</td>
                 <td class="load-cell" onclick="event.stopPropagation();openPlateCalc('${finalLoad}')">${loadDisplay}${timerBtn}${prBtn}</td>
             </tr>`;
+
+            window.workoutExport[day].main.push({
+                name: m.name + (m.isTopSet ? ' (Top Set)' : ''),
+                setRep: setRepStr.replace(/<[^>]+>/g,'').trim(),
+                load: finalLoad,
+                pct: adjustedPct,
+                completed: !!state.completed[uid],
+                rpe: getLoggedRPE(liftId)
+            });
         });
 
         html += `</table>`;
@@ -1989,6 +2081,13 @@ function render() {
                 }
                 const val = state.accWeights[accId] || '';
                 accHtml += `<div class="acc-row"><div class="acc-info"><span class="acc-name">${a.name}</span>${recHtml}</div><span class="acc-sets">${a.sets}</span><input class="acc-input" value="${val}" onchange="updateAccWeight('${accId}',this.value)"></div>`;
+
+                window.workoutExport[day].acc.push({
+                    name: a.name,
+                    sets: a.sets,
+                    weight: val || null,
+                    recommended: (a.base && state.maxes[a.base] > 0) ? Math.round((state.maxes[a.base]*(a.basePct+((state.activeWeek===6?0:state.activeWeek-1)*0.025)))/5)*5 : null
+                });
             });
             html += accHtml + `</div></div>`;
         }
