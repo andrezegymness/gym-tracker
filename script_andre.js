@@ -541,6 +541,184 @@ window.shareWorkoutWeek = function() {
 };
 
 // ==========================================
+// LIFT REPORT — single-lift export across a
+// day, a week, or the entire program
+// ==========================================
+function captureExportForWeeks(weeks) {
+    const originalWeek = state.activeWeek;
+    const result = {};
+    weeks.forEach(w => {
+        state.activeWeek = w;
+        render();
+        result[w] = JSON.parse(JSON.stringify(window.workoutExport));
+    });
+    state.activeWeek = originalWeek;
+    render();
+    return result;
+}
+
+function buildLiftReportText(s) {
+    const lift = s.lift;
+    const max = state.maxes[lift] || 0;
+    const u = state.unit || 'LBS';
+    const weeksNeeded = s.scope === 'program' ? [1,2,3,4,5,6] : [s.week];
+    const exportByWeek = captureExportForWeeks(weeksNeeded);
+
+    let lines = [];
+    lines.push(`🎯 ${lift.toUpperCase()} REPORT`);
+    lines.push(`Andre's Calibrations — Andre Map Wave`);
+    lines.push(`Based on 1RM: ${max > 0 ? max+' '+u : 'not set'}`);
+    lines.push(`Generated ${new Date().toLocaleDateString()}`);
+
+    let bodyLines = [];
+    weeksNeeded.forEach(w => {
+        const weekData = exportByWeek[w] || {};
+        const weekLabel = w === 6 ? `WEEK 6 — DELOAD` : `WEEK ${w}`;
+        const daysToShow = (s.scope === 'day') ? [s.day] : Object.keys(weekData);
+
+        let weekBlock = [];
+        daysToShow.forEach(day => {
+            const data = weekData[day];
+            if(!data) return;
+            const mainRows = data.main.filter(m => m.type === lift);
+            const accRows = data.acc.filter(a => a.focus === lift);
+            if(mainRows.length === 0 && accRows.length === 0) return;
+
+            weekBlock.push(`  ${day}:`);
+            mainRows.forEach(m => {
+                const loadStr = m.load > 0 ? `${m.load} ${u}` : `${Math.round(m.pct*100)}%`;
+                const check = m.completed ? ' ✅' : '';
+                const rpeStr = m.rpe ? ` (RPE ${m.rpe})` : '';
+                weekBlock.push(`    • ${m.name}: ${m.setRep} @ ${loadStr}${check}${rpeStr}`);
+            });
+            accRows.forEach(a => {
+                const wStr = a.weight ? `${a.weight} ${u} logged` : (a.recommended ? `Rec ${a.recommended} ${u}` : 'no weight logged');
+                weekBlock.push(`    - ${a.name} (${a.sets}): ${wStr}`);
+            });
+        });
+
+        if(weekBlock.length > 0) {
+            bodyLines.push('');
+            bodyLines.push(`── ${weekLabel} ──`);
+            bodyLines.push(...weekBlock);
+        }
+    });
+
+    if(bodyLines.length === 0) {
+        lines.push('');
+        lines.push(`No ${lift} data found for this selection.`);
+    } else {
+        lines.push(...bodyLines);
+    }
+
+    lines.push('');
+    lines.push(`Sent from Andre's Calibrations`);
+    return lines.join('\n');
+}
+
+let liftReportState = {};
+
+function lrBtn(label, onclick, extra='') {
+    return `<button class="full-btn" style="margin-bottom:8px;${extra}" onclick="${onclick}">${label}</button>`;
+}
+function lrBackBtn(onclick) {
+    return `<button class="full-btn" style="background:transparent;border:1px solid var(--separator);margin-top:4px;" onclick="${onclick}">← Back</button>`;
+}
+
+function renderLiftReportStep() {
+    const body = document.getElementById('liftReportBody');
+    if(!body) return;
+    const s = liftReportState;
+
+    if(!s.lift) {
+        body.innerHTML = `
+            <p style="color:var(--text-secondary,#999);margin-bottom:12px;">Which lift?</p>
+            ${lrBtn('🦵 Squat', "pickLiftReportLift('Squat')")}
+            ${lrBtn('🏋️ Bench', "pickLiftReportLift('Bench')")}
+            ${lrBtn('🔺 Deadlift', "pickLiftReportLift('Deadlift')")}
+        `;
+        return;
+    }
+
+    if(!s.scope) {
+        body.innerHTML = `
+            <p style="color:var(--text-secondary,#999);margin-bottom:12px;">${s.lift} — how much?</p>
+            ${lrBtn('📅 Single Day', "pickLiftReportScope('day')")}
+            ${lrBtn('🗓️ This Week', "pickLiftReportScope('week')")}
+            ${lrBtn('📖 Entire Program', "pickLiftReportScope('program')")}
+            ${lrBackBtn("liftReportState.lift=null;renderLiftReportStep();")}
+        `;
+        return;
+    }
+
+    if((s.scope==='day' || s.scope==='week') && s.week===null) {
+        let opts = '';
+        for(let w=1; w<=6; w++) {
+            const label = w===6 ? 'Deload Week' : `Week ${w}`;
+            opts += lrBtn(label, `pickLiftReportWeek(${w})`);
+        }
+        body.innerHTML = `
+            <p style="color:var(--text-secondary,#999);margin-bottom:12px;">${s.lift} — which week?</p>
+            ${opts}
+            ${lrBackBtn("liftReportState.scope=null;renderLiftReportStep();")}
+        `;
+        return;
+    }
+
+    if(s.scope==='day' && !s.day) {
+        const weekData = andreData[s.week] || {};
+        const days = Object.keys(weekData).filter(d => weekData[d].some(e => e.type===s.lift));
+        if(days.length===0) {
+            body.innerHTML = `<p>No ${s.lift} sessions found in ${s.week===6?'the Deload Week':'Week '+s.week}.</p>
+                ${lrBackBtn("liftReportState.week=null;renderLiftReportStep();")}`;
+            return;
+        }
+        const opts = days.map(d => lrBtn(d, `pickLiftReportDay('${d}')`)).join('');
+        body.innerHTML = `
+            <p style="color:var(--text-secondary,#999);margin-bottom:12px;">${s.lift} — ${s.week===6?'Deload Week':'Week '+s.week} — which day?</p>
+            ${opts}
+            ${lrBackBtn("liftReportState.week=null;renderLiftReportStep();")}
+        `;
+        return;
+    }
+
+    let summaryLabel;
+    if(s.scope==='program') summaryLabel = `${s.lift} — Entire Program`;
+    else if(s.scope==='week') summaryLabel = `${s.lift} — ${s.week===6?'Deload Week':'Week '+s.week}`;
+    else summaryLabel = `${s.lift} — ${s.week===6?'Deload Week':'Week '+s.week} — ${s.day}`;
+
+    const backAction = s.scope==='day' ? "liftReportState.day=null" : (s.scope==='week' ? "liftReportState.week=null" : "liftReportState.scope=null");
+
+    body.innerHTML = `
+        <p style="color:var(--text-secondary,#999);margin-bottom:12px;">Ready:</p>
+        <p style="font-weight:700;margin-bottom:16px;">${summaryLabel}</p>
+        ${lrBtn('📤 Generate & Share', 'generateLiftReport()', 'background:#2196f3;')}
+        ${lrBackBtn(backAction+";renderLiftReportStep();")}
+    `;
+}
+
+window.openLiftReport = function() {
+    liftReportState = { lift: null, scope: null, week: null, day: null };
+    const modal = document.getElementById('liftReportModal');
+    if(modal) modal.style.display = 'flex';
+    renderLiftReportStep();
+};
+window.pickLiftReportLift = function(lift) { liftReportState.lift = lift; renderLiftReportStep(); };
+window.pickLiftReportScope = function(scope) { liftReportState.scope = scope; renderLiftReportStep(); };
+window.pickLiftReportWeek = function(w) { liftReportState.week = w; renderLiftReportStep(); };
+window.pickLiftReportDay = function(d) { liftReportState.day = d; renderLiftReportStep(); };
+window.generateLiftReport = function() {
+    const s = liftReportState;
+    const text = buildLiftReportText(s);
+    let title;
+    if(s.scope === 'program') title = `${s.lift} — Full Program Report`;
+    else if(s.scope === 'week') title = `${s.lift} — ${s.week===6?'Deload Week':'Week '+s.week} Report`;
+    else title = `${s.lift} — ${s.week===6?'Deload Week':'Week '+s.week} ${s.day} Report`;
+    shareOrCopy(text, title);
+    closeModal('liftReportModal');
+};
+
+// ==========================================
 // RPE AUTO-REGULATION ENGINE
 // Modes: OFF, set-to-set, session-to-session
 // Stored in localStorage so it persists
@@ -1545,11 +1723,11 @@ function resolveSmartLift(lift, week) {
 }
 
 const andreAccessories = {
-  "Tuesday":   [ {name:"Close Grip Bench",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.72},{name:"Larsen Press",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.68},{name:"Tricep Pushdowns",sets:"3x12",weeks:[1,2,3,6]} ],
-  "Wednesday": [ {name:"Leg Extensions",sets:"3x15",weeks:[1,2,3,4,6]},{name:"Pendulum Squat",sets:"3x8",weeks:[1,2,3,4,6]},{name:"Walking Lunges",sets:"3x12",weeks:[1,2,3,6]},{name:"Leg Press",sets:"4x10",weeks:[1,2,3,4,6]},{name:"GHR",sets:"3x8",weeks:[1,2,3,4,6]} ],
-  "Thursday":  [ {name:"Pendlay Rows",sets:"4x6",weeks:[1,2,3,4,6]},{name:"Weighted Pull-ups",sets:"3x8",weeks:[1,2,3,4,6]},{name:"T-Bar Row (Chest Supp)",sets:"3x10",weeks:[1,2,3,4,6]},{name:"Face Pulls",sets:"4x15",weeks:[1,2,3,4,5,6]} ],
-  "Friday":    [ {name:"DB Shoulder Press",sets:"4x10",weeks:[1,2,3,6]},{name:"DB Lateral Raise",sets:"4x15",weeks:[1,2,3,6]},{name:"Rear Delt Fly",sets:"4x15",weeks:[1,2,3,6]},{name:"Arnold Press",sets:"3x10",weeks:[1,2,3,6]} ],
-  "Saturday":  [ {name:"RDL",sets:"4x6",weeks:[1,2,3,4,6],base:'Deadlift',basePct:0.55},{name:"Hamstring Curls",sets:"5x10",weeks:[1,2,3,4,6]},{name:"Leg Press (High Feet)",sets:"4x12",weeks:[1,2,3,6]},{name:"GHR",sets:"3x3",weeks:[1,2,3,4,5,6]} ]
+  "Tuesday":   [ {name:"Close Grip Bench",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.72,focus:'Bench'},{name:"Larsen Press",sets:"3x4",weeks:[1,2,3,4,6],base:'Bench',basePct:0.68,focus:'Bench'},{name:"Tricep Pushdowns",sets:"3x12",weeks:[1,2,3,6],focus:'Bench'} ],
+  "Wednesday": [ {name:"Leg Extensions",sets:"3x15",weeks:[1,2,3,4,6],focus:'Squat'},{name:"Pendulum Squat",sets:"3x8",weeks:[1,2,3,4,6],focus:'Squat'},{name:"Walking Lunges",sets:"3x12",weeks:[1,2,3,6],focus:'Squat'},{name:"Leg Press",sets:"4x10",weeks:[1,2,3,4,6],focus:'Squat'},{name:"GHR",sets:"3x8",weeks:[1,2,3,4,6],focus:'Squat'} ],
+  "Thursday":  [ {name:"Pendlay Rows",sets:"4x6",weeks:[1,2,3,4,6],focus:'Bench'},{name:"Weighted Pull-ups",sets:"3x8",weeks:[1,2,3,4,6],focus:'Bench'},{name:"T-Bar Row (Chest Supp)",sets:"3x10",weeks:[1,2,3,4,6],focus:'Bench'},{name:"Face Pulls",sets:"4x15",weeks:[1,2,3,4,5,6],focus:'Bench'} ],
+  "Friday":    [ {name:"DB Shoulder Press",sets:"4x10",weeks:[1,2,3,6],focus:'OHP'},{name:"DB Lateral Raise",sets:"4x15",weeks:[1,2,3,6],focus:'OHP'},{name:"Rear Delt Fly",sets:"4x15",weeks:[1,2,3,6],focus:'OHP'},{name:"Arnold Press",sets:"3x10",weeks:[1,2,3,6],focus:'OHP'} ],
+  "Saturday":  [ {name:"RDL",sets:"4x6",weeks:[1,2,3,4,6],base:'Deadlift',basePct:0.55,focus:'Deadlift'},{name:"Hamstring Curls",sets:"5x10",weeks:[1,2,3,4,6],focus:'Deadlift'},{name:"Leg Press (High Feet)",sets:"4x12",weeks:[1,2,3,6],focus:'Deadlift'},{name:"GHR",sets:"3x3",weeks:[1,2,3,4,5,6],focus:'Deadlift'} ]
 };
 
 const accessoryData = {
@@ -2059,6 +2237,7 @@ function render() {
 
             window.workoutExport[day].main.push({
                 name: m.name + (m.isTopSet ? ' (Top Set)' : ''),
+                type: m.type,
                 setRep: setRepStr.replace(/<[^>]+>/g,'').trim(),
                 load: finalLoad,
                 pct: adjustedPct,
@@ -2085,6 +2264,7 @@ function render() {
                 window.workoutExport[day].acc.push({
                     name: a.name,
                     sets: a.sets,
+                    focus: a.focus || null,
                     weight: val || null,
                     recommended: (a.base && state.maxes[a.base] > 0) ? Math.round((state.maxes[a.base]*(a.basePct+((state.activeWeek===6?0:state.activeWeek-1)*0.025)))/5)*5 : null
                 });

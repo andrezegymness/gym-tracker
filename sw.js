@@ -5,7 +5,7 @@
 //           Network-first for Firebase/API calls
 // ==========================================
 
-const CACHE_NAME = 'andres-calibrations-v4';
+const CACHE_NAME = 'andres-calibrations-v5';
 
 // All app files to cache for offline use
 const APP_SHELL = [
